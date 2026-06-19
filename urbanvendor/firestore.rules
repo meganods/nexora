@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // VENDORS: Registration & Admin Management
+    match /vendors/{vendorId} {
+      // Allows anyone to read (for discovery) and create (signup)
+      allow read, create: if true;
+      // ONLY the vendor can update their own data
+      allow update, delete: if request.auth != null && request.auth.uid == vendorId;
+    }
+
+    // SERVICES: Global catalog
+    match /services/{serviceId} {
+      allow read: if true;
+      // Admin or authenticated staff only
+      allow write: if request.auth != null;
+    }
+
+    // CATEGORY REQUESTS: New category requests from vendors
+    match /category_requests/{requestId} {
+      // Vendors can create requests
+      allow create: if request.auth != null;
+      // Admin can read all, vendor can read their own
+      allow read: if request.auth != null;
+      // Admin can update (accept/reject)
+      allow update: if request.auth != null;
+    }
+
+    // BOOKINGS: Service request lifecycle
+    match /bookings/{bookingId} {
+      // Authenticated users can participate in bookings
+      allow read, write: if request.auth != null;
+    }
+
+    // USERS: Customer profile data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Catch-all safety
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

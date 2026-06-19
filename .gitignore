@@ -1,0 +1,17 @@
+# Environments
+.env
+
+# Flutter/Dart/Android/iOS/Web
+**/build/
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+**/android/app/build/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.DS_Store

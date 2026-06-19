@@ -25,13 +25,46 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           TextButton(
             onPressed: () {
               setState(() => _isCancelled = true);
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
+              messenger.showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
             },
             child: Text("YES, CANCEL", style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
+    );
+  }
+
+  void _showMoreOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.support_agent),
+                title: Text('Contact Support', style: GoogleFonts.outfit()),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support feature coming soon')));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_problem_outlined),
+                title: Text('Report Issue', style: GoogleFonts.outfit()),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report issue feature coming soon')));
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -45,26 +78,31 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppTheme.accentColor), onPressed: () => Navigator.pop(context)),
         title: Text("Booking Info", style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold)),
         actions: [
-          if (!_isCancelled) IconButton(icon: const Icon(Icons.more_vert, color: Colors.grey), onPressed: () {}),
+          if (!_isCancelled) IconButton(icon: const Icon(Icons.more_vert, color: Colors.grey), onPressed: _showMoreOptions),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatusHeader(),
-            _buildServiceImage(),
-            _buildShopInfo(),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
-            _buildItemizedServices(),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
-            _buildDateTimeInfo(),
-            _buildLocationInfo(),
-            _buildPricingSection(),
-            const SizedBox(height: 40),
-            if (!_isCancelled) _buildCancelButton(),
-            const SizedBox(height: 40),
-          ],
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStatusHeader(),
+                _buildServiceImage(),
+                _buildShopInfo(),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                _buildItemizedServices(),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                _buildDateTimeInfo(),
+                _buildLocationInfo(),
+                _buildPricingSection(),
+                const SizedBox(height: 40),
+                if (!_isCancelled) _buildCancelButton(),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -86,11 +124,20 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildServiceImage() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      height: 200,
-      width: double.infinity,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(25), image: const DecorationImage(image: AssetImage("assets/images/banner1.png"), fit: BoxFit.cover)),
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        constraints: const BoxConstraints(maxWidth: 800),
+        height: 250,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          image: const DecorationImage(
+            image: AssetImage("assets/images/banner1.png"),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
     );
   }
 

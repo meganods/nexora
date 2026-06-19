@@ -1,0 +1,60 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'onboarding_journey_screen.dart';
+import 'application_status_screen.dart';
+import 'expert_portal_dashboard.dart';
+
+class RootGatekeeper extends StatelessWidget {
+  const RootGatekeeper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = authSnapshot.data;
+        if (user == null) {
+          return const OnboardingJourneyScreen();
+        }
+
+        // User is logged in, now check their vendor status
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('vendors').doc(user.uid).snapshots(),
+          builder: (context, vendorSnapshot) {
+            if (vendorSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (!vendorSnapshot.hasData || !vendorSnapshot.data!.exists) {
+              // If user is authenticated but has no vendor doc yet, 
+              // they might be in the middle of registration.
+              // For now, redirect to onboarding or profile creation.
+              // Usually, we create the user AFTER the registration steps, 
+              // or at the very beginning. Let's send them to onboarding.
+              return const OnboardingJourneyScreen();
+            }
+
+            final data = vendorSnapshot.data!.data() as Map<String, dynamic>;
+            final status = data['status'] ?? 'PENDING';
+
+            if (status == 'APPROVED') {
+              return const ExpertPortalDashboard();
+            } else {
+              // Show status screen for PENDING, UNDER_REVIEW, REJECTED, PENDING_REGISTRATION
+              return const ApplicationStatusScreen();
+            }
+          },
+        );
+      },
+    );
+  }
+}

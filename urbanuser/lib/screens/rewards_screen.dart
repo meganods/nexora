@@ -1,31 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../data/rewards_data.dart';
 import '../widgets/custom_bottom_nav.dart';
 
-class RewardsScreen extends StatelessWidget {
+class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
+
+  @override
+  State<RewardsScreen> createState() => _RewardsScreenState();
+}
+
+class _RewardsScreenState extends State<RewardsScreen> {
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         elevation: 0,
-        title: Text("Rewards", style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold)),
-        actions: [IconButton(icon: const Icon(Icons.info_outline, color: Colors.grey), onPressed: () {})],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildPointsHeader(),
-            _buildScratchCardsSection(),
-            _buildCouponsSection(),
-            const SizedBox(height: 120),
-          ],
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            }
+          },
+        ),
+        title: Text(
+          "Rewards & Cashback",
+          style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
         ),
       ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPointsHeader(),
+              _buildAvailableRewards(),
+              _buildRewardHistory(),
+              const SizedBox(height: 40),
+            ],
+          ),
+          ),
+        ),
       bottomNavigationBar: const CustomBottomNav(selectedIndex: 3),
     );
   }
@@ -33,121 +57,266 @@ class RewardsScreen extends StatelessWidget {
   Widget _buildPointsHeader() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(25),
-      padding: const EdgeInsets.all(30),
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppTheme.accentColor,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: AppTheme.accentColor.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accentColor.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.stars, color: Colors.amber, size: 30),
-              const SizedBox(width: 10),
-              Text("1,240 Points", style: GoogleFonts.outfit(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text("Earn 260 more points for a free haircut!", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
-          const SizedBox(height: 25),
-          Container(
-            height: 8,
-            width: double.infinity,
-            decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4)),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.8,
-              child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber, Colors.orange]), borderRadius: BorderRadius.circular(4))),
+          const Icon(Icons.workspace_premium, color: Colors.amber, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            "₹1,250",
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Total Lifetime Rewards",
+            style: GoogleFonts.outfit(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _statItem("₹850", "Referrals"),
+              Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.2)),
+              _statItem("₹400", "Promo Cashback"),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildScratchCardsSection() {
+  Widget _statItem(String value, String label) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 25), child: Text("SCRATCH & WIN", style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[400], letterSpacing: 1.2))),
-        const SizedBox(height: 20),
-        SizedBox(
-          height: 140,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 25),
-            children: [
-              _scratchCard(const Color(0xFF673AB7), Icons.local_offer, "Win up to ₹500"),
-              _scratchCard(const Color(0xFFFFD700), Icons.card_giftcard, "Gift Voucher"),
-              _scratchCard(const Color(0xFF00BFA5), Icons.flash_on, "Extra 10% Off"),
-            ],
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 12,
           ),
         ),
       ],
     );
   }
 
-  Widget _scratchCard(Color color, IconData icon, String label) {
-    return Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 15),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Opacity(opacity: 0.1, child: Icon(icon, color: Colors.white, size: 80)),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 30),
-              const SizedBox(height: 10),
-              Text(label, textAlign: TextAlign.center, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCouponsSection() {
+  Widget _buildAvailableRewards() {
+    if (RewardsData.availableRewards.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Text(
+          "No more rewards available to claim.",
+          style: GoogleFonts.outfit(color: Colors.grey),
+        ),
+      );
+    }
     return Padding(
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("MY COUPONS", style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[400], letterSpacing: 1.2)),
-          const SizedBox(height: 20),
-          _couponItem("SAVE50", "Flat ₹50 OFF on first house cleaning service", "Exp: 20 Oct"),
-          _couponItem("PLUSFREE", "1 Month Plus Membership for FREE", "Exp: 15 Nov"),
-          _couponItem("UBERCO", "25% OFF on Uber rides using this code", "Exp: 30 Oct"),
+          Text(
+            "Available Rewards (Tap to Claim)",
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.accentColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              itemCount: RewardsData.availableRewards.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                final reward = RewardsData.availableRewards[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      RewardsData.claimedCoupons.add(reward);
+                      RewardsData.availableRewards.removeAt(index);
+                    });
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("${reward["title"]} claimed successfully!"),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.green,
+                        duration: const Duration(milliseconds: 1500),
+                      ),
+                    );
+                  },
+                  child: _rewardCard(
+                    reward["color"] as Color,
+                    reward["icon"] as IconData,
+                    reward["title"] as String,
+                    reward["expiry"] as String,
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _couponItem(String code, String desc, String expiry) {
+  Widget _rewardCard(Color color, IconData icon, String title, String expiry) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey[100]!), borderRadius: BorderRadius.circular(20)),
-      child: Row(
+      width: 140,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: Colors.amber[50], borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.amber[200]!, style: BorderStyle.none)), child: Text(code, style: GoogleFonts.outfit(color: Colors.amber[800], fontWeight: FontWeight.bold, fontSize: 13))),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(desc, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accentColor)),
-                const SizedBox(height: 4),
-                Text(expiry, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-              ],
+          Icon(icon, color: Colors.white, size: 32),
+          const Spacer(),
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 14),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              expiry,
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRewardHistory() {
+    final history = [
+      {"title": "Referral Reward", "desc": "Referred Priya Singh", "amount": "+₹200", "date": "10 Jun 2026", "icon": Icons.group_add},
+      {"title": "Promo Cashback", "desc": "SAVE50 code applied", "amount": "+₹50", "date": "08 Jun 2026", "icon": Icons.local_offer},
+      {"title": "Reward Expired", "desc": "Flat 20% Off coupon", "amount": "Expired", "date": "05 Jun 2026", "icon": Icons.timer_off},
+      {"title": "Referral Reward", "desc": "Referred Amit Kumar", "amount": "+₹200", "date": "01 Jun 2026", "icon": Icons.group_add},
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Cashback & Reward History",
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.accentColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: history.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[200]),
+              itemBuilder: (context, index) {
+                final item = history[index];
+                final isExpired = item["amount"] == "Expired";
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isExpired ? Colors.red[50] : Colors.green[50],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      item["icon"] as IconData,
+                      color: isExpired ? Colors.red : Colors.green,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    item["title"] as String,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppTheme.accentColor,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${item["date"]} • ${item["desc"]}",
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  trailing: Text(
+                    item["amount"] as String,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isExpired ? Colors.red : Colors.green,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

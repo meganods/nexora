@@ -82,13 +82,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: isSelected ? AppTheme.primaryColor : Colors.grey[100]!, width: 1.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 5))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.grey[50], shape: BoxShape.circle),
+              decoration: BoxDecoration(color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : Colors.grey[50], shape: BoxShape.circle),
               child: Icon(isSelected ? Icons.home : Icons.home_outlined, color: isSelected ? AppTheme.primaryColor : Colors.grey[400], size: 20),
             ),
             const SizedBox(width: 20),
@@ -115,6 +115,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _paymentCard("Credit Card", "Ends in 4242", Icons.credit_card),
         _paymentCard("Google Pay", "tap to pay via UPI", Icons.account_balance_wallet_outlined),
         _paymentCard("Paytm Wallet", "₹1,240 Balance", Icons.account_balance),
+        _paymentCard("Cash on Delivery", "Pay with cash at doorstep", Icons.money_rounded),
       ],
     );
   }
@@ -135,7 +136,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.grey[50], shape: BoxShape.circle),
+              decoration: BoxDecoration(color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : Colors.grey[50], shape: BoxShape.circle),
               child: Icon(icon, color: isSelected ? AppTheme.primaryColor : Colors.grey[600], size: 20),
             ),
             const SizedBox(width: 20),
@@ -200,6 +201,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildPayNowButton(double total) {
+    bool isCOD = selectedPayment == "Cash on Delivery";
     return Container(
       padding: const EdgeInsets.fromLTRB(25, 20, 25, 40),
       decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey[100]!))),
@@ -216,7 +218,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("PAY ₹${total.toStringAsFixed(0)}", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
+            Text(isCOD ? "PLACE ORDER" : "PAY ₹${total.toStringAsFixed(0)}", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
             const SizedBox(width: 15),
             const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
           ],

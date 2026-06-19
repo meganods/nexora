@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -40,7 +41,27 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/address_setup'),
+                onPressed: () async {
+                  if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
+                    try {
+                      await FirebaseFirestore.instance.collection('users').add({
+                        'name': _nameController.text,
+                        'email': _emailController.text,
+                        'phone': _phoneController.text,
+                        'createdAt': FieldValue.serverTimestamp(),
+                      });
+                      if (context.mounted) {
+                        Navigator.pushNamed(context, '/address_setup');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
+                      }
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter name and phone number')));
+                  }
+                },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
                 child: Text("CONTINUE", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
               ),

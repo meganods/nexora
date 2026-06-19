@@ -2,6 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_bottom_nav.dart';
+import 'edit_profile_screen.dart';
+import 'wallet_screen.dart';
+import 'rewards_screen.dart';
+import 'refer_screen.dart';
+import 'help_center_screen.dart';
+import 'address_setup_screen.dart';
+import 'payment_screen.dart';
+import 'notification_settings_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'about_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -14,23 +26,42 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text("Profile", style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold)),
-        actions: [IconButton(icon: const Icon(Icons.settings_outlined, color: Colors.grey), onPressed: () {})],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.grey),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()));
+            },
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildUserHeader(),
+            _buildUserHeader(context),
             _buildMembershipCard(),
-            _buildQuickActions(),
+            _buildQuickActions(context),
             _buildMenuSection("ACCOUNT SETTINGS", [
-              _menuItem(Icons.location_on_outlined, "Manage Addresses"),
-              _menuItem(Icons.payment_outlined, "Payment Methods"),
-              _menuItem(Icons.notifications_none, "Notification Settings"),
+              _menuItem(Icons.location_on_outlined, "Manage Addresses", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AddressSetupScreen()));
+              }),
+              _menuItem(Icons.payment_outlined, "Payment Methods", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentScreen()));
+              }),
+              _menuItem(Icons.notifications_none, "Notification Settings", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()));
+              }),
             ]),
             _buildMenuSection("SUPPORT", [
-              _menuItem(Icons.help_outline, "Help Center"),
-              _menuItem(Icons.description_outlined, "Privacy Policy"),
-              _menuItem(Icons.info_outline, "About Urban Company"),
+              _menuItem(Icons.help_outline, "Help Center", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpCenterScreen()));
+              }),
+              _menuItem(Icons.description_outlined, "Privacy Policy", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
+              }),
+              _menuItem(Icons.info_outline, "About Urban Company", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
+              }),
             ]),
             const SizedBox(height: 30),
             Padding(
@@ -39,7 +70,27 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 55,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Logout', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                        content: Text('Are you sure you want to logout?', style: GoogleFonts.outfit()),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                          TextButton(
+                            onPressed: () async {
+                              await FirebaseAuth.instance.signOut();
+                              if (context.mounted) {
+                                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (route) => false);
+                              }
+                            },
+                            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.grey[200]!), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
                   child: Text("LOGOUT", style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
                 ),
@@ -53,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserHeader() {
+  Widget _buildUserHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(25),
       child: Row(
@@ -70,7 +121,12 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor), 
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
+            }
+          ),
         ],
       ),
     );
@@ -105,28 +161,39 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(25),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _quickActionItem(Icons.account_balance_wallet_outlined, "Wallet"),
-          _quickActionItem(Icons.card_giftcard, "Rewards"),
-          _quickActionItem(Icons.share_outlined, "Refer"),
-          _quickActionItem(Icons.support_agent, "Help"),
+          _quickActionItem(Icons.account_balance_wallet_outlined, "Wallet", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen()));
+          }),
+          _quickActionItem(Icons.card_giftcard, "Rewards", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
+          }),
+          _quickActionItem(Icons.share_outlined, "Refer", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferScreen()));
+          }),
+          _quickActionItem(Icons.support_agent, "Help", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpCenterScreen()));
+          }),
         ],
       ),
     );
   }
 
-  Widget _quickActionItem(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: Colors.blue[50], shape: BoxShape.circle), child: Icon(icon, color: AppTheme.primaryColor, size: 24)),
-        const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.accentColor)),
-      ],
+  Widget _quickActionItem(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: Colors.blue[50], shape: BoxShape.circle), child: Icon(icon, color: AppTheme.primaryColor, size: 24)),
+          const SizedBox(height: 8),
+          Text(label, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.accentColor)),
+        ],
+      ),
     );
   }
 
@@ -140,13 +207,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _menuItem(IconData icon, String title) {
+  Widget _menuItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 25),
       leading: Icon(icon, color: Colors.grey[600], size: 22),
       title: Text(title, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w500, color: AppTheme.accentColor)),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

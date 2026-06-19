@@ -1,0 +1,152 @@
+### urbanuser
+
+✅ Connected Pages:
+- Login (login_screen.dart)
+- Dashboard (dashboard_screen.dart)
+- Profile (profile_screen.dart)
+- Edit Profile (edit_profile_screen.dart)
+- Cart (cart_screen.dart)
+
+❌ Missing Pages (Auto-Created):
+- Register (register_screen.dart)
+- Forgot Password (forgot_password_screen.dart)
+- Home (home_screen.dart)
+- Address Management (address_management_screen.dart)
+- Checkout (checkout_screen.dart)
+- Orders (orders_screen.dart)
+- Order Details (order_details_screen.dart)
+- Notifications (notifications_screen.dart)
+- Wishlist (wishlist_screen.dart)
+- Settings (settings_screen.dart)
+- Help & Support (help_support_screen.dart)
+- Search (search_screen.dart)
+- Category Details (category_details_screen.dart)
+- Product Details (product_details_screen.dart)
+- Payment Success (payment_success_screen.dart)
+- Payment Failed (payment_failed_screen.dart)
+- 404 Page (not_found_screen.dart)
+
+⚠ Broken Connections (Auto-Fixed):
+- Automatically registered routes for newly created pages in main.dart.
+
+### urbanvendor
+
+✅ Connected Pages:
+- Login (login_screen.dart)
+
+❌ Missing Pages (Auto-Created):
+- Register (register_screen.dart)
+- Dashboard (dashboard_screen.dart)
+- Store Profile (store_profile_screen.dart)
+- Edit Store (edit_store_screen.dart)
+- Products List (products_list_screen.dart)
+- Add Product (add_product_screen.dart)
+- Edit Product (edit_product_screen.dart)
+- Inventory (inventory_screen.dart)
+- Orders (orders_screen.dart)
+- Order Details (order_details_screen.dart)
+- Customers (customers_screen.dart)
+- Reviews (reviews_screen.dart)
+- Analytics (analytics_screen.dart)
+- Notifications (notifications_screen.dart)
+- Coupons (coupons_screen.dart)
+- Withdrawals (withdrawals_screen.dart)
+- Reports (reports_screen.dart)
+- Settings (settings_screen.dart)
+- Help Center (help_center_screen.dart)
+- 404 Page (not_found_screen.dart)
+
+⚠ Broken Connections (Auto-Fixed):
+- Automatically registered routes for newly created pages in main.dart.
+
+### urbanadmin
+
+✅ Connected Pages:
+- Login (login_screen.dart)
+- Users Management (users_screen.dart)
+- Vendors Management (vendors_screen.dart)
+- Settings (settings_screen.dart)
+
+❌ Missing Pages (Auto-Created):
+- Dashboard (admin_dashboard.dart)
+- Products Management (products_screen.dart)
+- Categories Management (categories_screen.dart)
+- Orders Management (orders_screen.dart)
+- Payments Management (payments_screen.dart)
+- Reports (reports_screen.dart)
+- Analytics (analytics_screen.dart)
+- CMS Management (cms_screen.dart)
+- Banner Management (banner_screen.dart)
+- Notifications (notifications_screen.dart)
+- Roles & Permissions (roles_permissions_screen.dart)
+- Audit Logs (audit_logs_screen.dart)
+- Support Tickets (support_tickets_screen.dart)
+- System Monitoring (system_monitoring_screen.dart)
+- Backup Management (backup_management_screen.dart)
+- 404 Page (not_found_screen.dart)
+
+⚠ Broken Connections (Auto-Fixed):
+- Automatically registered routes for newly created pages in main.dart.
+
+### Files Created
+- urbanuser/lib/screens/register_screen.dart
+- urbanuser/lib/screens/forgot_password_screen.dart
+- urbanuser/lib/screens/home_screen.dart
+- urbanuser/lib/screens/address_management_screen.dart
+- urbanuser/lib/screens/checkout_screen.dart
+- urbanuser/lib/screens/orders_screen.dart
+- urbanuser/lib/screens/order_details_screen.dart
+- urbanuser/lib/screens/notifications_screen.dart
+- urbanuser/lib/screens/wishlist_screen.dart
+- urbanuser/lib/screens/settings_screen.dart
+- urbanuser/lib/screens/help_support_screen.dart
+- urbanuser/lib/screens/search_screen.dart
+- urbanuser/lib/screens/category_details_screen.dart
+- urbanuser/lib/screens/product_details_screen.dart
+- urbanuser/lib/screens/payment_success_screen.dart
+- urbanuser/lib/screens/payment_failed_screen.dart
+- urbanuser/lib/screens/not_found_screen.dart
+- urbanvendor/lib/screens/register_screen.dart
+- urbanvendor/lib/screens/dashboard_screen.dart
+- urbanvendor/lib/screens/store_profile_screen.dart
+- urbanvendor/lib/screens/edit_store_screen.dart
+- urbanvendor/lib/screens/products_list_screen.dart
+- urbanvendor/lib/screens/add_product_screen.dart
+- urbanvendor/lib/screens/edit_product_screen.dart
+- urbanvendor/lib/screens/inventory_screen.dart
+- urbanvendor/lib/screens/orders_screen.dart
+- urbanvendor/lib/screens/order_details_screen.dart
+- urbanvendor/lib/screens/customers_screen.dart
+- urbanvendor/lib/screens/reviews_screen.dart
+- urbanvendor/lib/screens/analytics_screen.dart
+- urbanvendor/lib/screens/notifications_screen.dart
+- urbanvendor/lib/screens/coupons_screen.dart
+- urbanvendor/lib/screens/withdrawals_screen.dart
+- urbanvendor/lib/screens/reports_screen.dart
+- urbanvendor/lib/screens/settings_screen.dart
+- urbanvendor/lib/screens/help_center_screen.dart
+- urbanvendor/lib/screens/not_found_screen.dart
+- urbanadmin/lib/screens/admin_dashboard.dart
+- urbanadmin/lib/screens/products_screen.dart
+- urbanadmin/lib/screens/categories_screen.dart
+- urbanadmin/lib/screens/orders_screen.dart
+- urbanadmin/lib/screens/payments_screen.dart
+- urbanadmin/lib/screens/reports_screen.dart
+- urbanadmin/lib/screens/analytics_screen.dart
+- urbanadmin/lib/screens/cms_screen.dart
+- urbanadmin/lib/screens/banner_screen.dart
+- urbanadmin/lib/screens/notifications_screen.dart
+- urbanadmin/lib/screens/roles_permissions_screen.dart
+- urbanadmin/lib/screens/audit_logs_screen.dart
+- urbanadmin/lib/screens/support_tickets_screen.dart
+- urbanadmin/lib/screens/system_monitoring_screen.dart
+- urbanadmin/lib/screens/backup_management_screen.dart
+- urbanadmin/lib/screens/not_found_screen.dart
+
+### Files Fixed
+- urbanuser/lib/main.dart
+- urbanvendor/lib/main.dart
+- urbanadmin/lib/main.dart
+
+### Manual Action Required
+- Update sidebar menus to include new routes if they are not already mapped.

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/service_model.dart';
+import '../data/dummy_data.dart';
+import 'service_detail_screen.dart';
 import '../theme/app_theme.dart';
-import '../widgets/shop_detail_sheet.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryName;
@@ -10,9 +13,82 @@ class CategoryDetailScreen extends StatefulWidget {
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
 }
-
 class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  int _selectedSubCatIndex = 0;
+  final List<String> _subCats = ["All", "Top Rated", "Lowest Price", "Near Me", "Express", "Certified"];
+  String _searchQuery = "";
+  Future<List<ServiceModel>>? _servicesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _servicesFuture = _fetchVendorServices();
+  }
+
+  Future<List<ServiceModel>> _fetchVendorServices() async {
+    List<ServiceModel> combinedServices = [];
+    try {
+      // 1. Fetch all global services for this category
+      final servicesSnapshot = await FirebaseFirestore.instance
+          .collection('services')
+          .where('categoryName', isEqualTo: widget.categoryName)
+          .get();
+
+      if (servicesSnapshot.docs.isEmpty) return DummyData.getByCategory(widget.categoryName);
+
+      // 2. Fetch all approved vendors
+      final vendorsSnapshot = await FirebaseFirestore.instance
+          .collection('vendors')
+          .where('status', isEqualTo: 'APPROVED')
+          .get();
+
+      // 3. Cross-reference
+      for (var vendorDoc in vendorsSnapshot.docs) {
+        final vendorData = vendorDoc.data();
+        final enabledServices = vendorData['enabledServices'] as List<dynamic>? ?? [];
+
+        for (var serviceDoc in servicesSnapshot.docs) {
+          if (enabledServices.contains(serviceDoc.id)) {
+            final serviceData = serviceDoc.data();
+            final fallbackImg = DummyData.allServices.first.image;
+            
+            combinedServices.add(
+              ServiceModel(
+                id: serviceDoc.id,
+                title: serviceData['title'] ?? '',
+                category: serviceData['categoryName'] ?? widget.categoryName,
+                subCategory: 'Certified',
+                price: serviceData['price'] != null ? '₹${serviceData['price']}' : '₹0',
+                discountPercent: 0,
+                rating: (vendorData['rating'] as num?)?.toDouble() ?? 4.5,
+                totalReviews: (vendorData['reviewsCount'] as num?)?.toInt() ?? 0,
+                vendorName: vendorData['brandName'] ?? vendorData['businessName'] ?? 'Vendor',
+                image: serviceData['imageUrl'] ?? fallbackImg,
+                images: [serviceData['imageUrl'] ?? fallbackImg],
+                shortDescription: serviceData['description'] ?? '',
+                description: serviceData['description'] ?? '',
+                longDescription: serviceData['description'] ?? '',
+                duration: serviceData['duration'] ?? '1 hour',
+                isAvailable: true,
+                location: 'Local',
+                tags: [],
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching vendor services: $e");
+    }
+    
+    // Fallback to dummy data if DB fetch comes up totally empty
+    if (combinedServices.isEmpty) {
+      combinedServices = DummyData.getByCategory(widget.categoryName);
+    }
+    
+    return combinedServices;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +157,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
+                      onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
                       decoration: InputDecoration(
                         hintText: "Search for ${widget.categoryName}...",
                         hintStyle: GoogleFonts.outfit(color: Colors.grey[400], fontSize: 14),
@@ -107,23 +184,29 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Widget _buildSubCategoryCarousel() {
-    final subCats = ["All", "Top Rated", "Lowest Price", "Near Me", "Express", "Certified"];
     return SizedBox(
       height: 40,
       child: ListView.builder(
         scrollDirection: Axis.horizontal, padding: const EdgeInsets.only(left: 20),
-        itemCount: subCats.length, itemBuilder: (context, index) => Container(
-          margin: const EdgeInsets.only(right: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            color: index == 0 ? AppTheme.accentColor : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: index == 0 ? AppTheme.accentColor : Colors.grey[200]!),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            subCats[index],
-            style: GoogleFonts.outfit(color: index == 0 ? Colors.white : Colors.grey[600], fontWeight: FontWeight.w600, fontSize: 13),
+        itemCount: _subCats.length, itemBuilder: (context, index) => GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedSubCatIndex = index;
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              color: index == _selectedSubCatIndex ? AppTheme.accentColor : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: index == _selectedSubCatIndex ? AppTheme.accentColor : Colors.grey[200]!),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _subCats[index],
+              style: GoogleFonts.outfit(color: index == _selectedSubCatIndex ? Colors.white : Colors.grey[600], fontWeight: FontWeight.w600, fontSize: 13),
+            ),
           ),
         ),
       ),
@@ -131,151 +214,205 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Widget _buildShopList() {
-    final shops = [
-      {
-        "name": "Sparkle Beauty Studio",
-        "rating": "4.83",
-        "reviews": "153K",
-        "price": "598",
-        "oldPrice": "848",
-        "time": "1 hr 5 mins",
-        "services": ["Hair trim: Classic", "Styling: Blowdry / Out-curl"],
-        "img": "assets/images/banner1.png",
-        "isPackage": true
-      },
-      {
-        "name": "Pro Handyman Hub",
-        "rating": "4.66",
-        "reviews": "721",
-        "price": "1,199",
-        "oldPrice": "1,499",
-        "time": "2 hrs",
-        "services": ["General Repair", "Electrical Checkup", "Furniture Fixing"],
-        "img": "assets/images/onboarding_1_handyman_illustration_1774853199914.png",
-        "isPackage": false
-      },
-      {
-        "name": "Elite Car Detailers",
-        "rating": "4.81",
-        "reviews": "66K",
-        "price": "1,548",
-        "oldPrice": "1,748",
-        "time": "1 hr 20 mins",
-        "services": ["Full Interior Cleaning", "Exterior Waxing"],
-        "img": "assets/images/car_wash_banner_illustration_1774854072344.png",
-        "isPackage": true
-      },
-    ];
-    return ListView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-      itemCount: shops.length, itemBuilder: (context, index) {
-        final shop = shops[index];
-        return GestureDetector(
-          onTap: () => ShopDetailSheet.show(context, shop),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 25),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return FutureBuilder<List<ServiceModel>>(
+      future: _servicesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        List<ServiceModel> services = snapshot.data ?? [];
+
+        if (_searchQuery.isNotEmpty) {
+          services = services.where((s) => s.title.toLowerCase().contains(_searchQuery)).toList();
+        }
+
+        // Apply sorting/filtering based on selected sub-category
+        if (_subCats[_selectedSubCatIndex] == "Top Rated") {
+          services.sort((a, b) => b.rating.compareTo(a.rating));
+        } else if (_subCats[_selectedSubCatIndex] == "Lowest Price") {
+          services.sort((a, b) {
+            final priceA = int.tryParse(a.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            final priceB = int.tryParse(b.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return priceA.compareTo(priceB);
+          });
+        }
+
+        if (services.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (shop["isPackage"] as bool)
-                          Row(
-                            children: [
-                              const Icon(Icons.bookmark, color: Colors.teal, size: 14),
-                              const SizedBox(width: 4),
-                              Text("PACKAGE", style: GoogleFonts.outfit(color: Colors.teal, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-                            ],
-                          ),
-                        const SizedBox(height: 5),
-                        Text(shop["name"] as String, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
-                        const SizedBox(height: 5),
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Color(0xFF1E2432), size: 14),
-                            const SizedBox(width: 4),
-                            Text("${shop["rating"]} (${shop["reviews"]} reviews)", style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text("₹${shop["price"]}", style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                            const SizedBox(width: 8),
-                            Text("₹${shop["oldPrice"]}", style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey, decoration: TextDecoration.lineThrough)),
-                            const SizedBox(width: 8),
-                            const Text("•", style: TextStyle(color: Colors.grey)),
-                            const SizedBox(width: 8),
-                            Text(shop["time"] as String, style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey)),
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                        const SizedBox(height: 15),
-                        ... (shop["services"] as List<String>).map((s) => Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(padding: EdgeInsets.only(top: 6), child: Icon(Icons.circle, size: 4, color: Colors.grey)),
-                              const SizedBox(width: 10),
-                              Expanded(child: Text(s, style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey[700]))),
-                            ],
-                          ),
-                        )),
-                        const SizedBox(height: 20),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Text("See all services", style: GoogleFonts.outfit(color: const Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 15, decoration: TextDecoration.underline)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Column(
-                    children: [
-                      Container(
-                        height: 110, width: 110,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          image: DecorationImage(image: AssetImage(shop["img"] as String), fit: BoxFit.cover),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton(
-                        onPressed: () => ShopDetailSheet.show(context, shop),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFEEEEEE)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.storefront, size: 16, color: AppTheme.accentColor),
-                            const SizedBox(width: 5),
-                            Text("VIEW SHOP", style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No services found in ${widget.categoryName}",
+                    style: GoogleFonts.outfit(color: Colors.grey),
                   ),
                 ],
               ),
-              const SizedBox(height: 25),
-              const Divider(height: 1, color: Color(0xFFF5F5F5), thickness: 1),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: services.length,
+          itemBuilder: (context, index) {
+            final service = services[index];
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ServiceDetailScreen(service: service),
+                ),
+              ),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (service.tags.contains("Package"))
+                                Row(
+                                  children: [
+                                    const Icon(Icons.bookmark, color: Colors.teal, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text("PACKAGE",
+                                        style: GoogleFonts.outfit(
+                                            color: Colors.teal,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0)),
+                                  ],
+                                ),
+                              const SizedBox(height: 5),
+                              Text(service.title,
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star, color: Color(0xFF1E2432), size: 14),
+                                  const SizedBox(width: 4),
+                                  Text("${service.rating} (${service.totalReviews} reviews)",
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(service.price,
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                                  const SizedBox(width: 8),
+                                  if (service.discountPercent > 0)
+                                    Text("₹${(int.tryParse(service.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) + 200}",
+                                        style: GoogleFonts.outfit(
+                                            fontSize: 14,
+                                            color: Colors.grey,
+                                            decoration: TextDecoration.lineThrough)),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
+                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                              const SizedBox(height: 15),
+                              Text(
+                                service.description,
+                                style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey[700]),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 20),
+                              GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ServiceDetailScreen(service: service),
+                                  ),
+                                ),
+                                child: Text("View details",
+                                    style: GoogleFonts.outfit(
+                                        color: const Color(0xFF673AB7),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        decoration: TextDecoration.underline)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Column(
+                          children: [
+                            Container(
+                              height: 110,
+                              width: 110,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                image: DecorationImage(
+                                  image: service.image.startsWith("assets")
+                                      ? AssetImage(service.image) as ImageProvider
+                                      : NetworkImage(service.image),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ServiceDetailScreen(service: service),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFEEEEEE)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.flash_on, size: 16, color: AppTheme.accentColor),
+                                  const SizedBox(width: 5),
+                                  Text("BOOK NOW",
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.accentColor)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 25),
+                    const Divider(height: 1, color: Color(0xFFF5F5F5), thickness: 1),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildFilterSidebar() {
     return Drawer(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../screens/cart_screen.dart';
+import '../screens/all_reviews_screen.dart';
+import '../models/service_model.dart';
 
 class ShopDetailSheet extends StatefulWidget {
   final Map<String, dynamic> shop;
@@ -124,7 +126,7 @@ class _ShopDetailSheetState extends State<ShopDetailSheet> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Row(children: [const Icon(Icons.star, color: AppTheme.primaryColor, size: 14), const SizedBox(width: 4), Text(widget.shop["rating"]!, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor))])),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Row(children: [const Icon(Icons.star, color: AppTheme.primaryColor, size: 14), const SizedBox(width: 4), Text(widget.shop["rating"]!, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor))])),
               const SizedBox(width: 10),
               Text("${widget.shop["reviews"]} Ratings", style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey)),
             ],
@@ -258,7 +260,7 @@ class _ShopDetailSheetState extends State<ShopDetailSheet> {
             scrollDirection: Axis.horizontal, padding: const EdgeInsets.only(left: 20),
             itemCount: offers.length, itemBuilder: (context, index) => Container(
               width: 250, margin: const EdgeInsets.only(right: 12), padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(color: offers[index]["color"] as Color, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black.withOpacity(0.05))),
+              decoration: BoxDecoration(color: offers[index]["color"] as Color, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
               child: Row(
                 children: [
                   const Icon(Icons.stars, color: Colors.amber),
@@ -380,7 +382,29 @@ class _ShopDetailSheetState extends State<ShopDetailSheet> {
             ),
           )),
           const SizedBox(height: 10),
-          Center(child: TextButton(onPressed: () {}, child: Text("READ ALL REVIEWS", style: GoogleFonts.outfit(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1.2)))),
+          Center(child: TextButton(onPressed: () {
+            final mockService = ServiceModel(
+              id: "mock-id",
+              title: widget.shop["name"] ?? "Shop",
+              category: "General",
+              subCategory: "General",
+              price: "0",
+              discountPercent: 0,
+              rating: double.tryParse(widget.shop["rating"]?.toString() ?? "0") ?? 0.0,
+              totalReviews: int.tryParse(widget.shop["reviews"]?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? "0") ?? 0,
+              vendorName: widget.shop["name"] ?? "Vendor",
+              image: widget.shop["img"] ?? "",
+              images: [],
+              shortDescription: "",
+              description: "",
+              longDescription: "",
+              duration: "",
+              isAvailable: true,
+              location: "",
+              tags: [],
+            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => AllReviewsScreen(service: mockService)));
+          }, child: Text("READ ALL REVIEWS", style: GoogleFonts.outfit(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1.2)))),
         ],
       ),
     );

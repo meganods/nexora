@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dashboard_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -42,49 +41,65 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onPageChanged: (index) => setState(() => _currentPage = index),
             itemCount: _onboardingData.length,
             itemBuilder: (context, index) {
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    _onboardingData[index].image,
-                    fit: BoxFit.cover,
-                  ),
-                  _buildGradientOverlay(),
-                ],
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > constraints.maxHeight;
+                  return Container(
+                    color: const Color(0xFFE6EAEB),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          _onboardingData[index].image,
+                          fit: isWide ? BoxFit.contain : BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
+                        _buildGradientOverlay(),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),
 
           // Content
           Positioned(
-            bottom: 60,
-            left: 30,
-            right: 30,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDots(),
-                const SizedBox(height: 30),
-                Text(
-                  _onboardingData[_currentPage].title,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
-                  ),
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDots(),
+                    const Spacer(),
+                    Text(
+                      _onboardingData[_currentPage].title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: MediaQuery.of(context).size.width > 600 ? 42 : 34,
+                        fontWeight: FontWeight.bold,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      _onboardingData[_currentPage].description,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    _buildActionButtons(),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  _onboardingData[_currentPage].description,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 50),
-                _buildActionButtons(),
-              ],
+              ),
             ),
           ),
         ],
@@ -100,8 +115,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withOpacity(0.3),
-            Colors.black.withOpacity(0.9),
+            Colors.black.withValues(alpha: 0.3),
+            Colors.black.withValues(alpha: 0.9),
           ],
         ),
       ),
@@ -142,7 +157,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ElevatedButton(
           onPressed: () {
             if (_currentPage == _onboardingData.length - 1) {
-              Navigator.pushReplacementNamed(context, '/profile_setup');
+              Navigator.pushReplacementNamed(context, '/login');
             } else {
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),

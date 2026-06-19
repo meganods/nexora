@@ -43,9 +43,9 @@ class CustomBottomNav extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryColor : Colors.grey[400], size: 24),
+          Icon(icon, color: isSelected ? AppTheme.primaryColor : AppTheme.accentColor, size: 24),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: isSelected ? AppTheme.primaryColor : Colors.grey[400])),
+          Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: isSelected ? AppTheme.primaryColor : AppTheme.accentColor)),
         ],
       ),
     );

@@ -10,6 +10,7 @@ class RegistrationProvider with ChangeNotifier {
   String businessBio = "";
   String password = "";
   String phoneNumber = "";
+  String profileImageUrl = "";
   
   // Category & Services
   List<String> selectedCategoryIds = [];
@@ -41,6 +42,7 @@ class RegistrationProvider with ChangeNotifier {
     experience = data['experience'] ?? "";
     businessBio = data['businessBio'] ?? "";
     phoneNumber = data['phoneNumber'] ?? "";
+    profileImageUrl = data['profileImageUrl'] ?? "";
     selectedCategoryIds = List<String>.from(data['selectedCategoryIds'] ?? []);
     enabledServices = List<String>.from(data['enabledServices'] ?? []);
     enabledServiceNames = List<String>.from(data['enabledServiceNames'] ?? []);
@@ -67,6 +69,7 @@ class RegistrationProvider with ChangeNotifier {
       'experience': experience,
       'businessBio': businessBio,
       'phoneNumber': phoneNumber,
+      'profileImageUrl': profileImageUrl,
       'selectedCategoryIds': selectedCategoryIds,
       'enabledServices': enabledServices,
       'enabledServiceNames': enabledServiceNames,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/registration_provider.dart';
+import '../services/cloudinary_service.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -17,6 +19,8 @@ class CreateProfileScreen extends StatefulWidget {
 
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   File? _profileImage;
+  String? _profileImageUrl;
+  bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
   
   final _formKey = GlobalKey<FormState>();
@@ -76,14 +80,66 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (pickedFile == null) return;
+
+      setState(() {
+        _isUploadingImage = true;
+        if (!kIsWeb) _profileImage = File(pickedFile.path);
+      });
+
+      // Upload to Cloudinary
+      String? uploadedUrl;
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        uploadedUrl = await CloudinaryService.uploadImageBytes(
+          bytes: bytes,
+          fileName: pickedFile.name,
+          folder: 'urban_company/vendor_profiles',
+        );
+      } else {
+        uploadedUrl = await CloudinaryService.uploadImage(
+          filePath: pickedFile.path,
+          folder: 'urban_company/vendor_profiles',
+        );
+      }
+
+      if (!mounted) return;
+
+      if (uploadedUrl != null) {
         setState(() {
-          _profileImage = File(pickedFile.path);
+          _profileImageUrl = uploadedUrl;
+          _isUploadingImage = false;
         });
+
+        // Save URL immediately to Firestore
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('vendors')
+              .doc(user.uid)
+              .set({'profileImageUrl': uploadedUrl}, SetOptions(merge: true));
+        }
+
+        // Update provider so later steps carry the URL
+        if (mounted) {
+          final provider = Provider.of<RegistrationProvider>(context, listen: false);
+          provider.profileImageUrl = uploadedUrl;
+        }
+      } else {
+        setState(() => _isUploadingImage = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image upload failed. Please try again.')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isUploadingImage = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to open gallery. Restart app if this persists.')),
         );
@@ -276,7 +332,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
               ),
               const SizedBox(height: 40),
               
-              // Profile Picture Widget (no change)
+              // Profile Picture Widget
               Center(
                 child: Stack(
                   alignment: Alignment.center,
@@ -297,11 +353,25 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         color: Color(0xFF7A8FA6),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: _profileImage != null 
-                          ? Image.file(_profileImage!, fit: BoxFit.cover)
-                          : null,
+                      child: _isUploadingImage
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : _profileImageUrl != null
+                              ? Image.network(
+                                  _profileImageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const Icon(Icons.person, color: Colors.white, size: 40),
+                                )
+                              : _profileImage != null && !kIsWeb
+                                  ? Image.file(_profileImage!, fit: BoxFit.cover)
+                                  : null,
                     ),
-                    if (_profileImage == null)
+                    if (!_isUploadingImage && _profileImageUrl == null && _profileImage == null)
                       Container(
                         width: 50,
                         height: 50,
@@ -315,17 +385,21 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                       bottom: 10,
                       right: 15,
                       child: GestureDetector(
-                        onTap: _pickImage,
+                        onTap: _isUploadingImage ? null : _pickImage,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: _isUploadingImage ? Colors.grey[300] : Colors.white,
                             shape: BoxShape.circle,
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
                             ],
                           ),
-                          child: const Icon(Icons.camera_alt, color: primaryBlue, size: 16),
+                          child: Icon(
+                            _isUploadingImage ? Icons.hourglass_empty : Icons.camera_alt,
+                            color: primaryBlue,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ),

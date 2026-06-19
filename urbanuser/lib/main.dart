@@ -58,7 +58,7 @@ class UrbanApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Urban Company Clone',
+      title: 'Urban Company',
       theme: AppTheme.lightTheme,
       scrollBehavior: AppScrollBehavior(),
       initialRoute: '/',

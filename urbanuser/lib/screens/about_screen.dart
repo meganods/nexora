@@ -438,7 +438,7 @@ class AboutScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Text(
-        "© 2026 Urban Company Clone.\nAll Rights Reserved.",
+        "© 2026 Urban Company.\nAll Rights Reserved.",
         textAlign: TextAlign.center,
         style: GoogleFonts.outfit(
           color: Colors.grey[500],

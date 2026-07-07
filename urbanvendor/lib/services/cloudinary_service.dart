@@ -18,6 +18,7 @@ class CloudinaryService {
     String folder = 'urban_company',
   }) async {
     try {
+      debugPrint('Cloudinary Upload → cloudName: $_cloudName, preset: $_uploadPreset, folder: $folder');
       CloudinaryResponse response = await _cloudinary.uploadFile(
         CloudinaryFile.fromFile(
           filePath,
@@ -25,6 +26,7 @@ class CloudinaryService {
           resourceType: CloudinaryResourceType.Image,
         ),
       );
+      debugPrint('Cloudinary Upload Success: ${response.secureUrl}');
       return response.secureUrl;
     } catch (e) {
       debugPrint('Cloudinary Upload Error: $e');
@@ -39,6 +41,7 @@ class CloudinaryService {
     String folder = 'urban_company',
   }) async {
     try {
+      debugPrint('Cloudinary Bytes Upload → cloudName: $_cloudName, preset: $_uploadPreset, folder: $folder');
       CloudinaryResponse response = await _cloudinary.uploadFile(
         CloudinaryFile.fromBytesData(
           bytes,
@@ -47,6 +50,7 @@ class CloudinaryService {
           resourceType: CloudinaryResourceType.Image,
         ),
       );
+      debugPrint('Cloudinary Bytes Upload Success: ${response.secureUrl}');
       return response.secureUrl;
     } catch (e) {
       debugPrint('Cloudinary Bytes Upload Error: $e');

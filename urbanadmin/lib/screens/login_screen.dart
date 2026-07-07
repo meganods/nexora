@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Fluid Executive',
+                          'Admin Executive',
                           style: GoogleFonts.poppins(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,

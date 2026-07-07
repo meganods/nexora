@@ -71,7 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         _buildSettingItem(
           title: 'Admin Email',
-          subtitle: 'admin@fluid.co',
+          subtitle: 'admin@admin.co',
           trailing: const Icon(Icons.edit_rounded, size: 20),
           onTap: () {},
         ),

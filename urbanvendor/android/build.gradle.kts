@@ -7,11 +7,13 @@ allprojects {
     }
 }
 
-// Lazy relocation - safest approach for modern Gradle
-rootProject.layout.buildDirectory.set(rootProject.layout.buildDirectory.dir("../../build"))
+val flutterProjectRoot = if (rootProject.projectDir.name == "android") rootProject.projectDir.parentFile else rootProject.projectDir
+val newBuildDir = File(flutterProjectRoot, "build")
+rootProject.layout.buildDirectory.set(newBuildDir)
 
 subprojects {
-    project.layout.buildDirectory.set(rootProject.layout.buildDirectory.dir(project.name))
+    val subBuildDir = File(newBuildDir, project.name)
+    project.layout.buildDirectory.set(subBuildDir)
     
     if (project.name != "app") {
         evaluationDependsOn(":app")

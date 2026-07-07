@@ -210,17 +210,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       title: Text(
         title,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-        ),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
       ),
       subtitle: Text(
         subtitle,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: Colors.blueGrey[400],
-        ),
+        style: GoogleFonts.poppins(fontSize: 13, color: Colors.blueGrey[400]),
       ),
       trailing: trailing,
     );
@@ -261,9 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Text(
             'Save Changes',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-            ),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -274,7 +266,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Change Password', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Change Password',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -306,12 +301,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
-            child: Text('Update', style: GoogleFonts.poppins(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+            ),
+            child: Text(
+              'Update',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
           ),
         ],
       ),

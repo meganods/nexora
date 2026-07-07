@@ -7,8 +7,7 @@ allprojects {
     }
 }
 
-val flutterProjectRoot = if (rootProject.projectDir.name == "android") rootProject.projectDir.parentFile else rootProject.projectDir
-val newBuildDir = File(flutterProjectRoot, "build")
+val newBuildDir = File("C:/Users/Vishal/AppData/Local/Temp/urban_company_builds/urbanuser")
 rootProject.layout.buildDirectory.set(newBuildDir)
 
 subprojects {

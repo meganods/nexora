@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show ImageFilter;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urbanuser/widgets/custom_bottom_nav.dart';
@@ -97,6 +98,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildSectionHeader("Service Stories", "View All"),
               _buildVideoStories(),
               const SizedBox(height: 24),
+              _buildHealthSafetyBanner(),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Best in Your City", "View All"),
+              _buildBestInYourCityVerticalList(),
+              const SizedBox(height: 24),
               _buildSectionHeader("Special Deals", ""),
               _buildSpecialOffers(),
               const SizedBox(height: 24),
@@ -109,13 +115,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildSectionHeader("Offers that will make you smile", ""),
               _buildSmileOffersCarousel(),
               const SizedBox(height: 24),
-              _buildHealthSafetyBanner(),
-              const SizedBox(height: 24),
               _buildSectionHeader("Top Rated Vendors", "View All"),
               _buildVendorCarousel(),
-              const SizedBox(height: 24),
-              _buildSectionHeader("Best in Your City", "View All"),
-              _buildBestInYourCityVerticalList(),
               const SizedBox(height: 24),
               _buildSectionHeader("What our customers say", ""),
               _buildCustomerReviews(),
@@ -1106,63 +1107,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHealthSafetyBanner() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDE7F6), // Soft lavender background
+        color: const Color(0xFFF1EEFA), // Soft lavender background
         borderRadius: BorderRadius.circular(25),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(22.0),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.shield_outlined, color: Colors.green, size: 16),
+                    const Text("•", style: TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 6),
                     Text(
-                      "SAFETY AND SANITATION",
+                      "SAFETY FIRST PROTOCOLS",
                       style: GoogleFonts.outfit(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: const Color(0xFF5E35B1),
                         letterSpacing: 1.0,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   "Your health is our\ntop priority.",
                   style: GoogleFonts.outfit(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.accentColor,
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 20),
-                _healthPoint(Icons.health_and_safety_outlined, "Vaccinated Partners", "All partners are fully vaccinated."),
-                const SizedBox(height: 12),
-                _healthPoint(Icons.masks_outlined, "Safety Protocols Followed", "Masks, gloves, and sanitizers are mandatory."),
-                const SizedBox(height: 12),
-                _healthPoint(Icons.thermostat_outlined, "Daily Temperature Checks", "Monitored and recorded daily."),
-                const SizedBox(height: 12),
-                _healthPoint(Icons.clean_hands_outlined, "Contactless Services", "Options available for key handovers."),
+                const SizedBox(height: 24),
+                _healthPoint(Icons.masks_outlined, "Double Masking", "Mandatory for all experts during visits"),
+                const SizedBox(height: 16),
+                _healthPoint(Icons.clean_hands_outlined, "Daily Sanitization", "Equipment sanitized before every job"),
+                const SizedBox(height: 16),
+                _healthPoint(Icons.vaccines_outlined, "Fully Vaccinated", "100% of our pros are fully vaccinated"),
+                const SizedBox(height: 16),
+                _healthPoint(Icons.thermostat_outlined, "Health Tracking", "Real-time body temp tracking daily"),
               ],
             ),
           ),
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
-            child: Image.network(
-              "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=720&auto=format&fit=crop",
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
+                child: Image.network(
+                  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=720&auto=format&fit=crop",
+                  height: 210,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                bottom: 15,
+                left: 15,
+                right: 15,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      color: Colors.white.withValues(alpha: 0.8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                            child: const Icon(Icons.check, color: Colors.white, size: 14),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Verified & Safe Expert",
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.accentColor,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "Learn More",
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF5E35B1),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1171,10 +1219,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _healthPoint(IconData icon, String title, String subtitle) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, color: AppTheme.primaryColor, size: 20),
-        const SizedBox(width: 12),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: const Color(0xFF5E35B1), size: 20),
+        ),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1187,11 +1242,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: AppTheme.accentColor,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: GoogleFonts.outfit(
                   fontSize: 11,
-                  color: Colors.grey[700],
+                  color: Colors.grey[600],
                 ),
               ),
             ],

@@ -1526,6 +1526,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildVideoStories() {
     final List<ServiceModel> stories = DummyData.allServices.take(5).toList();
+    final List<String> localStoryImages = [
+      "assets/images/banner1.png",
+      "assets/images/house_cleaning_demo_1774854111518.png",
+      "assets/images/kitchen_cleaning_demo_1774854091381.png",
+      "assets/images/car_wash_banner_illustration_1774854072344.png",
+      "assets/images/onboarding_2_home_cleaning_illustration_retry_1774853265369.png",
+    ];
 
     return SizedBox(
       height: 220,
@@ -1535,6 +1542,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemCount: stories.length,
             itemBuilder: (context, index) {
               final service = stories[index];
+              final String storyImg = index < localStoryImages.length ? localStoryImages[index] : service.image;
+
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -1548,8 +1557,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: service.title,
                   rating: service.rating.toString(),
                   videoPath: "assets/videos/pinsnap-48765608461538391.mp4",
-                  isNetwork: false,
-                  imageUrl: service.image,
+                  isNetwork: !storyImg.startsWith("assets"),
+                  imageUrl: storyImg,
                 ),
               );
             },

@@ -234,21 +234,21 @@ class _CouponsScreenState extends State<CouponsScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         double cardWidth = (constraints.maxWidth - 48) / 5;
-        if (cardWidth < 180) cardWidth = 180;
+        if (cardWidth < 200) cardWidth = 200; // Safe minimum fallback size
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _kpiCard("Total Coupons", "$total", Icons.local_offer, const Color(0xFFF3E5F5), Colors.purple),
+              _kpiCard("Total Coupons", "$total", Icons.local_offer, const Color(0xFFF3E5F5), Colors.purple, cardWidth),
               const SizedBox(width: 12),
-              _kpiCard("Active Coupons", "$active", Icons.check_circle_outline, const Color(0xFFE8F5E9), Colors.green),
+              _kpiCard("Active Coupons", "$active", Icons.check_circle_outline, const Color(0xFFE8F5E9), Colors.green, cardWidth),
               const SizedBox(width: 12),
-              _kpiCard("Upcoming Coupons", "$upcoming", Icons.watch_later_outlined, const Color(0xFFFFF8E1), Colors.amber),
+              _kpiCard("Upcoming Coupons", "$upcoming", Icons.watch_later_outlined, const Color(0xFFFFF8E1), Colors.amber, cardWidth),
               const SizedBox(width: 12),
-              _kpiCard("Expired Coupons", "$expired", Icons.cancel_outlined, const Color(0xFFFFEBEE), Colors.red),
+              _kpiCard("Expired Coupons", "$expired", Icons.cancel_outlined, const Color(0xFFFFEBEE), Colors.red, cardWidth),
               const SizedBox(width: 12),
-              _kpiCard("Total Discount Given", "₹${discountGiven.toStringAsFixed(0)}", Icons.card_giftcard, const Color(0xFFE3F2FD), Colors.blue),
+              _kpiCard("Total Discount Given", "₹${discountGiven.toStringAsFixed(0)}", Icons.card_giftcard, const Color(0xFFE3F2FD), Colors.blue, cardWidth),
             ],
           ),
         );
@@ -256,9 +256,9 @@ class _CouponsScreenState extends State<CouponsScreen> {
     );
   }
 
-  Widget _kpiCard(String title, String val, IconData icon, Color bg, Color iconColor) {
+  Widget _kpiCard(String title, String val, IconData icon, Color bg, Color iconColor, double width) {
     return Container(
-      width: 210,
+      width: width,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,

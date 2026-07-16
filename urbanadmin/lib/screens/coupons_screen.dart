@@ -21,6 +21,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
   String _searchQuery = '';
   String _statusFilter = 'All';
   String _typeFilter = 'All';
+  String _serviceFilter = 'All';
+  String _categoryFilter = 'All';
   DateTimeRange? _selectedDateRange;
 
   // Pagination state
@@ -331,6 +333,18 @@ class _CouponsScreenState extends State<CouponsScreen> {
             }),
             const SizedBox(width: 12),
 
+            // Services Filter
+            _dropdownFilter("All Services", _serviceFilter, ['All', 'Cleaning', 'Plumbing', 'Barber', 'Salon'], (val) {
+              setState(() => _serviceFilter = val!);
+            }),
+            const SizedBox(width: 12),
+
+            // Categories Filter
+            _dropdownFilter("All Categories", _categoryFilter, ['All', 'Home Services', 'Personal Care', 'Repair'], (val) {
+              setState(() => _categoryFilter = val!);
+            }),
+            const SizedBox(width: 12),
+
             // Date picker filter
             GestureDetector(
               onTap: () async {
@@ -375,6 +389,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                   _searchQuery = '';
                   _statusFilter = 'All';
                   _typeFilter = 'All';
+                  _serviceFilter = 'All';
+                  _categoryFilter = 'All';
                   _selectedDateRange = null;
                 });
               },

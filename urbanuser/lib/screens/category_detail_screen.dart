@@ -231,19 +231,62 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           services = services.where((s) => s.title.toLowerCase().contains(_searchQuery)).toList();
         }
 
-        // Apply sorting/filtering based on selected sub-category
-        if (_subCats[_selectedSubCatIndex] == "Top Rated") {
-          services.sort((a, b) => b.rating.compareTo(a.rating));
-        } else if (_subCats[_selectedSubCatIndex] == "Lowest Price") {
+        // 1. Apply Price Range Filter
+        if (_selectedPriceRange == "₹0 - ₹500") {
+          services = services.where((s) {
+            final price = int.tryParse(s.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return price <= 500;
+          }).toList();
+        } else if (_selectedPriceRange == "₹500 - ₹2000") {
+          services = services.where((s) {
+            final price = int.tryParse(s.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return price >= 500 && price <= 2000;
+          }).toList();
+        } else if (_selectedPriceRange == "₹2000+") {
+          services = services.where((s) {
+            final price = int.tryParse(s.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return price >= 2000;
+          }).toList();
+        }
+
+        // 2. Apply Sort By Filter from Sidebar
+        if (_selectedSortBy == "Price Low to High") {
           services.sort((a, b) {
             final priceA = int.tryParse(a.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
             final priceB = int.tryParse(b.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
             return priceA.compareTo(priceB);
           });
+        } else if (_selectedSortBy == "Price High to Low") {
+          services.sort((a, b) {
+            final priceA = int.tryParse(a.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            final priceB = int.tryParse(b.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return priceB.compareTo(priceA);
+          });
+        } else if (_selectedSortBy == "Ratings") {
+          services.sort((a, b) => b.rating.compareTo(a.rating));
+        } else if (_selectedSortBy == "Popularity") {
+          services.sort((a, b) => b.totalReviews.compareTo(a.totalReviews));
         }
 
+        // 3. Apply Sub-category Pill Filter (All, Top Rated, Lowest Price, Near Me, Express, Certified)
+        final subCat = _subCats[_selectedSubCatIndex];
+        if (subCat == "Top Rated") {
+          services.sort((a, b) => b.rating.compareTo(a.rating));
+        } else if (subCat == "Lowest Price") {
+          services.sort((a, b) {
+            final priceA = int.tryParse(a.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            final priceB = int.tryParse(b.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            return priceA.compareTo(priceB);
+          });
+        } else if (subCat == "Certified") {
+          services = services.where((s) => s.subCategory == "Certified").toList();
+        } else if (subCat == "Express") {
+          services = services.where((s) => s.duration.toLowerCase().contains("min") || s.duration.toLowerCase().contains("30") || s.duration.toLowerCase().contains("45")).toList();
+        }
+
+        Widget mainContent;
         if (services.isEmpty) {
-          return Center(
+          mainContent = Center(
             child: Padding(
               padding: const EdgeInsets.all(40.0),
               child: Column(
@@ -258,157 +301,181 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               ),
             ),
           );
-        }
-
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: services.length,
-          itemBuilder: (context, index) {
-            final service = services[index];
-            return GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ServiceDetailScreen(service: service),
+        } else {
+          mainContent = ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: services.length,
+            itemBuilder: (context, index) {
+              final service = services[index];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ServiceDetailScreen(service: service),
+                  ),
                 ),
-              ),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 25),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (service.tags.contains("Package"))
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 25),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (service.tags.contains("Package"))
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.bookmark, color: Colors.teal, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text("PACKAGE",
+                                          style: GoogleFonts.outfit(
+                                              color: Colors.teal,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.0)),
+                                    ],
+                                  ),
+                                const SizedBox(height: 5),
+                                Text(service.title,
+                                    style: GoogleFonts.outfit(
+                                        fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
+                                const SizedBox(height: 5),
                                 Row(
                                   children: [
-                                    const Icon(Icons.bookmark, color: Colors.teal, size: 14),
+                                    const Icon(Icons.star, color: Color(0xFF1E2432), size: 14),
                                     const SizedBox(width: 4),
-                                    Text("PACKAGE",
+                                    Text("${service.rating} (${service.totalReviews} reviews)",
                                         style: GoogleFonts.outfit(
-                                            color: Colors.teal,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.0)),
+                                            fontSize: 13,
+                                            color: Colors.grey[600],
+                                            fontWeight: FontWeight.w500)),
                                   ],
                                 ),
-                              const SizedBox(height: 5),
-                              Text(service.title,
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, color: Color(0xFF1E2432), size: 14),
-                                  const SizedBox(width: 4),
-                                  Text("${service.rating} (${service.totalReviews} reviews)",
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
-                                          fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Text(service.price,
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                                  const SizedBox(width: 8),
-                                  if (service.discountPercent > 0)
-                                    Text("₹${(int.tryParse(service.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) + 200}",
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Text(service.price,
                                         style: GoogleFonts.outfit(
-                                            fontSize: 14,
-                                            color: Colors.grey,
-                                            decoration: TextDecoration.lineThrough)),
-                                ],
+                                            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                                    const SizedBox(width: 8),
+                                    if (service.discountPercent > 0)
+                                      Text("₹${(int.tryParse(service.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0) + 200}",
+                                          style: GoogleFonts.outfit(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                              decoration: TextDecoration.lineThrough)),
+                                  ],
+                                ),
+                                const SizedBox(height: 15),
+                                const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                                const SizedBox(height: 15),
+                                Text(
+                                  service.description,
+                                  style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey[700]),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 20),
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ServiceDetailScreen(service: service),
+                                    ),
+                                  ),
+                                  child: Text("View details",
+                                      style: GoogleFonts.outfit(
+                                          color: const Color(0xFF673AB7),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          decoration: TextDecoration.underline)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Column(
+                            children: [
+                              Container(
+                                height: 110,
+                                width: 110,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  image: DecorationImage(
+                                    image: service.image.startsWith("assets")
+                                        ? AssetImage(service.image) as ImageProvider
+                                        : NetworkImage(service.image),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 15),
-                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                              const SizedBox(height: 15),
-                              Text(
-                                service.description,
-                                style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey[700]),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 20),
-                              GestureDetector(
-                                onTap: () => Navigator.push(
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                onPressed: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => ServiceDetailScreen(service: service),
                                   ),
                                 ),
-                                child: Text("View details",
-                                    style: GoogleFonts.outfit(
-                                        color: const Color(0xFF673AB7),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        decoration: TextDecoration.underline)),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFEEEEEE)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.flash_on, size: 16, color: AppTheme.accentColor),
+                                    const SizedBox(width: 5),
+                                    Text("BOOK NOW",
+                                        style: GoogleFonts.outfit(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.accentColor)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 15),
-                        Column(
-                          children: [
-                            Container(
-                              height: 110,
-                              width: 110,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
-                                image: DecorationImage(
-                                  image: service.image.startsWith("assets")
-                                      ? AssetImage(service.image) as ImageProvider
-                                      : NetworkImage(service.image),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ServiceDetailScreen(service: service),
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Color(0xFFEEEEEE)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.flash_on, size: 16, color: AppTheme.accentColor),
-                                  const SizedBox(width: 5),
-                                  Text("BOOK NOW",
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.accentColor)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 25),
-                    const Divider(height: 1, color: Color(0xFFF5F5F5), thickness: 1),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      const Divider(height: 1, color: Color(0xFFF5F5F5), thickness: 1),
+                    ],
+                  ),
                 ),
+              );
+            },
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${widget.categoryName} Shops",
+                    style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentColor),
+                  ),
+                  Text(
+                    "${services.length} found",
+                    style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 10),
+            mainContent,
+          ],
         );
       },
     );

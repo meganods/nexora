@@ -4,6 +4,9 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'booking_detail_screen.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
 
@@ -48,52 +51,165 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildBookingList(String status) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: status == "UPCOMING" ? 1 : 0,
-      itemBuilder: (context, index) => Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25), border: Border.all(color: Colors.grey[100]!), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)]),
-        child: Column(
-          children: [
-            Row(
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Center(
+        child: Text(
+          "Please log in to view bookings",
+          style: GoogleFonts.outfit(color: Colors.grey, fontSize: 16),
+        ),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('userId', isEqualTo: user.uid)
+          .where('status', isEqualTo: status)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.asset("assets/images/banner1.png", width: 60, height: 60, fit: BoxFit.cover)),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Urban Barber Shop", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Ref #UC-882201", style: TextStyle(color: Colors.grey[600], fontSize: 11)),
-                      const SizedBox(height: 5),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: status == "UPCOMING" ? Colors.blue[50] : Colors.green[50], borderRadius: BorderRadius.circular(8)), child: Text(status, style: TextStyle(color: status == "UPCOMING" ? Colors.blue : Colors.green, fontSize: 10, fontWeight: FontWeight.bold))),
-                    ],
-                  ),
+                Icon(Icons.calendar_today_outlined, size: 60, color: Colors.grey[300]),
+                const SizedBox(height: 15),
+                Text(
+                  "No $status bookings found",
+                  style: GoogleFonts.outfit(color: Colors.grey, fontSize: 14),
                 ),
               ],
             ),
-            const Divider(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: [const Icon(Icons.calendar_month, color: Colors.grey, size: 16), const SizedBox(width: 8), Text("Mon, Oct 12", style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold))]),
-                Row(children: [const Icon(Icons.access_time, color: Colors.grey, size: 16), const SizedBox(width: 8), Text("10:00 AM", style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold))]),
-              ],
-            ),
-             const SizedBox(height: 20),
-             SizedBox(
-               width: double.infinity,
-               child: ElevatedButton(
-                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => BookingDetailScreen(booking: {"id": "#UC-882201"}))),
-                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                 child: Text("VIEW DETAILS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-               ),
-             ),
-          ],
-        ),
-      ),
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final doc = docs[index];
+            final data = doc.data() as Map<String, dynamic>;
+            final String bookingId = data['id'] ?? doc.id;
+            final String shopName = data['shopName'] ?? 'Urban Service Pro';
+            final String price = data['price'] ?? '₹1,299';
+            final String date = data['date'] ?? 'Mon, Oct 12';
+            final String time = data['time'] ?? '10:00 AM';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.grey[100]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop",
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.cleaning_services, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(shopName, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text("Ref #$bookingId", style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: status == "UPCOMING" ? Colors.blue[50] : Colors.green[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                status,
+                                style: TextStyle(
+                                  color: status == "UPCOMING" ? Colors.blue : Colors.green,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(children: [
+                        const Icon(Icons.calendar_month, color: Colors.grey, size: 16),
+                        const SizedBox(width: 8),
+                        Text(date, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                      ]),
+                      Row(children: [
+                        const Icon(Icons.access_time, color: Colors.grey, size: 16),
+                        const SizedBox(width: 8),
+                        Text(time, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                      ]),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingDetailScreen(
+                            booking: {
+                              "id": bookingId,
+                              "shopName": shopName,
+                              "price": price,
+                              "date": date,
+                              "time": time,
+                              "status": status,
+                            },
+                          ),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text("VIEW DETAILS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

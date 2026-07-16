@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/thank_you_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -206,8 +208,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
       padding: const EdgeInsets.fromLTRB(25, 20, 25, 40),
       decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey[100]!))),
       child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ThankYouScreen()));
+        onPressed: () async {
+          // Write booking to Firestore
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            final String bookingId = "UC-${100000 + DateTime.now().millisecond + DateTime.now().second * 1000}";
+            await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
+              'id': bookingId,
+              'userId': user.uid,
+              'userEmail': user.email,
+              'shopName': 'Classic Bathroom Cleaning',
+              'price': '₹${total.toStringAsFixed(0)}',
+              'date': 'Mon, Oct 12',
+              'time': '10:00 AM',
+              'status': 'UPCOMING',
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+          if (mounted) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ThankYouScreen()));
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryColor,

@@ -1,5 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -35,8 +37,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(seconds: 2));
     
+    // Save real booking details to Firestore
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final bookingId = "UC-${100000 + DateTime.now().millisecond + DateTime.now().second * 1000}";
+        await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
+          'id': bookingId,
+          'userId': user.uid,
+          'userEmail': user.email,
+          'shopName': 'Deep Home Cleaning',
+          'price': '₹1,448',
+          'date': _dates[_selectedDateIndex],
+          'time': _times[_selectedTimeIndex],
+          'paymentMethod': _paymentMethods[_selectedPaymentIndex]['title'],
+          'status': 'UPCOMING',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        print("Error saving booking: $e");
+      }
+    }
+
     if (!mounted) return;
     setState(() => _isProcessing = false);
 

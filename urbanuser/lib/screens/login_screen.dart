@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:urbanuser/screens/signup_screen.dart';
 import 'package:urbanuser/screens/mock_google_login_screen.dart';
 
@@ -40,24 +42,41 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     try {
-      try {
-        await GoogleSignIn.instance.initialize(
-          clientId: 'YOUR_WEB_CLIENT_ID',
+      UserCredential userCredential;
+      if (kIsWeb) {
+        // On Web, use FirebaseAuth's popup sign-in
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        userCredential = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      } else {
+        // On Mobile/Native, we use GoogleSignIn and then authenticate with Firebase
+        try {
+          await GoogleSignIn.instance.initialize(
+            clientId: 'YOUR_WEB_CLIENT_ID',
+          );
+        } catch (_) {}
+        final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
+        if (googleUser == null) return; // User cancelled
+        
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
         );
-      } catch (_) {}
+        userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      }
       
-      final GoogleSignInAccount? account = await GoogleSignIn.instance.authenticate();
-      if (account == null) return; // User cancelled
+      final User? user = userCredential.user;
+      if (user == null) return;
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('userEmail', account.email);
-      await prefs.setString('userName', account.displayName ?? 'Google User');
+      await prefs.setString('userEmail', user.email ?? '');
+      await prefs.setString('userName', user.displayName ?? 'Google User');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Welcome, ${account.displayName ?? 'User'}!'),
+            content: Text('Welcome, ${user.displayName ?? 'User'}!'),
             backgroundColor: Colors.green,
           ),
         );

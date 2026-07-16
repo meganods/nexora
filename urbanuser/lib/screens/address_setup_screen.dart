@@ -43,16 +43,32 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
-    _loadUserData();
+    _loadUserDataAndLocation();
   }
 
-  Future<void> _loadUserData() async {
+  Future<void> _loadUserDataAndLocation() async {
     final prefs = await SharedPreferences.getInstance();
+    final savedAddress = prefs.getString('userAddress');
+    
     setState(() {
       _nameController.text = prefs.getString('userName') ?? '';
       _mobileController.text = prefs.getString('userMobile') ?? '';
     });
+
+    if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+      setState(() {
+        _houseController.text = prefs.getString('userAddressHouse') ?? '';
+        _buildingController.text = prefs.getString('userAddressBuilding') ?? '';
+        _streetController.text = prefs.getString('userAddressStreet') ?? '';
+        _landmarkController.text = prefs.getString('userAddressLandmark') ?? '';
+        _cityController.text = prefs.getString('userCity') ?? '';
+        _stateController.text = prefs.getString('userState') ?? '';
+        _pincodeController.text = prefs.getString('userPincode') ?? '';
+        _addressType = prefs.getString('userAddressType') ?? 'Home';
+      });
+    } else {
+      _getCurrentLocation();
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -209,7 +225,14 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     // Simulate saving user address locally to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userAddress', "${_houseController.text}, ${_buildingController.text}, ${_streetController.text}");
+    await prefs.setString('userAddressHouse', _houseController.text);
+    await prefs.setString('userAddressBuilding', _buildingController.text);
+    await prefs.setString('userAddressStreet', _streetController.text);
+    await prefs.setString('userAddressLandmark', _landmarkController.text);
     await prefs.setString('userCity', _cityController.text);
+    await prefs.setString('userState', _stateController.text);
+    await prefs.setString('userPincode', _pincodeController.text);
+    await prefs.setString('userAddressType', _addressType);
     
     String fullMobile = _mobileController.text;
     if (fullMobile.isNotEmpty && !fullMobile.startsWith('+91')) {

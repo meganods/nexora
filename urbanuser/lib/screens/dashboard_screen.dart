@@ -39,8 +39,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final prefs = await SharedPreferences.getInstance();
     final savedAddress = prefs.getString('userAddress');
     if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+      final parts = savedAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
       setState(() {
-        _userAddress = savedAddress.replaceAll(RegExp(r'^,\s*'), '').trim();
+        _userAddress = parts.join(', ');
       });
     }
   }
@@ -170,10 +171,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Flexible(
                       child: Text(
                         _userAddress,
-                        maxLines: 1,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.accentColor,
                         ),

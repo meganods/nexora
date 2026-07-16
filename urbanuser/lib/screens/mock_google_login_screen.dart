@@ -20,12 +20,18 @@ class MockGoogleLoginScreen extends StatelessWidget {
     await prefs.setString('userEmail', email);
     await prefs.setString('userName', name);
     
+    final savedAddress = prefs.getString('userAddress');
+    
     if (context.mounted) {
       Navigator.pop(context); // hide loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Welcome, $name!'), backgroundColor: Colors.green),
       );
-      Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+      if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+      }
     }
   }
 

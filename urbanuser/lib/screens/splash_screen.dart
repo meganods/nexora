@@ -21,10 +21,15 @@ class _SplashScreenState extends State<SplashScreen> {
     
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final savedAddress = prefs.getString('userAddress');
 
     if (mounted) {
       if (isLoggedIn) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/address_setup');
+        }
       } else {
         Navigator.pushReplacementNamed(context, '/onboarding');
       }

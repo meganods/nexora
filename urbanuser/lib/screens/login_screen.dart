@@ -35,8 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('userEmail', _emailController.text);
     
+    final savedAddress = prefs.getString('userAddress');
+    
     if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+      if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+      }
     }
   }
 
@@ -72,6 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('userEmail', user.email ?? '');
       await prefs.setString('userName', user.displayName ?? 'Google User');
       
+      final savedAddress = prefs.getString('userAddress');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -79,7 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+        if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+          Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+        } else {
+          Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
+        }
       }
     } catch (e) {
       // Fallback to Mock Google Login if standard Sign-In fails in dev/unconfigured environment

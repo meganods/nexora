@@ -511,7 +511,11 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     tempSortBy,
                     (val) {
                       setDrawerState(() {
-                        tempSortBy = val;
+                        if (tempSortBy == val) {
+                          tempSortBy = ""; // Toggle selection off
+                        } else {
+                          tempSortBy = val;
+                        }
                       });
                     },
                   ),

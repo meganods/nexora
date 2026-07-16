@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/admin_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/admin_dashboard.dart';
+import 'admin_dashboard.dart';
 
 import 'screens/not_found_screen.dart';
 import 'screens/users_screen.dart';

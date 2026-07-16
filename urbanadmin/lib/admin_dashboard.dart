@@ -13,6 +13,7 @@ import 'screens/bookings_screen.dart';
 import 'screens/users_screen.dart';
 import 'screens/system_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/coupons_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -133,6 +134,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         );
       case 'Settings':
         return const SettingsScreen();
+      case 'Coupons':
+        return const CouponsScreen();
       default:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,6 +181,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildMenuItem('Users', Icons.people_rounded),
                   _buildMenuItem('Earnings', Icons.payments_rounded),
                   _buildMenuItem('System', Icons.settings_rounded),
+                  _buildMenuItem('Coupons', Icons.local_offer_rounded),
                   const SizedBox(height: 24),
                   _buildMenuItem('Settings', Icons.settings_applications_rounded),
                 ],

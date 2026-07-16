@@ -29,185 +29,170 @@ class _CouponsScreenState extends State<CouponsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          "Coupon Management",
-          style: GoogleFonts.outfit(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 22),
-        ),
-        iconTheme: const IconThemeData(color: primaryColor),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('coupons').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('coupons').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final allCoupons = snapshot.data?.docs ?? [];
+
+        // Process coupon counts and statistics
+        final now = DateTime.now();
+        int totalCount = allCoupons.length;
+        int activeCount = 0;
+        int upcomingCount = 0;
+        int expiredCount = 0;
+        double totalDiscountGiven = 0.0;
+
+        List<Map<String, dynamic>> processedCoupons = [];
+
+        for (var doc in allCoupons) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          
+          // Parse dates
+          DateTime? startDate;
+          DateTime? endDate;
+          if (data['startDate'] != null) {
+            startDate = (data['startDate'] as Timestamp).toDate();
+          }
+          if (data['endDate'] != null) {
+            endDate = (data['endDate'] as Timestamp).toDate();
           }
 
-          final allCoupons = snapshot.data?.docs ?? [];
+          final isActive = data['status'] == true;
+          String calculatedStatus = 'Inactive';
 
-          // Process coupon counts and statistics
-          final now = DateTime.now();
-          int totalCount = allCoupons.length;
-          int activeCount = 0;
-          int upcomingCount = 0;
-          int expiredCount = 0;
-          double totalDiscountGiven = 0.0;
-
-          List<Map<String, dynamic>> processedCoupons = [];
-
-          for (var doc in allCoupons) {
-            final data = doc.data() as Map<String, dynamic>;
-            data['id'] = doc.id;
-            
-            // Parse dates
-            DateTime? startDate;
-            DateTime? endDate;
-            if (data['startDate'] != null) {
-              startDate = (data['startDate'] as Timestamp).toDate();
-            }
-            if (data['endDate'] != null) {
-              endDate = (data['endDate'] as Timestamp).toDate();
-            }
-
-            final isActive = data['status'] == true;
-            String calculatedStatus = 'Inactive';
-
-            if (isActive) {
-              if (startDate != null && startDate.isAfter(now)) {
-                calculatedStatus = 'Upcoming';
-                upcomingCount++;
-              } else if (endDate != null && endDate.isBefore(now)) {
-                calculatedStatus = 'Expired';
-                expiredCount++;
-              } else {
-                calculatedStatus = 'Active';
-                activeCount++;
-              }
+          if (isActive) {
+            if (startDate != null && startDate.isAfter(now)) {
+              calculatedStatus = 'Upcoming';
+              upcomingCount++;
+            } else if (endDate != null && endDate.isBefore(now)) {
+              calculatedStatus = 'Expired';
+              expiredCount++;
             } else {
-              calculatedStatus = 'Inactive';
+              calculatedStatus = 'Active';
+              activeCount++;
             }
-
-            final usedCount = data['usedCount'] ?? 0;
-            final discountValue = (data['discountValue'] ?? 0.0) as num;
-            totalDiscountGiven += (usedCount * discountValue.toDouble());
-
-            data['calculatedStatus'] = calculatedStatus;
-            data['startDateObj'] = startDate;
-            data['endDateObj'] = endDate;
-
-            // Apply search & dropdown filters
-            bool matchesSearch = _searchQuery.isEmpty ||
-                (data['code'] ?? '').toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                (data['title'] ?? '').toString().toLowerCase().contains(_searchQuery.toLowerCase());
-
-            bool matchesStatus = _statusFilter == 'All' || calculatedStatus == _statusFilter;
-            bool matchesType = _typeFilter == 'All' || (data['discountType'] ?? '') == _typeFilter;
-
-            bool matchesDate = _selectedDateRange == null ||
-                (startDate != null && endDate != null &&
-                    startDate.isBefore(_selectedDateRange!.end) &&
-                    endDate.isAfter(_selectedDateRange!.start));
-
-            if (matchesSearch && matchesStatus && matchesType && matchesDate) {
-              processedCoupons.add(data);
-            }
+          } else {
+            calculatedStatus = 'Inactive';
           }
 
-          // Apply pagination
-          int totalFiltered = processedCoupons.length;
-          int totalPages = (totalFiltered / _pageSize).ceil();
-          if (totalPages == 0) totalPages = 1;
-          if (_currentPage > totalPages) _currentPage = totalPages;
-          int startIndex = (_currentPage - 1) * _pageSize;
-          int endIndex = startIndex + _pageSize;
-          if (endIndex > totalFiltered) endIndex = totalFiltered;
-          List<Map<String, dynamic>> paginatedCoupons = processedCoupons.sublist(startIndex, endIndex);
+          final usedCount = data['usedCount'] ?? 0;
+          final discountValue = (data['discountValue'] ?? 0.0) as num;
+          totalDiscountGiven += (usedCount * discountValue.toDouble());
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          data['calculatedStatus'] = calculatedStatus;
+          data['startDateObj'] = startDate;
+          data['endDateObj'] = endDate;
+
+          // Apply search & dropdown filters
+          bool matchesSearch = _searchQuery.isEmpty ||
+              (data['code'] ?? '').toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              (data['title'] ?? '').toString().toLowerCase().contains(_searchQuery.toLowerCase());
+
+          bool matchesStatus = _statusFilter == 'All' || calculatedStatus == _statusFilter;
+          bool matchesType = _typeFilter == 'All' || (data['discountType'] ?? '') == _typeFilter;
+
+          bool matchesDate = _selectedDateRange == null ||
+              (startDate != null && endDate != null &&
+                  startDate.isBefore(_selectedDateRange!.end) &&
+                  endDate.isAfter(_selectedDateRange!.start));
+
+          if (matchesSearch && matchesStatus && matchesType && matchesDate) {
+            processedCoupons.add(data);
+          }
+        }
+
+        // Apply pagination
+        int totalFiltered = processedCoupons.length;
+        int totalPages = (totalFiltered / _pageSize).ceil();
+        if (totalPages == 0) totalPages = 1;
+        if (_currentPage > totalPages) _currentPage = totalPages;
+        int startIndex = (_currentPage - 1) * _pageSize;
+        int endIndex = startIndex + _pageSize;
+        if (endIndex > totalFiltered) endIndex = totalFiltered;
+        List<Map<String, dynamic>> paginatedCoupons = processedCoupons.sublist(startIndex, endIndex);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Breadcrumbs & Create Button Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Breadcrumbs & Create Button Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Dashboard > Coupons",
-                      style: GoogleFonts.outfit(color: Colors.grey, fontSize: 13),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => _showCreateEditCouponModal(null),
-                      icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                      label: Text("Create Coupon", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ],
+                Text(
+                  "Dashboard > Coupons",
+                  style: GoogleFonts.outfit(color: Colors.grey, fontSize: 13),
                 ),
-                const SizedBox(height: 24),
-
-                // KPI cards
-                _buildKPICards(totalCount, activeCount, upcomingCount, expiredCount, totalDiscountGiven),
-                const SizedBox(height: 32),
-
-                // Search & Filter Panel
-                _buildSearchFilterPanel(),
-                const SizedBox(height: 24),
-
-                // Table Card
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-                  ),
-                  color: Colors.white,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            columns: [
-                              DataColumn(label: Text('Coupon Code', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Title', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Discount', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Min. Order', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Usage Limit', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Used', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Per User Limit', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Validity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Status', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('Actions', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
-                            ],
-                            rows: paginatedCoupons.map((coupon) {
-                              return _buildCouponDataRow(coupon);
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Pagination bar
-                        _buildPaginationBar(totalFiltered, startIndex, endIndex, totalPages),
-                      ],
-                    ),
+                ElevatedButton.icon(
+                  onPressed: () => _showCreateEditCouponModal(null),
+                  icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                  label: Text("Create Coupon", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+            const SizedBox(height: 24),
+
+            // KPI cards
+            _buildKPICards(totalCount, activeCount, upcomingCount, expiredCount, totalDiscountGiven),
+            const SizedBox(height: 32),
+
+            // Search & Filter Panel
+            _buildSearchFilterPanel(),
+            const SizedBox(height: 24),
+
+            // Table Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+              ),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columns: [
+                          DataColumn(label: Text('Coupon Code', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Title', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Discount', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Min. Order', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Usage Limit', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Used', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Per User Limit', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Validity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Status', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Actions', style: GoogleFonts.outfit(fontWeight: FontWeight.bold))),
+                        ],
+                        rows: paginatedCoupons.map((coupon) {
+                          return _buildCouponDataRow(coupon);
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Pagination bar
+                    _buildPaginationBar(totalFiltered, startIndex, endIndex, totalPages),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -221,15 +206,15 @@ class _CouponsScreenState extends State<CouponsScreen> {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _kpiCard("Total Coupons", "$total", Icons.local_offer, Colors.purple[50]!, Colors.purple),
+              _kpiCard("Total Coupons", "$total", Icons.local_offer, const Color(0xFFF3E5F5), Colors.purple),
               const SizedBox(width: 12),
-              _kpiCard("Active Coupons", "$active", Icons.check_circle_outline, Colors.green[50]!, Colors.green),
+              _kpiCard("Active Coupons", "$active", Icons.check_circle_outline, const Color(0xFFE8F5E9), Colors.green),
               const SizedBox(width: 12),
-              _kpiCard("Upcoming Coupons", "$upcoming", Icons.watch_later_outlined, Colors.amber[50]!, Colors.amber),
+              _kpiCard("Upcoming Coupons", "$upcoming", Icons.watch_later_outlined, const Color(0xFFFFF8E1), Colors.amber),
               const SizedBox(width: 12),
-              _kpiCard("Expired Coupons", "$expired", Icons.cancel_outlined, Colors.red[50]!, Colors.red),
+              _kpiCard("Expired Coupons", "$expired", Icons.cancel_outlined, const Color(0xFFFFEBEE), Colors.red),
               const SizedBox(width: 12),
-              _kpiCard("Total Discount Given", "₹${discountGiven.toStringAsFixed(0)}", Icons.card_giftcard, Colors.blue[50]!, Colors.blue),
+              _kpiCard("Total Discount Given", "₹${discountGiven.toStringAsFixed(0)}", Icons.card_giftcard, const Color(0xFFE3F2FD), Colors.blue),
             ],
           ),
         );
@@ -244,7 +229,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.grey.withOpacity(0.08)),
       ),
       child: Row(
         children: [
@@ -273,7 +258,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.grey.withOpacity(0.08)),
       ),
       child: Wrap(
         spacing: 12,
@@ -416,17 +401,17 @@ class _CouponsScreenState extends State<CouponsScreen> {
         ? "${DateFormat('dd MMM yyyy').format(startDate)}\n${DateFormat('dd MMM yyyy').format(endDate)}"
         : 'Open';
 
-    Color statusBg = Colors.grey[100]!;
+    Color statusBg = const Color(0xFFF1F5F9);
     Color statusTextColor = Colors.grey;
 
     if (calculatedStatus == 'Active') {
-      statusBg = Colors.green[50]!;
+      statusBg = const Color(0xFFE8F5E9);
       statusTextColor = Colors.green;
     } else if (calculatedStatus == 'Upcoming') {
-      statusBg = Colors.amber[50]!;
+      statusBg = const Color(0xFFFFF8E1);
       statusTextColor = Colors.orange;
     } else if (calculatedStatus == 'Expired') {
-      statusBg = Colors.red[50]!;
+      statusBg = const Color(0xFFFFEBEE);
       statusTextColor = Colors.red;
     }
 

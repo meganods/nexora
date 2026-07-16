@@ -31,6 +31,14 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   final _pincodeController = TextEditingController();
   
   String _addressType = "Home";
+  String? _nameError;
+  String? _mobileError;
+  String? _houseError;
+  String? _buildingError;
+  String? _streetError;
+  String? _cityError;
+  String? _stateError;
+  String? _pincodeError;
 
   @override
   void initState() {
@@ -170,17 +178,28 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   }
 
   void _saveAddress() async {
-    if (_nameController.text.trim().isEmpty ||
-        _mobileController.text.trim().isEmpty ||
-        _houseController.text.trim().isEmpty ||
-        _buildingController.text.trim().isEmpty ||
-        _streetController.text.trim().isEmpty ||
-        _cityController.text.trim().isEmpty ||
-        _stateController.text.trim().isEmpty ||
-        _pincodeController.text.trim().isEmpty) {
+    setState(() {
+      _nameError = _nameController.text.trim().isEmpty ? "Full Name is required" : null;
+      _mobileError = _mobileController.text.trim().isEmpty ? "Mobile Number is required" : null;
+      _houseError = _houseController.text.trim().isEmpty ? "House / Flat Number is required" : null;
+      _buildingError = _buildingController.text.trim().isEmpty ? "Building / Society Name is required" : null;
+      _streetError = _streetController.text.trim().isEmpty ? "Street / Area is required" : null;
+      _cityError = _cityController.text.trim().isEmpty ? "City is required" : null;
+      _stateError = _stateController.text.trim().isEmpty ? "State is required" : null;
+      _pincodeError = _pincodeController.text.trim().isEmpty ? "Pincode is required" : null;
+    });
+
+    if (_nameError != null ||
+        _mobileError != null ||
+        _houseError != null ||
+        _buildingError != null ||
+        _streetError != null ||
+        _cityError != null ||
+        _stateError != null ||
+        _pincodeError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all details (Personal Details & Address Details) before proceeding'),
+          content: Text('Please fill all required fields'),
           backgroundColor: Colors.red,
         ),
       );
@@ -269,31 +288,31 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                 children: [
                   Text("Personal Details", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _buildInputField("Full Name", _nameController),
+                  _buildInputField("Full Name", _nameController, errorText: _nameError),
                   const SizedBox(height: 12),
-                  _buildInputField("Mobile Number", _mobileController),
+                  _buildInputField("Mobile Number", _mobileController, errorText: _mobileError),
                   const SizedBox(height: 24),
                   
                   Text("Address Details", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _buildInputField("House / Flat Number", _houseController),
+                  _buildInputField("House / Flat Number", _houseController, errorText: _houseError),
                   const SizedBox(height: 12),
-                  _buildInputField("Building / Society Name", _buildingController),
+                  _buildInputField("Building / Society Name", _buildingController, errorText: _buildingError),
                   const SizedBox(height: 12),
-                  _buildInputField("Street / Area", _streetController),
+                  _buildInputField("Street / Area", _streetController, errorText: _streetError),
                   const SizedBox(height: 12),
                   _buildInputField("Landmark (Optional)", _landmarkController),
                   const SizedBox(height: 12),
                   
                   Row(
                     children: [
-                      Expanded(child: _buildInputField("City *", _cityController)),
+                      Expanded(child: _buildInputField("City *", _cityController, errorText: _cityError)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildInputField("State *", _stateController)),
+                      Expanded(child: _buildInputField("State *", _stateController, errorText: _stateError)),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildInputField("Pincode *", _pincodeController),
+                  _buildInputField("Pincode *", _pincodeController, errorText: _pincodeError),
                   const SizedBox(height: 24),
                   
                   Text("Address Type", style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -353,7 +372,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller) {
+  Widget _buildInputField(String label, TextEditingController controller, {String? errorText}) {
     bool isMobile = label == "Mobile Number";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,6 +397,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
+              errorText: errorText,
               prefixIcon: isMobile
                   ? Padding(
                       padding: const EdgeInsets.only(left: 14, right: 8),

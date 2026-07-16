@@ -294,99 +294,109 @@ class _CouponsScreenState extends State<CouponsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withOpacity(0.08)),
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        alignment: WrapAlignment.start,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          // Search box
-          SizedBox(
-            width: 200,
-            height: 40,
-            child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: InputDecoration(
-                hintText: 'Search by code or title...',
-                hintStyle: GoogleFonts.outfit(fontSize: 12),
-                prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
-                filled: true,
-                fillColor: bgColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                contentPadding: EdgeInsets.zero,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Search box
+            SizedBox(
+              width: 200,
+              height: 40,
+              child: TextField(
+                onChanged: (val) => setState(() => _searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search by code or title...',
+                  hintStyle: GoogleFonts.outfit(fontSize: 12),
+                  prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+                  filled: true,
+                  fillColor: bgColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 12),
 
-          // Status Filter
-          _dropdownFilter("All Status", _statusFilter, ['All', 'Active', 'Inactive', 'Expired', 'Upcoming'], (val) {
-            setState(() => _statusFilter = val!);
-          }),
+            // Status Filter
+            _dropdownFilter("All Status", _statusFilter, ['All', 'Active', 'Inactive', 'Expired', 'Upcoming'], (val) {
+              setState(() => _statusFilter = val!);
+            }),
+            const SizedBox(width: 12),
 
-          // Type Filter
-          _dropdownFilter("All Types", _typeFilter, ['All', 'Flat', 'Percentage'], (val) {
-            setState(() => _typeFilter = val!);
-          }),
+            // Type Filter
+            _dropdownFilter("All Types", _typeFilter, ['All', 'Flat', 'Percentage'], (val) {
+              setState(() => _typeFilter = val!);
+            }),
+            const SizedBox(width: 12),
 
-          // Date picker filter
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-              );
-              if (picked != null) {
-                setState(() => _selectedDateRange = picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    _selectedDateRange == null
-                        ? "Start Date - End Date"
-                        : "${DateFormat('dd MMM').format(_selectedDateRange!.start)} - ${DateFormat('dd MMM').format(_selectedDateRange!.end)}",
-                    style: GoogleFonts.outfit(fontSize: 12, color: primaryColor),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Clear filters
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _searchQuery = '';
-                _statusFilter = 'All';
-                _typeFilter = 'All';
-                _selectedDateRange = null;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.refresh, size: 14, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text("Clear", style: GoogleFonts.outfit(fontSize: 12)),
-                ],
+            // Date picker filter
+            GestureDetector(
+              onTap: () async {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                );
+                if (picked != null) {
+                  setState(() => _selectedDateRange = picked);
+                }
+              },
+              child: Container(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedDateRange == null
+                          ? "Start Date - End Date"
+                          : "${DateFormat('dd MMM').format(_selectedDateRange!.start)} - ${DateFormat('dd MMM').format(_selectedDateRange!.end)}",
+                      style: GoogleFonts.outfit(fontSize: 12, color: primaryColor),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+
+            // Clear filters
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _searchQuery = '';
+                  _statusFilter = 'All';
+                  _typeFilter = 'All';
+                  _selectedDateRange = null;
+                });
+              },
+              child: Container(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.refresh, size: 14, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text("Clear", style: GoogleFonts.outfit(fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

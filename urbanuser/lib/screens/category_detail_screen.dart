@@ -110,23 +110,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   children: [
                     _buildSubCategoryCarousel(),
                     const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${widget.categoryName} Shops",
-                            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentColor),
-                          ),
-                          Text(
-                            "24 found",
-                            style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     _buildShopList(),
                     const SizedBox(height: 100),
                   ],

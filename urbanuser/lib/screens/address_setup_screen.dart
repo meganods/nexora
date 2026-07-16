@@ -128,9 +128,9 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         if (data != null && data['address'] != null) {
           final address = data['address'];
           setState(() {
-            _buildingController.text = address['building'] ?? address['suburb'] ?? address['neighbourhood'] ?? "";
-            _streetController.text = address['road'] ?? "";
-            _cityController.text = address['city'] ?? address['town'] ?? address['county'] ?? "";
+            _buildingController.text = address['building'] ?? address['house_number'] ?? address['amenity'] ?? "";
+            _streetController.text = address['road'] ?? address['neighbourhood'] ?? address['suburb'] ?? "";
+            _cityController.text = address['city'] ?? address['town'] ?? address['municipality'] ?? address['village'] ?? address['city_district'] ?? address['county'] ?? "";
             _stateController.text = address['state'] ?? "";
             _pincodeController.text = address['postcode'] ?? "";
           });

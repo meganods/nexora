@@ -207,6 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildBannerCarousel() {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(

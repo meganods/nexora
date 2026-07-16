@@ -81,58 +81,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
       bottomNavigationBar: const CustomBottomNav(selectedIndex: 0),
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
               _buildBannerCarousel(),
-              _buildPageIndicator(),
-              _buildSectionHeader("All Categories", "See All"),
+              const SizedBox(height: 24),
+              _buildWhatDoYouNeedHeader(),
               _buildCategoryGrid(),
-              const SizedBox(height: 32),
-
-              // NEW SECTION 1: Best In Your City (Carousel)
-              _buildSectionHeader("Best In Your City", "Explore"),
-              _buildServiceCarousel(),
-
-              const SizedBox(height: 24),
-              _buildSectionHeader("Service Stories", "View All"),
-              _buildVideoStories(),
-
-              // NEW SECTION 2: Top Vendors (Carousel)
-              const SizedBox(height: 24),
-              _buildSectionHeader("Top Rated Vendors", "View All"),
-              _buildVendorCarousel(),
-
-              // NEW SECTION 3: New & Noteworthy (Carousel)
               const SizedBox(height: 24),
               _buildSectionHeader("New & Noteworthy", ""),
               _buildNewServicesCarousel(),
-
-              const SizedBox(height: 32),
-              _buildSectionHeader("Special Offers", ""),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Service Stories", "View All"),
+              _buildVideoStories(),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Special Deals", ""),
               _buildSpecialOffers(),
-
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               _buildSectionHeader("Trending Services", ""),
               _buildTrendingServices(),
-
-              const SizedBox(height: 32),
-              _buildSectionHeader("Recommended", ""),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Recommended for You", ""),
               _buildRecommendedList(),
-
-              _buildSectionHeader("What Users Say", ""),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Offers that will make you smile", ""),
+              _buildSmileOffersCarousel(),
+              const SizedBox(height: 24),
+              _buildHealthSafetyBanner(),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Top Rated Vendors", "View All"),
+              _buildVendorCarousel(),
+              const SizedBox(height: 24),
+              _buildSectionHeader("Best in Your City", "View All"),
+              _buildBestInYourCityVerticalList(),
+              const SizedBox(height: 24),
+              _buildSectionHeader("What our customers say", ""),
               _buildCustomerReviews(),
-
-              _buildWhyChooseUs(),
-
-              const SizedBox(height: 32),
-              _buildSectionHeader("Exclusive Offers For You", ""),
-              _buildOffersCarousel(),
-
-              _buildReferAndEarn(),
-
+              const SizedBox(height: 24),
+              _buildHowItWorks(),
+              const SizedBox(height: 24),
+              _buildCommonQuestions(),
               const SizedBox(height: 120),
             ],
           ),
@@ -215,112 +205,168 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBannerCarousel() {
-    final displayBanners = _banners;
-
-    return SizedBox(
-      height: 240,
-      child: PageView.builder(
-            controller: _bannerController,
-            onPageChanged: (index) => setState(() => _currentBannerIndex = index),
-            itemCount: displayBanners.length,
-            itemBuilder: (context, index) {
-              final banner = displayBanners[index];
-              return GestureDetector(
-                onTap: () {
-                  String cat = "Cleaning";
-                  if (banner.subtitle.contains("Plumbing")) cat = "Plumbing";
-                  if (banner.subtitle.contains("Auto Care")) cat = "Car Wash";
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryDetailScreen(categoryName: cat)));
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    return Container(
+      height: 190,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF673AB7), // Premium violet
+            Color(0xFF512DA8), // Rich purple
+            Color(0xFF3F51B5), // Deep blue-indigo
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF673AB7).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30,
+            top: -30,
+            child: CircleAvatar(
+              radius: 90,
+              backgroundColor: Colors.white.withValues(alpha: 0.06),
+            ),
+          ),
+          Positioned(
+            left: -10,
+            bottom: -30,
+            child: CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.white.withValues(alpha: 0.06),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(22.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    image: banner.isNetwork
-                        ? null
-                        : DecorationImage(
-                            image: AssetImage(banner.image),
-                            fit: BoxFit.cover,
-                          ),
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Stack(
-                    children: [
-                      if (banner.isNetwork)
-                        Positioned.fill(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(25),
-                            child: Image.network(
-                              banner.image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                child: const Icon(Icons.broken_image, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              banner.discount,
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              banner.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                height: 1.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    "LIMITED TIME OFFER",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 10),
+                Text(
+                  "40% OFF\nDeep Cleaning",
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Get your home brand new again with our expert team.",
+                  style: GoogleFonts.outfit(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF512DA8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Book Now",
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
   }
 
   Widget _buildPageIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        _banners.length,
-        (index) => Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          decoration: BoxDecoration(
-            color: _currentBannerIndex == index
-                ? AppTheme.accentColor
-                : Colors.grey[300],
-            shape: BoxShape.circle,
+    return const SizedBox.shrink(); // Replaced by a single clean promo banner card
+  }
+
+  Widget _buildWhatDoYouNeedHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "What do you need?",
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentColor,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CategoriesScreen(),
+                    ),
+                  );
+                },
+                child: Text(
+                  "See All >",
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            "Choose from our premium services",
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -499,52 +545,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNewServicesCarousel() {
-    final news = DummyData.newServices;
+    final List<Map<String, dynamic>> items = [
+      {"title": "Kitchen\nCleaning", "color": 0xFF00796B},
+      {"title": "Sofa\nCleaning", "color": 0xFF00695C},
+      {"title": "Carpet\nCleaning", "color": 0xFF00897B},
+      {"title": "Bathroom\nCleaning", "color": 0xFF00796B},
+    ];
 
     return SizedBox(
-      height: 120,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 20),
-        itemCount: news.length,
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          final service = news[index];
+          final item = items[index];
           return GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CategoryDetailScreen(categoryName: service['title']),
+                  builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
                 ),
               );
             },
             child: Container(
-              width: 260,
+              width: 160,
               margin: const EdgeInsets.only(right: 15),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Color(service['color']),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(item["color"]),
+                    Color(item["color"]).withValues(alpha: 0.85),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
+              child: Stack(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.new_releases, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
-                      service['title'],
+                      item["title"],
                       style: GoogleFonts.outfit(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      child: const Icon(Icons.cleaning_services, size: 16, color: Colors.white),
                     ),
                   ),
                 ],
@@ -557,59 +616,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCategoryGrid() {
-    final categories = DummyData.homeCategories;
+    final List<Map<String, dynamic>> items = [
+      {"title": "Cleaning", "image": "assets/images/categories/cleaner_icon_1774853550305.png"},
+      {"title": "Plumbing", "image": "assets/images/categories/plumber_icon_1774853426358.png"},
+      {"title": "Electrician", "image": "assets/images/categories/electrician_icon_1774853479339.png"},
+      {"title": "Carpenter", "image": "assets/images/categories/carpenter_icon_1774853442272.png"},
+      {"title": "Painter", "image": "assets/images/categories/painter_icon_1774853496361.png"},
+      {"title": "Pest Control", "image": "assets/images/categories/pest_control.png"},
+      {"title": "Appliance", "image": "assets/images/categories/ac_repair.png"},
+      {"title": "Others", "image": "others"},
+    ];
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.7,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
       ),
-      itemCount: categories.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final item = categories[index];
-        final String name = item.title;
-        final String imageUrl = item.imagePath;
+        final item = items[index];
+        final String title = item["title"]!;
+        final String image = item["image"]!;
 
         return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CategoryDetailScreen(categoryName: name),
-            ),
-          ),
+          onTap: () {
+            if (title == "Others") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoriesScreen(),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CategoryDetailScreen(categoryName: title),
+                ),
+              );
+            }
+          },
           child: Column(
             children: [
-              AspectRatio(
-                aspectRatio: 1.0,
+              Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.1), width: 1),
+                    color: const Color(0xFFF3F5F9), // Light grey/blue premium tint
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Image.asset(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.category_outlined, color: Colors.grey),
-                  ),
+                  child: image == "others"
+                      ? const Icon(Icons.more_horiz_rounded, size: 28, color: AppTheme.accentColor)
+                      : Image.asset(
+                          image,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.category_outlined, color: Colors.grey),
+                        ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                name,
+                title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
                   color: AppTheme.accentColor,
                 ),
               ),
@@ -621,198 +700,242 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSpecialOffers() {
-    final offers = DummyData.specialOffers;
-
     return SizedBox(
-      height: 180,
-      child: ListView.builder(
+      height: 125,
+      child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 20),
-        itemCount: offers.length,
-        itemBuilder: (context, index) {
-          final offer = offers[index];
-          return Container(
-            width: 300,
+        children: [
+          Container(
+            width: 280,
             margin: const EdgeInsets.only(right: 15),
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Color(offer["color"]),
-              borderRadius: BorderRadius.circular(25),
+              color: const Color(0xFFFFF9C4), // Soft yellow background
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFFFF59D)),
             ),
-            child: Stack(
+            child: Row(
               children: [
-                Positioned(
-                  right: -20,
-                  bottom: -20,
-                  child: Icon(
-                    Icons.local_offer,
-                    size: 100,
-                    color: Colors.black.withValues(alpha: 0.05),
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      offer["title"],
-                      style: GoogleFonts.outfit(
-                        color: Colors.black87,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Free Inspection",
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      offer["subtitle"],
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                      const SizedBox(height: 2),
+                      Text(
+                        "Valid till 22th",
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: Colors.grey[750],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          RewardsData.claimedCoupons.add({
-                            "id": DateTime.now().toString(),
-                            "code": offer["title"].toString().toUpperCase().replaceAll(' ', ''),
-                            "title": offer["title"],
-                            "description": offer["subtitle"],
-                            "expiry": "Expires soon",
-                            "color": Color(offer["color"]),
-                            "icon": Icons.local_offer,
-                            "discountPercent": 10.0,
-                            "discountAmount": null,
-                          });
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Offer Claimed Successfully! Check your rewards."),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A), // Dark blue
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A), // Dark slate blue button
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      child: Text(
-                        "Claim Now",
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                        child: Text(
+                          "Book Now",
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.confirmation_num_outlined,
+                  size: 55,
+                  color: Color(0xFFFFD54F),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          Container(
+            width: 280,
+            margin: const EdgeInsets.only(right: 15),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD), // Soft blue background
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFBBDEFB)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Get ₹200 Referral",
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Valid for limited time",
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: Colors.grey[750],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A), // Dark slate blue button
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "Refer Now",
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.card_giftcard_outlined,
+                  size: 55,
+                  color: Color(0xFF90CAF9),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTrendingServices() {
-    final trending = DummyData.trendingServices;
 
-    return Padding(
+  Widget _buildTrendingServices() {
+    final List<Map<String, dynamic>> items = [
+      {"title": "Sofa Cleaning", "color": 0xFFE3F2FD, "icon": Icons.weekend_outlined},
+      {"title": "Carpet Cleaning", "color": 0xFFFFF3E0, "icon": Icons.layers_outlined},
+      {"title": "AC Repair/Service", "color": 0xFFF3E5F5, "icon": Icons.ac_unit_outlined},
+      {"title": "Gas Service", "color": 0xFFE8F5E9, "icon": Icons.local_fire_department_outlined},
+    ];
+
+    return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: trending.map((item) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CategoryDetailScreen(categoryName: item['title']),
-                  ),
-                );
-              },
-              child: Container(
-                margin: EdgeInsets.only(right: item == trending.last ? 0 : 15),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Color(item['color']),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(item['icon'], color: AppTheme.accentColor, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item['title'],
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
+        childAspectRatio: 2.8,
       ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Color(item["color"]),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              children: [
+                Icon(item["icon"], color: AppTheme.accentColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    item["title"],
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.accentColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildRecommendedList() {
-    final recs = DummyData.getBySection("Recommended");
+    final List<Map<String, dynamic>> recs = [
+      {
+        "title": "Kitchen Cleaning",
+        "price": "₹150",
+        "discount": "20% OFF",
+        "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=720&auto=format&fit=crop"
+      },
+      {
+        "title": "House Cleaning",
+        "price": "₹150",
+        "discount": "20% OFF",
+        "image": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=720&auto=format&fit=crop"
+      }
+    ];
 
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: recs.length,
       itemBuilder: (context, index) {
-        final service = recs[index];
+        final item = recs[index];
         return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ServiceDetailScreen(service: service),
-            ),
-          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+              ),
+            );
+          },
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.lightGray,
-              borderRadius: BorderRadius.circular(20),
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
             ),
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(12),
                   child: Image.network(
-                    service.image,
-                    width: 85,
-                    height: 85,
+                    item["image"],
+                    width: 60,
+                    height: 60,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 85,
-                      height: 85,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image_outlined),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -821,42 +944,417 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        service.title,
+                        item["title"],
                         style: GoogleFonts.outfit(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
+                          color: AppTheme.accentColor,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        service.price,
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700], // Updated price color
-                        ),
-                      ),
-                      if (service.discountPercent > 0) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red[50],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            "${service.discountPercent}% Off",
+                      Row(
+                        children: [
+                          Text(
+                            item["price"],
                             style: GoogleFonts.outfit(
-                              color: Colors.red[400],
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              item["discount"],
+                              style: GoogleFonts.outfit(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSmileOffersCarousel() {
+    final List<Map<String, dynamic>> items = [
+      {
+        "title": "Sofa Cleaning starting at 999",
+        "rating": "4.8",
+        "price": "₹999",
+        "image": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=720&auto=format&fit=crop"
+      },
+      {
+        "title": "Car Wash Premium Deep Clean",
+        "rating": "4.9",
+        "price": "₹499",
+        "image": "https://images.unsplash.com/photo-1619642751056-25f4fb49e8eb?q=80&w=720&auto=format&fit=crop"
+      }
+    ];
+
+    return SizedBox(
+      height: 220,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: 20),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+                ),
+              );
+            },
+            child: Container(
+              width: 220,
+              margin: const EdgeInsets.only(right: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: Image.network(
+                      item["image"],
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item["title"],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.orange, size: 13),
+                            const SizedBox(width: 3),
+                            Text(
+                              item["rating"],
+                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              item["price"],
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                            ),
+                          ],
                         ),
                       ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHealthSafetyBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDE7F6), // Soft lavender background
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(22.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, color: Colors.green, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      "SAFETY AND SANITATION",
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Your health is our\ntop priority.",
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.accentColor,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _healthPoint(Icons.health_and_safety_outlined, "Vaccinated Partners", "All partners are fully vaccinated."),
+                const SizedBox(height: 12),
+                _healthPoint(Icons.masks_outlined, "Safety Protocols Followed", "Masks, gloves, and sanitizers are mandatory."),
+                const SizedBox(height: 12),
+                _healthPoint(Icons.thermostat_outlined, "Daily Temperature Checks", "Monitored and recorded daily."),
+                const SizedBox(height: 12),
+                _healthPoint(Icons.clean_hands_outlined, "Contactless Services", "Options available for key handovers."),
+              ],
+            ),
+          ),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
+            child: Image.network(
+              "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=720&auto=format&fit=crop",
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _healthPoint(IconData icon, String title, String subtitle) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppTheme.primaryColor, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentColor,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBestInYourCityVerticalList() {
+    final List<Map<String, dynamic>> items = [
+      {
+        "title": "Classic Bathroom Cleaning",
+        "rating": "4.8 (1.2k reviews)",
+        "price": "₹249",
+        "image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=720&auto=format&fit=crop",
+        "tag": "POPULAR",
+      },
+      {
+        "title": "Salon for Women",
+        "rating": "4.7 (850 reviews)",
+        "price": "₹399",
+        "image": "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=720&auto=format&fit=crop",
+        "tag": "RECOMMENDED",
+      },
+      {
+        "title": "AC Service & Repair",
+        "rating": "4.9 (1.5k reviews)",
+        "price": "₹599",
+        "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=720&auto=format&fit=crop",
+        "tag": "TOP RATED",
+      }
+    ];
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      child: Image.network(
+                        item["image"],
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item["tag"],
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item["title"],
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.orange, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            item["rating"],
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Verified Partner Assured",
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            item["price"],
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.accentColor,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "Book",
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -865,6 +1363,135 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHowItWorks() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "How it works",
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.accentColor,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _stepRow("1", "Details", "Choose service, date, and preferred time slot."),
+          const SizedBox(height: 18),
+          _stepRow("2", "Relax", "We send our certified expert to your doorstep."),
+          const SizedBox(height: 18),
+          _stepRow("3", "Enjoy", "Pay after service is completed to your satisfaction."),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepRow(String num, String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 14,
+          backgroundColor: AppTheme.primaryColor,
+          child: Text(
+            num,
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentColor,
+                ),
+              ),
+              Text(
+                desc,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommonQuestions() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Common Questions",
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.accentColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _faqItem("Are partners background verified?", "Yes, 100% of our service professionals undergo thorough background checks, criminal record verification, and professional skill assessments before onboarding."),
+          _faqItem("How do you select partners?", "We hold rigorous technical interviews, practical exams, and mock service test runs to filter and select only the top 10% of applicants."),
+          _faqItem("What if something gets damaged?", "NEXORA provides structural insurance and guaranteed cover for any accidental damages caused during the service session."),
+        ],
+      ),
+    );
+  }
+
+  Widget _faqItem(String question, String answer) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          question,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.accentColor,
+          ),
+        ),
+        iconColor: AppTheme.primaryColor,
+        collapsedIconColor: Colors.grey,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              answer,
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                color: Colors.grey[750],
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1209,17 +1836,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _topMenuCard(
                           context,
                           "Carpenter",
-                          "assets/images/categories/carpenter_icon_1774853442272.png",
+                          "assets/images/carpenter_icon_1774853442272.png",
                         ),
                         _topMenuCard(
                           context,
                           "Laundry",
-                          "assets/images/categories/laundry_icon_1774853512710.png",
+                          "assets/images/laundry_icon_1774853512710.png",
                         ),
                         _topMenuCard(
                           context,
                           "Pest Control",
-                          "assets/images/categories/cleaner_icon_1774853550305.png",
+                          "assets/images/cleaner_icon_1774853550305.png",
                         ),
                       ],
                     ),

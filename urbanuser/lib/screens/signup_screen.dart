@@ -45,10 +45,18 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
     
+    String fullMobile = _mobileController.text.trim();
+    if (fullMobile.isNotEmpty && !fullMobile.startsWith('+91')) {
+      if (fullMobile.startsWith('0')) {
+        fullMobile = fullMobile.substring(1);
+      }
+      fullMobile = '+91$fullMobile';
+    }
+    
     // Save details to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userName', _nameController.text);
-    await prefs.setString('userMobile', _mobileController.text);
+    await prefs.setString('userMobile', fullMobile);
     await prefs.setString('userEmail', _emailController.text);
     
     if (mounted) {
@@ -315,6 +323,7 @@ class _SignupScreenState extends State<SignupScreen> {
     const darkSlate = Color(0xFF0C1A30);
     const textGrey = Color(0xFF64748B);
 
+    bool isPhone = keyboardType == TextInputType.phone;
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -323,7 +332,32 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.outfit(color: textGrey.withValues(alpha: 0.6)),
-        prefixIcon: Icon(prefixIcon, color: textGrey, size: 20),
+        prefixIcon: isPhone
+            ? Padding(
+                padding: const EdgeInsets.only(left: 12, right: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("🇮🇳", style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 6),
+                    Text(
+                      "+91",
+                      style: GoogleFonts.outfit(
+                        color: Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      height: 18,
+                      width: 1,
+                      color: Colors.grey[300],
+                    ),
+                  ],
+                ),
+              )
+            : Icon(prefixIcon, color: textGrey, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: bgLight,

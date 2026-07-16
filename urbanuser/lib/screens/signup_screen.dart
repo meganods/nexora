@@ -20,15 +20,26 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirm = true;
   bool _agreeToTerms = false;
 
+  String? _nameError;
+  String? _emailError;
+  String? _mobileError;
+  String? _passwordError;
+  String? _confirmError;
+
   void _signup() async {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _mobileController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _confirmController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields'), backgroundColor: Colors.red),
-      );
+    setState(() {
+      _nameError = _nameController.text.trim().isEmpty ? "Full Name is required" : null;
+      _emailError = _emailController.text.trim().isEmpty ? "Email is required" : null;
+      _mobileError = _mobileController.text.trim().isEmpty ? "Phone Number is required" : null;
+      _passwordError = _passwordController.text.trim().isEmpty ? "Password is required" : null;
+      _confirmError = _confirmController.text.trim().isEmpty ? "Confirm Password is required" : null;
+    });
+
+    if (_nameError != null ||
+        _emailError != null ||
+        _mobileError != null ||
+        _passwordError != null ||
+        _confirmError != null) {
       return;
     }
 
@@ -39,9 +50,9 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
     if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red),
-      );
+      setState(() {
+        _confirmError = "Passwords do not match";
+      });
       return;
     }
     
@@ -134,6 +145,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _nameController,
                       hint: "John Doe",
                       prefixIcon: Icons.person_outline_rounded,
+                      errorText: _nameError,
                     ),
                     const SizedBox(height: 16),
                     
@@ -145,6 +157,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: "+1 (555) 000-0000",
                       prefixIcon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      errorText: _mobileError,
                     ),
                     const SizedBox(height: 16),
                     
@@ -156,6 +169,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: "john@example.com",
                       prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
+                      errorText: _emailError,
                     ),
                     const SizedBox(height: 16),
                     
@@ -167,6 +181,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: "••••••••",
                       prefixIcon: Icons.lock_outline_rounded,
                       obscureText: _obscurePassword,
+                      errorText: _passwordError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -185,6 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: "••••••••",
                       prefixIcon: Icons.refresh_rounded,
                       obscureText: _obscureConfirm,
+                      errorText: _confirmError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -316,6 +332,7 @@ class _SignupScreenState extends State<SignupScreen> {
     bool obscureText = false,
     Widget? suffixIcon,
     TextInputType keyboardType = TextInputType.text,
+    String? errorText,
   }) {
     const borderGrey = Color(0xFFE2E8F0);
     const primaryBlue = Color(0xFF0A59C8);
@@ -332,6 +349,7 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.outfit(color: textGrey.withValues(alpha: 0.6)),
+        errorText: errorText,
         prefixIcon: isPhone
             ? Padding(
                 padding: const EdgeInsets.only(left: 12, right: 8),

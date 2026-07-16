@@ -19,15 +19,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   static bool _isGoogleInitialized = false;
+  
+  String? _emailError;
+  String? _passwordError;
 
   Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter email and password'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    setState(() {
+      _emailError = _emailController.text.trim().isEmpty ? "Email is required" : null;
+      _passwordError = _passwordController.text.trim().isEmpty ? "Password is required" : null;
+    });
+
+    if (_emailError != null || _passwordError != null) {
       return;
     }
     
@@ -182,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   hintText: "name@example.com",
                   hintStyle: GoogleFonts.outfit(color: textGrey.withValues(alpha: 0.7)),
+                  errorText: _emailError,
                   filled: true,
                   fillColor: bgLight,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -237,6 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   hintText: "••••••••",
                   hintStyle: GoogleFonts.outfit(color: textGrey.withValues(alpha: 0.7)),
+                  errorText: _passwordError,
                   filled: true,
                   fillColor: bgLight,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

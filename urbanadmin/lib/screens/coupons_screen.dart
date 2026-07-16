@@ -32,8 +32,42 @@ class _CouponsScreenState extends State<CouponsScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore.collection('coupons').snapshots(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Error loading coupons: ${snapshot.error}",
+                    style: GoogleFonts.outfit(color: Colors.red, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(color: accentColor),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Connecting to database...",
+                    style: GoogleFonts.outfit(color: Colors.grey, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         final allCoupons = snapshot.data?.docs ?? [];

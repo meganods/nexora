@@ -127,12 +127,37 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         final data = json.decode(response.body);
         if (data != null && data['address'] != null) {
           final address = data['address'];
+          
+          String stateDistrict = address['state_district'] ?? "";
+          String postcode = address['postcode'] ?? "";
+          String city = address['city'] ?? address['town'] ?? address['municipality'] ?? address['village'] ?? address['city_district'] ?? address['county'] ?? "";
+          
+          // Map Gautambudh Nagar / Dadri to Noida/Greater Noida based on postcode
+          if (stateDistrict.contains("Gautam Buddha") || stateDistrict.contains("Gautam Budh") || city == "Dadri") {
+            if (postcode.startsWith("201318") || postcode.startsWith("201308") || postcode.startsWith("201310")) {
+              city = "Greater Noida";
+            } else if (postcode.startsWith("2013")) {
+              city = "Noida";
+            }
+          }
+          
+          String street = address['road'] ?? address['neighbourhood'] ?? address['suburb'] ?? "";
+          if (street.isEmpty || street == "Dadri") {
+            final parts = data['display_name']?.toString().split(',') ?? [];
+            if (parts.isNotEmpty) {
+              final firstPart = parts.first.trim();
+              if (firstPart != city && firstPart != stateDistrict && firstPart != address['state'] && firstPart != address['country']) {
+                street = firstPart;
+              }
+            }
+          }
+          
           setState(() {
             _buildingController.text = address['building'] ?? address['house_number'] ?? address['amenity'] ?? "";
-            _streetController.text = address['road'] ?? address['neighbourhood'] ?? address['suburb'] ?? "";
-            _cityController.text = address['city'] ?? address['town'] ?? address['municipality'] ?? address['village'] ?? address['city_district'] ?? address['county'] ?? "";
+            _streetController.text = street;
+            _cityController.text = city;
             _stateController.text = address['state'] ?? "";
-            _pincodeController.text = address['postcode'] ?? "";
+            _pincodeController.text = postcode;
           });
         }
       }

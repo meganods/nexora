@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -19,7 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirm = true;
   bool _agreeToTerms = false;
 
-  void _signup() {
+  void _signup() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _mobileController.text.isEmpty ||
@@ -44,10 +45,18 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account Created Successfully!'), backgroundColor: Colors.green),
-    );
-    Navigator.pop(context); // Go back to login
+    // Save details to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', _nameController.text);
+    await prefs.setString('userMobile', _mobileController.text);
+    await prefs.setString('userEmail', _emailController.text);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account Created Successfully!'), backgroundColor: Colors.green),
+      );
+      Navigator.pop(context); // Go back to login
+    }
   }
 
   @override

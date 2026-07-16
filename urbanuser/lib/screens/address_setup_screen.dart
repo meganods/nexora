@@ -170,8 +170,20 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   }
 
   void _saveAddress() async {
-    if (_cityController.text.isEmpty || _stateController.text.isEmpty || _pincodeController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('City, State, and Pincode are required.'), backgroundColor: Colors.red));
+    if (_nameController.text.trim().isEmpty ||
+        _mobileController.text.trim().isEmpty ||
+        _houseController.text.trim().isEmpty ||
+        _buildingController.text.trim().isEmpty ||
+        _streetController.text.trim().isEmpty ||
+        _cityController.text.trim().isEmpty ||
+        _stateController.text.trim().isEmpty ||
+        _pincodeController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all details (Personal Details & Address Details) before proceeding'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
     

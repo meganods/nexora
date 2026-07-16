@@ -8,6 +8,7 @@ import 'screens/admin_dashboard.dart';
 
 import 'screens/not_found_screen.dart';
 import 'screens/users_screen.dart';
+import 'screens/coupons_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +54,7 @@ class NexoraAdminApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/dashboard': (context) => const AdminDashboard(),
         '/users': (context) => const UsersScreen(),
+        '/coupons': (context) => const CouponsScreen(),
       },
       onUnknownRoute: (settings) => MaterialPageRoute(builder: (_) => const NotFoundScreen()),
     );

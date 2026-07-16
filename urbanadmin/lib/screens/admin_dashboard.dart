@@ -26,6 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     {'title': 'Vendors', 'icon': Icons.store, 'route': '/vendors'},
     {'title': 'Categories', 'icon': Icons.category, 'route': '/categories'},
     {'title': 'Bookings', 'icon': Icons.calendar_today, 'route': '/bookings'},
+    {'title': 'Coupons', 'icon': Icons.local_offer, 'route': '/coupons'},
     {'title': 'Settings', 'icon': Icons.settings, 'route': '/settings'},
   ];
 

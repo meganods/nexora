@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../screens/payment_screen.dart';
 import '../data/rewards_data.dart';
@@ -97,10 +99,23 @@ class _CartScreenState extends State<CartScreen> {
   double get _finalTotal {
     double discount = 0.0;
     if (_appliedCoupon != null) {
-      if (_appliedCoupon!["discountPercent"] != null) {
-        discount = _currentTotal * (_appliedCoupon!["discountPercent"] / 100);
-      } else if (_appliedCoupon!["discountAmount"] != null) {
-        discount = _appliedCoupon!["discountAmount"];
+      final String type = _appliedCoupon!["discountType"] ?? '';
+      final double val = ((_appliedCoupon!["discountValue"] ?? 0.0) as num).toDouble();
+
+      if (type == "Percentage") {
+        discount = _currentTotal * (val / 100);
+        final double maxD = ((_appliedCoupon!["maxDiscount"] ?? 0.0) as num).toDouble();
+        if (maxD > 0 && discount > maxD) {
+          discount = maxD;
+        }
+      } else if (type == "Flat") {
+        discount = val;
+      } else {
+        if (_appliedCoupon!["discountPercent"] != null) {
+          discount = _currentTotal * (_appliedCoupon!["discountPercent"] / 100);
+        } else if (_appliedCoupon!["discountAmount"] != null) {
+          discount = _appliedCoupon!["discountAmount"];
+        }
       }
     }
     double total = _currentTotal - discount + 49 + 22; // +71 is taxes & fees
@@ -679,10 +694,22 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildPriceSummary() {
     double discount = 0.0;
     if (_appliedCoupon != null) {
-      if (_appliedCoupon!["discountPercent"] != null) {
-        discount = _currentTotal * (_appliedCoupon!["discountPercent"] / 100);
-      } else if (_appliedCoupon!["discountAmount"] != null) {
-        discount = _appliedCoupon!["discountAmount"];
+      final String type = _appliedCoupon!["discountType"] ?? '';
+      final double val = ((_appliedCoupon!["discountValue"] ?? 0.0) as num).toDouble();
+      if (type == "Percentage") {
+        discount = _currentTotal * (val / 100);
+        final double maxD = ((_appliedCoupon!["maxDiscount"] ?? 0.0) as num).toDouble();
+        if (maxD > 0 && discount > maxD) {
+          discount = maxD;
+        }
+      } else if (type == "Flat") {
+        discount = val;
+      } else {
+        if (_appliedCoupon!["discountPercent"] != null) {
+          discount = _currentTotal * (_appliedCoupon!["discountPercent"] / 100);
+        } else if (_appliedCoupon!["discountAmount"] != null) {
+          discount = _appliedCoupon!["discountAmount"];
+        }
       }
     }
 
@@ -818,6 +845,14 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _showCouponBottomSheet() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please login to view coupons"), backgroundColor: Colors.redAccent),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -827,83 +862,283 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(25),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Your Claimed Rewards",
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.accentColor,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Available Coupons",
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentColor,
                 ),
-                const SizedBox(height: 20),
-                if (RewardsData.claimedCoupons.isEmpty)
-                  Text(
-                    "You haven't claimed any rewards yet. Go to the Rewards section to claim them!",
-                    style: GoogleFonts.outfit(color: Colors.grey, fontSize: 14),
-                  )
-                else
-                  ...RewardsData.claimedCoupons.map((coupon) {
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _appliedCoupon = coupon;
-                        });
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.pop(context);
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text("Coupon applied!"),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightGray,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.grey[200]!),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('coupons')
+                      .where('status', isEqualTo: true)
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                        child: Text(
+                          "No coupons available right now.",
+                          style: GoogleFonts.outfit(color: Colors.grey),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(coupon["icon"] as IconData, color: coupon["color"] as Color, size: 30),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                      );
+                    }
+
+                    final now = DateTime.now();
+                    final List<Map<String, dynamic>> validCoupons = [];
+
+                    for (var doc in snapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      data['id'] = doc.id;
+
+                      // Check dates
+                      DateTime? startDate;
+                      DateTime? endDate;
+                      if (data['startDate'] != null) {
+                        startDate = (data['startDate'] as Timestamp).toDate();
+                      }
+                      if (data['endDate'] != null) {
+                        endDate = (data['endDate'] as Timestamp).toDate();
+                      }
+
+                      if (startDate != null && now.isBefore(startDate)) continue;
+                      if (endDate != null && now.isAfter(endDate)) continue;
+
+                      // Check general usage limit
+                      final int usageLimit = data['usageLimit'] ?? 1000;
+                      final int usedCount = data['usedCount'] ?? 0;
+                      if (usedCount >= usageLimit) continue;
+
+                      validCoupons.add(data);
+                    }
+
+                    if (validCoupons.isEmpty) {
+                      return Center(
+                        child: Text(
+                          "No valid coupons available right now.",
+                          style: GoogleFonts.outfit(color: Colors.grey),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: validCoupons.length,
+                      itemBuilder: (context, index) {
+                        final coupon = validCoupons[index];
+                        final code = coupon['code'] ?? 'CODE';
+                        final title = coupon['title'] ?? 'Title';
+                        final desc = coupon['description'] ?? 'No description';
+                        final double minOrder = ((coupon['minimumOrder'] ?? 0.0) as num).toDouble();
+                        final String discountType = coupon['discountType'] ?? 'Flat';
+                        final double discountVal = ((coupon['discountValue'] ?? 0.0) as num).toDouble();
+
+                        final String discountStr = discountType == 'Flat'
+                            ? 'Flat ₹${discountVal.toStringAsFixed(0)} OFF'
+                            : '${discountVal.toStringAsFixed(0)}% OFF';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 15),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    coupon["code"] as String,
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEDE7F6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      code,
+                                      style: GoogleFonts.outfit(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
                                   ),
-                                  Text(
-                                    coupon["title"] as String,
-                                    style: GoogleFonts.outfit(color: Colors.grey[600], fontSize: 12),
+                                  TextButton(
+                                    onPressed: () => _validateAndApplyCoupon(coupon),
+                                    child: Text(
+                                      "APPLY",
+                                      style: GoogleFonts.outfit(
+                                        color: const Color(0xFF5E35B1),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                            Text(
-                              "APPLY",
-                              style: GoogleFonts.outfit(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
+                              const SizedBox(height: 8),
+                              Text(
+                                title,
+                                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                desc,
+                                style: GoogleFonts.outfit(color: Colors.grey[700], fontSize: 11),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.info_outline, size: 12, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "Min order ₹${minOrder.toStringAsFixed(0)} • $discountStr",
+                                    style: GoogleFonts.outfit(fontSize: 10, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     );
-                  }),
-              ],
-            ),
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
     );
+  }
+
+  void _validateAndApplyCoupon(Map<String, dynamic> coupon) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final double minOrder = ((coupon['minimumOrder'] ?? 0.0) as num).toDouble();
+    if (_currentTotal < minOrder) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Minimum booking amount of ₹${minOrder.toStringAsFixed(0)} required to apply this coupon."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // Check usage limits per user
+    final int perUserLimit = coupon['perUserLimit'] ?? 1;
+    try {
+      final usageQuery = await FirebaseFirestore.instance
+          .collection('coupon_usage')
+          .where('couponId', isEqualTo: coupon['id'])
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      if (usageQuery.docs.length >= perUserLimit) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("You have already reached the usage limit for this coupon."),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      print("Error checking coupon usage: $e");
+    }
+
+    // Check category restriction
+    final String applicableType = coupon['applicableType'] ?? 'All';
+    if (applicableType == 'Categories') {
+      final List categoryIds = coupon['categoryIds'] ?? [];
+      final String shopName = widget.shop['name'] ?? '';
+      bool matches = categoryIds.any((cat) => shopName.toLowerCase().contains(cat.toString().toLowerCase()));
+      if (!matches) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("This coupon is not applicable to the selected service category."),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+    } else if (applicableType == 'Services') {
+      final List serviceIds = coupon['serviceIds'] ?? [];
+      final String shopName = widget.shop['name'] ?? '';
+      bool matches = serviceIds.any((srv) => shopName.toLowerCase().contains(srv.toString().toLowerCase()));
+      if (!matches) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("This coupon is not applicable to the selected service."),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // Check first booking only rule
+    final bool firstBookingOnly = coupon['firstBookingOnly'] == true;
+    if (firstBookingOnly) {
+      try {
+        final completedBookings = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('userId', isEqualTo: user.uid)
+            .get();
+
+        if (completedBookings.docs.isNotEmpty) {
+          if (mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("This coupon is only valid for your first service booking."),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        print("Error checking user bookings: $e");
+      }
+    }
+
+    // If all valid, apply the coupon!
+    if (mounted) {
+      setState(() {
+        _appliedCoupon = coupon;
+      });
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Coupon applied successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Widget _summaryRow(String label, String value) {
@@ -951,7 +1186,7 @@ class _CartScreenState extends State<CartScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      PaymentScreen(totalAmount: _finalTotal),
+                      PaymentScreen(totalAmount: _finalTotal, coupon: _appliedCoupon),
                 ),
               ),
               style: ElevatedButton.styleFrom(

@@ -7,7 +7,8 @@ import '../screens/thank_you_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final double? totalAmount;
-  const PaymentScreen({super.key, this.totalAmount});
+  final Map<String, dynamic>? coupon;
+  const PaymentScreen({super.key, this.totalAmount, this.coupon});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -224,6 +225,35 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'status': 'UPCOMING',
               'createdAt': FieldValue.serverTimestamp(),
             });
+
+            // Handle coupon usage and increment count via transaction
+            if (widget.coupon != null) {
+              final String couponId = widget.coupon!['id'] ?? '';
+              final double discountValue = ((widget.coupon!['discountValue'] ?? 0.0) as num).toDouble();
+
+              try {
+                await FirebaseFirestore.instance.runTransaction((transaction) async {
+                  final couponRef = FirebaseFirestore.instance.collection('coupons').doc(couponId);
+                  final couponSnapshot = await transaction.get(couponRef);
+
+                  if (couponSnapshot.exists) {
+                    final int currentUsed = couponSnapshot.get('usedCount') ?? 0;
+                    transaction.update(couponRef, {'usedCount': currentUsed + 1});
+
+                    final usageRef = FirebaseFirestore.instance.collection('coupon_usage').doc();
+                    transaction.set(usageRef, {
+                      'couponId': couponId,
+                      'userId': user.uid,
+                      'bookingId': bookingId,
+                      'discount': discountValue,
+                      'usedAt': FieldValue.serverTimestamp(),
+                    });
+                  }
+                });
+              } catch (e) {
+                print("Error recording coupon usage: $e");
+              }
+            }
           }
           if (mounted) {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ThankYouScreen()));

@@ -288,6 +288,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
 
   Widget _buildSearchFilterPanel() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -503,46 +504,52 @@ class _CouponsScreenState extends State<CouponsScreen> {
   }
 
   Widget _buildPaginationBar(int totalFiltered, int start, int end, int totalPages) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        Text(
-          "Showing ${totalFiltered == 0 ? 0 : start + 1} to $end of $totalFiltered entries",
-          style: GoogleFonts.outfit(color: Colors.grey, fontSize: 13),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Showing ${totalFiltered == 0 ? 0 : start + 1} to $end of $totalFiltered entries",
+            style: GoogleFonts.outfit(color: Colors.grey, fontSize: 13),
+          ),
         ),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
-            ),
-            ...List.generate(totalPages, (index) {
-              final pageNum = index + 1;
-              final isCurrent = pageNum == _currentPage;
-              return GestureDetector(
-                onTap: () => setState(() => _currentPage = pageNum),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isCurrent ? accentColor : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    "$pageNum",
-                    style: GoogleFonts.outfit(
-                      color: isCurrent ? Colors.white : primaryColor,
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+              ),
+              ...List.generate(totalPages, (index) {
+                final pageNum = index + 1;
+                final isCurrent = pageNum == _currentPage;
+                return GestureDetector(
+                  onTap: () => setState(() => _currentPage = pageNum),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isCurrent ? accentColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "$pageNum",
+                      style: GoogleFonts.outfit(
+                        color: isCurrent ? Colors.white : primaryColor,
+                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
-            IconButton(
-              icon: const Icon(Icons.chevron_right),
-              onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
-            ),
-          ],
+                );
+              }),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+              ),
+            ],
+          ),
         ),
       ],
     );

@@ -157,45 +157,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () => _showTopCategoryMenu(),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              children: [
-                Text(
-                  "Address",
-                  style: GoogleFonts.outfit(
-                    color: Colors.grey,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/address_setup');
+              },
+              child: Column(
+                children: [
+                  Text(
+                    "Address",
+                    style: GoogleFonts.outfit(
+                      color: Colors.grey,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _userAddress,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentColor,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _userAddress,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentColor,
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ],
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.grey,
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriesScreen(autoFocusSearch: true)));

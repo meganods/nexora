@@ -41,7 +41,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (savedAddress != null && savedAddress.trim().isNotEmpty) {
       final parts = savedAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
       setState(() {
-        _userAddress = parts.join(', ');
+        if (parts.length >= 2) {
+          _userAddress = "${parts[0]}, ${parts[1]}";
+        } else {
+          _userAddress = parts.join(', ');
+        }
       });
     }
   }
@@ -172,6 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Text(
                         _userAddress,
                         maxLines: 1,
+                        textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
                           fontSize: 15,

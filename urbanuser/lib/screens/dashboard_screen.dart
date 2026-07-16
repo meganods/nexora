@@ -133,6 +133,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildServiceCarousel(),
               const SizedBox(height: 32),
 
+              _buildSectionHeader("Service Stories", "View All"),
+              _buildVideoStories(),
+              const SizedBox(height: 32),
+
               _buildSectionHeader("What our customers say", ""),
               _buildCustomerReviews(),
               const SizedBox(height: 32),
@@ -1521,12 +1525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildVideoStories() {
-    final List<Map<String, dynamic>> stories = DummyData.getBySection("Service Stories").map((s) => {
-        'title': s.title,
-        'rating': s.rating.toString(),
-        'videoUrl': null, // Fallback to asset
-        'imageUrl': s.image,
-    }).take(5).toList();
+    final List<ServiceModel> stories = DummyData.allServices.take(5).toList();
 
     return SizedBox(
       height: 220,
@@ -1535,22 +1534,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.only(left: 20),
             itemCount: stories.length,
             itemBuilder: (context, index) {
-              final story = stories[index];
+              final service = stories[index];
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ServiceListScreen(sectionTitle: story['title']),
+                      builder: (context) => ServiceDetailScreen(service: service),
                     ),
                   );
                 },
                 child: _VideoStoryCard(
-                  title: story['title'],
-                  rating: story['rating'],
-                  videoPath: story['videoUrl'] ?? "assets/videos/pinsnap-48765608461538391.mp4",
-                  isNetwork: story['videoUrl'] != null,
-                  imageUrl: story['imageUrl'],
+                  title: service.title,
+                  rating: service.rating.toString(),
+                  videoPath: "assets/videos/pinsnap-48765608461538391.mp4",
+                  isNetwork: false,
+                  imageUrl: service.image,
                 ),
               );
             },

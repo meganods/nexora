@@ -484,43 +484,79 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Widget _buildFilterSidebar() {
+    String tempSortBy = _selectedSortBy;
+    String tempPriceRange = _selectedPriceRange;
+
     return Drawer(
       width: 300,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(25.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDrawerState) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(25.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Filters", style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Filters", style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  _buildFilterSection(
+                    "Sort By",
+                    ["Popularity", "Price Low to High", "Price High to Low", "Ratings"],
+                    tempSortBy,
+                    (val) {
+                      setDrawerState(() {
+                        tempSortBy = val;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 25),
+                  _buildFilterSection(
+                    "Price Range",
+                    ["₹0 - ₹500", "₹500 - ₹2000", "₹2000+"],
+                    tempPriceRange,
+                    (val) {
+                      setDrawerState(() {
+                        if (tempPriceRange == val) {
+                          tempPriceRange = ""; // Toggle selection
+                        } else {
+                          tempPriceRange = val;
+                        }
+                      });
+                    },
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Apply filters to main state
+                        setState(() {
+                          _selectedSortBy = tempSortBy;
+                          _selectedPriceRange = tempPriceRange;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                      child: Text("APPLY FILTERS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 30),
-              _buildFilterSection("Sort By", ["Popularity", "Price Low to High", "Price High to Low", "Ratings"]),
-              const SizedBox(height: 25),
-              _buildFilterSection("Price Range", ["₹0 - ₹500", "₹500 - ₹2000", "₹2000+"]),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                  child: Text("APPLY FILTERS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        }
       ),
     );
   }
 
-  Widget _buildFilterSection(String title, List<String> options) {
+  Widget _buildFilterSection(String title, List<String> options, String selectedValue, Function(String) onTap) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -528,11 +564,28 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         const SizedBox(height: 12),
         Wrap(
           spacing: 12, runSpacing: 10,
-          children: options.map((opt) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey[200]!)),
-            child: Text(opt, style: GoogleFonts.outfit(fontSize: 12, color: Colors.black87)),
-          )).toList(),
+          children: options.map((opt) {
+            bool isSelected = selectedValue == opt;
+            return GestureDetector(
+              onTap: () => onTap(opt),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.accentColor : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: isSelected ? AppTheme.accentColor : Colors.grey[200]!),
+                ),
+                child: Text(
+                  opt,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

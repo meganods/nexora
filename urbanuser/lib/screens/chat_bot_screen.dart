@@ -36,7 +36,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
     super.initState();
     // Initial welcome message
     _messages.add(ChatMessage(
-      text: "Hi! I am the Urban Company AI Assistant. How can I help you today?",
+      text: "Hi! I am the NEXORA AI Assistant. How can I help you today?",
       isUser: false,
       timestamp: DateTime.now(),
     ));

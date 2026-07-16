@@ -48,17 +48,17 @@ Future<void> main() async {
       measurementId: dotenv.get('FIREBASE_MEASUREMENT_ID'),
     ),
   );
-  runApp(const UrbanApp());
+  runApp(const NexoraApp());
 }
 
-class UrbanApp extends StatelessWidget {
-  const UrbanApp({super.key});
+class NexoraApp extends StatelessWidget {
+  const NexoraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Urban Company',
+      title: 'NEXORA',
       theme: AppTheme.lightTheme,
       scrollBehavior: AppScrollBehavior(),
       initialRoute: '/',

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -21,16 +20,30 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _agreeToTerms = false;
 
   void _signup() {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _mobileController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please agree to Terms & Conditions'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to Terms & Conditions'), backgroundColor: Colors.red),
+      );
       return;
     }
     if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red),
+      );
       return;
     }
     
-    // Simulate success
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Account Created Successfully!'), backgroundColor: Colors.green),
     );
@@ -39,187 +52,286 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Lavender gradient background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF2C2445),
-                  Color(0xFF1E1735),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
+    const primaryBlue = Color(0xFF0A59C8);
+    const darkSlate = Color(0xFF0C1A30);
+    const textGrey = Color(0xFF64748B);
+    const borderGrey = Color(0xFFE2E8F0);
+    const bgLight = Color(0xFFF8FAFC);
 
-          // Glassmorphism Card
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(32.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+    return Scaffold(
+      backgroundColor: bgLight,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              
+              // Top Toolbox Icon
+              const Icon(
+                Icons.business_center_rounded,
+                color: primaryBlue,
+                size: 54,
+              ),
+              const SizedBox(height: 12),
+              
+              // NEXORA Brand title
+              Text(
+                "NEXORA",
+                style: GoogleFonts.outfit(
+                  color: primaryBlue,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Subtitle
+              Text(
+                "Create your account",
+                style: GoogleFonts.outfit(
+                  color: darkSlate,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Form Card
+              Container(
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderGrey),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Full Name Field
+                    _buildFieldLabel("Full Name"),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _nameController,
+                      hint: "John Doe",
+                      prefixIcon: Icons.person_outline_rounded,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Phone Number Field
+                    _buildFieldLabel("Phone Number"),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _mobileController,
+                      hint: "+1 (555) 000-0000",
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Email Field
+                    _buildFieldLabel("Email"),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: "john@example.com",
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Password Field
+                    _buildFieldLabel("Password"),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _passwordController,
+                      hint: "••••••••",
+                      prefixIcon: Icons.lock_outline_rounded,
+                      obscureText: _obscurePassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: textGrey,
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                              const Spacer(),
-                              const Icon(Icons.person_add_outlined, color: Colors.white, size: 30),
-                              const Spacer(),
-                              const SizedBox(width: 24), // Balance back button
-                            ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Re-enter Password Field
+                    _buildFieldLabel("Re-enter Password"),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _confirmController,
+                      hint: "••••••••",
+                      prefixIcon: Icons.refresh_rounded,
+                      obscureText: _obscureConfirm,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: textGrey,
+                        ),
+                        onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Terms and Conditions checkbox row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _agreeToTerms,
+                            onChanged: (val) => setState(() => _agreeToTerms = val!),
+                            activeColor: primaryBlue,
+                            side: const BorderSide(color: borderGrey, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Create Account",
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Join us to get the best home services",
-                            style: GoogleFonts.outfit(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          
-                          _buildTextField("Full Name", "Enter your name", _nameController, false),
-                          const SizedBox(height: 16),
-                          _buildTextField("Email Address", "Enter your email", _emailController, false),
-                          const SizedBox(height: 16),
-                          _buildTextField("Mobile Number", "Enter your mobile", _mobileController, false),
-                          const SizedBox(height: 16),
-                          _buildTextField("Password", "••••••", _passwordController, true, 
-                              obscure: _obscurePassword, 
-                              onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword)),
-                          const SizedBox(height: 16),
-                          _buildTextField("Confirm Password", "••••••", _confirmController, true, 
-                              obscure: _obscureConfirm, 
-                              onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm)),
-                          const SizedBox(height: 20),
-                          
-                          // T&C Checkbox
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Checkbox(
-                                  value: _agreeToTerms,
-                                  onChanged: (val) => setState(() => _agreeToTerms = val!),
-                                  activeColor: const Color(0xFF8C52FF),
-                                  side: const BorderSide(color: Colors.white70),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              text: "By signing up, you agree to our ",
+                              style: GoogleFonts.outfit(color: darkSlate, fontSize: 13),
+                              children: [
+                                TextSpan(
+                                  text: "Terms of Service",
+                                  style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text("I agree to Terms & Conditions", style: GoogleFonts.outfit(color: Colors.white, fontSize: 13)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          
-                          // Sign Up Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 55,
-                            child: ElevatedButton(
-                              onPressed: _signup,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                              ),
-                              child: Text(
-                                "Create Account",
-                                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
+                                const TextSpan(text: " and "),
+                                TextSpan(
+                                  text: "Privacy Policy",
+                                  style: GoogleFonts.outfit(color: primaryBlue, fontWeight: FontWeight.bold),
+                                ),
+                                const TextSpan(text: "."),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 20),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Join NEXORA button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _signup,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryBlue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Join NEXORA ",
+                              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Already have an account row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Already have an account? ",
+                    style: GoogleFonts.outfit(color: textGrey, fontSize: 14),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Log in",
+                      style: GoogleFonts.outfit(
+                        color: primaryBlue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ),
+              const SizedBox(height: 20),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, bool isPassword, {bool? obscure, VoidCallback? onToggleObscure}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: GoogleFonts.outfit(
+        color: const Color(0xFF0C1A30),
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData prefixIcon,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    const borderGrey = Color(0xFFE2E8F0);
+    const primaryBlue = Color(0xFF0A59C8);
+    const bgLight = Color(0xFFF8FAFC);
+    const darkSlate = Color(0xFF0C1A30);
+    const textGrey = Color(0xFF64748B);
+
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: GoogleFonts.outfit(color: darkSlate),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.outfit(color: textGrey.withValues(alpha: 0.6)),
+        prefixIcon: Icon(prefixIcon, color: textGrey, size: 20),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: bgLight,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: borderGrey),
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: isPassword && (obscure ?? true),
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: Color(0xFF8C52FF)),
-            ),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      (obscure ?? true) ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: Colors.white54,
-                    ),
-                    onPressed: onToggleObscure,
-                  )
-                : null,
-          ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: borderGrey),
         ),
-      ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primaryBlue, width: 1.5),
+        ),
+      ),
     );
   }
 }

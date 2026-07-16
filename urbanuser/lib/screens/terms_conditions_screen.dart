@@ -40,7 +40,7 @@ class TermsConditionsScreen extends StatelessWidget {
               const SizedBox(height: 32),
               _buildSection(
                 "Introduction",
-                "By accessing or using the Urban Company platform, you agree to comply with and be bound by these Terms & Conditions. Please read them carefully.",
+                "By accessing or using the NEXORA platform, you agree to comply with and be bound by these Terms & Conditions. Please read them carefully.",
               ),
               _buildSection(
                 "User Responsibilities",
@@ -64,7 +64,7 @@ class TermsConditionsScreen extends StatelessWidget {
               ),
               _buildSection(
                 "Liability Disclaimer",
-                "Urban Company acts as an intermediary connecting users with independent professionals. We are not liable for any direct or indirect damages resulting from the services provided.",
+                "NEXORA acts as an intermediary connecting users with independent professionals. We are not liable for any direct or indirect damages resulting from the services provided.",
               ),
               _buildSection(
                 "Governing Law",

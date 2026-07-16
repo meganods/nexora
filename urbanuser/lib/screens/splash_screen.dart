@@ -34,24 +34,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF8C52FF), // Purple theme color
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Using an icon as a placeholder logo
-            const Icon(Icons.home_repair_service, size: 80, color: Colors.white),
+            Image.asset(
+              "assets/images/logo.png",
+              height: 200,
+              width: 200,
+              fit: BoxFit.contain,
+            ),
             const SizedBox(height: 20),
             const Text(
-              "Urban Company",
+              "NEXORA",
               style: TextStyle(
-                color: Colors.white,
+                color: Color(0xFF0C1A30),
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
               ),
             ),
             const SizedBox(height: 40),
-            const CircularProgressIndicator(color: Colors.white),
+            const CircularProgressIndicator(color: Color(0xFF3B82F6)),
           ],
         ),
       ),

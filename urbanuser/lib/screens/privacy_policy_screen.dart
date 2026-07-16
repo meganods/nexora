@@ -40,7 +40,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               const SizedBox(height: 32),
               _buildSection(
                 "Introduction",
-                "We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, store, use, and protect your data when you use the Urban Company platform.",
+                "We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, store, use, and protect your data when you use the NEXORA platform.",
               ),
               _buildSection(
                 "Information We Collect",
@@ -88,7 +88,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ),
               _buildSection(
                 "Contact Us",
-                "If you have any questions or concerns regarding this Privacy Policy, please contact our privacy team:\n\nEmail: privacy@urbancompany.com\nPhone: +91 XXXXX XXXXX",
+                "If you have any questions or concerns regarding this Privacy Policy, please contact our privacy team:\n\nEmail: privacy@nexora.com\nPhone: +91 XXXXX XXXXX",
               ),
               const SizedBox(height: 40),
             ],

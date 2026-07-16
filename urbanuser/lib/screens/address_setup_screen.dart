@@ -48,26 +48,56 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+    try {
+      bool serviceEnabled;
+      LocationPermission permission;
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return _fallbackToIpLocation();
+      }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return _fallbackToIpLocation();
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return _fallbackToIpLocation();
+      }
+
+      final position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _currentLocation = LatLng(position.latitude, position.longitude);
+        _mapController.move(_currentLocation, 15.0);
+      });
+      _reverseGeocode(position.latitude, position.longitude);
+    } catch (e) {
+      _fallbackToIpLocation();
     }
+  }
 
-    if (permission == LocationPermission.deniedForever) return;
-
-    final position = await Geolocator.getCurrentPosition();
-    setState(() {
-      _currentLocation = LatLng(position.latitude, position.longitude);
-      _mapController.move(_currentLocation, 15.0);
-    });
-    _reverseGeocode(position.latitude, position.longitude);
+  Future<void> _fallbackToIpLocation() async {
+    try {
+      final response = await http.get(Uri.parse('http://ip-api.com/json/'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          final lat = data['lat'];
+          final lon = data['lon'];
+          setState(() {
+            _currentLocation = LatLng(lat, lon);
+            _mapController.move(_currentLocation, 15.0);
+          });
+          _reverseGeocode(lat, lon);
+        }
+      }
+    } catch (e) {
+      debugPrint("IP fallback failed: $e");
+    }
   }
 
   Future<void> _reverseGeocode(double lat, double lon) async {

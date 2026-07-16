@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class HelpSupportScreen extends StatefulWidget {
@@ -30,7 +30,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     },
     {
       'q': 'Are there any hidden charges?',
-      'a': 'No, Urban Company follows a strict transparent pricing policy. The final price shown at checkout includes all taxes, visiting charges, and service fees.'
+      'a': 'No, NEXORA follows a strict transparent pricing policy. The final price shown at checkout includes all taxes, visiting charges, and service fees.'
     },
   ];
 

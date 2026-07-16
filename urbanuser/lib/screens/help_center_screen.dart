@@ -365,7 +365,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: _supportButton(Icons.email_outlined, "support@urbancompany.com", Colors.white.withValues(alpha: 0.1), Colors.white, isOutlined: true),
+                  child: _supportButton(Icons.email_outlined, "support@nexora.com", Colors.white.withValues(alpha: 0.1), Colors.white, isOutlined: true),
                 ),
               ],
             ),

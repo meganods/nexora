@@ -1,6 +1,6 @@
 {
-    "name": "urbanadmin",
-    "short_name": "urbanadmin",
+    "name": "NEXORA Admin",
+    "short_name": "NEXORA Admin",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

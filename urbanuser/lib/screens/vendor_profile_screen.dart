@@ -151,7 +151,7 @@ class VendorProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           Text(
-            "Hi, I am ${service.vendorName}, a verified professional at Urban Company. I specialize in providing top-notch services directly at your doorstep with a 100% satisfaction guarantee. I follow all safety protocols and use premium quality products.",
+            "Hi, I am ${service.vendorName}, a verified professional at NEXORA. I specialize in providing top-notch services directly at your doorstep with a 100% satisfaction guarantee. I follow all safety protocols and use premium quality products.",
             style: GoogleFonts.outfit(
               fontSize: 15,
               color: Colors.grey[700],

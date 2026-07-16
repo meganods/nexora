@@ -364,7 +364,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                               ? Image.network(
                                   _profileImageUrl!,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
+                                  errorBuilder: (_, _, _) =>
                                       const Icon(Icons.person, color: Colors.white, size: 40),
                                 )
                               : _profileImage != null && !kIsWeb

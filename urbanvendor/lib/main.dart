@@ -64,19 +64,19 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => RegistrationProvider()),
         ChangeNotifierProvider(create: (_) => VendorProvider()),
       ],
-      child: const UrbanVendorApp(),
+      child: const NexoraVendorApp(),
     ),
   );
 }
 
-class UrbanVendorApp extends StatelessWidget {
-  const UrbanVendorApp({super.key});
+class NexoraVendorApp extends StatelessWidget {
+  const NexoraVendorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Urban Vendor',
+      title: 'NEXORA Partner',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B44D3)),
         useMaterial3: true,

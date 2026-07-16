@@ -67,15 +67,19 @@ class AboutScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.home_repair_service,
-              size: 60,
-              color: AppTheme.primaryColor,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: Image.asset(
+                "assets/images/logo.png",
+                height: 80,
+                width: 80,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            "Urban Company",
+            "NEXORA",
             style: GoogleFonts.outfit(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -405,9 +409,9 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _contactRow(Icons.location_on_outlined, "123 Urban Street, Tech City, 10001"),
+             _contactRow(Icons.location_on_outlined, "123 NEXORA Street, Tech City, 10001"),
             const SizedBox(height: 12),
-            _contactRow(Icons.email_outlined, "support@urbancompany.com"),
+            _contactRow(Icons.email_outlined, "support@nexora.com"),
             const SizedBox(height: 12),
             _contactRow(Icons.phone_outlined, "+91 98765 43210"),
           ],
@@ -438,7 +442,7 @@ class AboutScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Text(
-        "© 2026 Urban Company.\nAll Rights Reserved.",
+        "© 2026 NEXORA.\nAll Rights Reserved.",
         textAlign: TextAlign.center,
         style: GoogleFonts.outfit(
           color: Colors.grey[500],

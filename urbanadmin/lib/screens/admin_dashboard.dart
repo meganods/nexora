@@ -75,7 +75,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         children: [
           const SizedBox(height: 40),
-          const Text('Urban Admin', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text('NEXORA Admin', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 40),
           Expanded(
             child: ListView.builder(

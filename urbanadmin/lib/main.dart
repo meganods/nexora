@@ -30,20 +30,20 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
-      child: const UrbanAdminApp(),
+      child: const NexoraAdminApp(),
     ),
   );
 }
 
 
-class UrbanAdminApp extends StatelessWidget {
-  const UrbanAdminApp({super.key});
+class NexoraAdminApp extends StatelessWidget {
+  const NexoraAdminApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Urban Admin Portal',
+      title: 'NEXORA Admin Portal',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6366F1)),
         useMaterial3: true,

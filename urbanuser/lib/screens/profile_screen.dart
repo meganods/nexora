@@ -59,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
               _menuItem(Icons.description_outlined, "Privacy Policy", () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
               }),
-              _menuItem(Icons.info_outline, "About Urban Company", () {
+              _menuItem(Icons.info_outline, "About NEXORA", () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
               }),
             ]),

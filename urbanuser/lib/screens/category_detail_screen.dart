@@ -19,6 +19,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   final List<String> _subCats = ["All", "Top Rated", "Lowest Price", "Near Me", "Express", "Certified"];
   String _searchQuery = "";
   Future<List<ServiceModel>>? _servicesFuture;
+  String _selectedSortBy = "Popularity";
+  String _selectedPriceRange = "";
 
   @override
   void initState() {

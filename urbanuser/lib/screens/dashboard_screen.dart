@@ -171,11 +171,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Flexible(
                       child: Text(
                         _userAddress,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.accentColor,
                         ),

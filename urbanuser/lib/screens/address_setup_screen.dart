@@ -106,7 +106,8 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         setState(() {
-          _streetController.text = p.street ?? "";
+          _buildingController.text = p.name ?? p.subLocality ?? "";
+          _streetController.text = p.street ?? p.thoroughfare ?? "";
           _cityController.text = p.locality ?? p.subAdministrativeArea ?? "";
           _stateController.text = p.administrativeArea ?? "";
           _pincodeController.text = p.postalCode ?? "";
@@ -127,7 +128,8 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         if (data != null && data['address'] != null) {
           final address = data['address'];
           setState(() {
-            _streetController.text = address['road'] ?? address['neighbourhood'] ?? "";
+            _buildingController.text = address['building'] ?? address['suburb'] ?? address['neighbourhood'] ?? "";
+            _streetController.text = address['road'] ?? "";
             _cityController.text = address['city'] ?? address['town'] ?? address['county'] ?? "";
             _stateController.text = address['state'] ?? "";
             _pincodeController.text = address['postcode'] ?? "";
@@ -150,8 +152,18 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     
     // Simulate saving user address locally to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userAddress', "\${_houseController.text}, \${_buildingController.text}, \${_streetController.text}");
+    await prefs.setString('userAddress', "${_houseController.text}, ${_buildingController.text}, ${_streetController.text}");
     await prefs.setString('userCity', _cityController.text);
+    
+    String fullMobile = _mobileController.text;
+    if (fullMobile.isNotEmpty && !fullMobile.startsWith('+91')) {
+      // Remove leading 0 if any, then add +91
+      if (fullMobile.startsWith('0')) {
+        fullMobile = fullMobile.substring(1);
+      }
+      fullMobile = '+91$fullMobile';
+    }
+    await prefs.setString('userMobile', fullMobile);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address Saved Successfully!'), backgroundColor: Colors.green));
@@ -305,6 +317,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   }
 
   Widget _buildInputField(String label, TextEditingController controller) {
+    bool isMobile = label == "Mobile Number";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,10 +336,37 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
           ),
           child: TextField(
             controller: controller,
+            keyboardType: isMobile ? TextInputType.phone : TextInputType.text,
             style: GoogleFonts.outfit(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
+              prefixIcon: isMobile
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 14, right: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text("🇮🇳", style: TextStyle(fontSize: 20)),
+                          const SizedBox(width: 6),
+                          Text(
+                            "+91",
+                            style: GoogleFonts.outfit(
+                              color: Colors.black87,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            height: 20,
+                            width: 1,
+                            color: Colors.grey[300],
+                          ),
+                        ],
+                      ),
+                    )
+                  : null,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2)),

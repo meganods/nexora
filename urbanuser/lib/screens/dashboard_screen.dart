@@ -97,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildServiceCarousel(),
 
               const SizedBox(height: 24),
-              _buildSectionHeader("Service Stories", ""),
+              _buildSectionHeader("Service Stories", "View All"),
               _buildVideoStories(),
 
               // NEW SECTION 2: Top Vendors (Carousel)
@@ -1281,38 +1281,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildVideoStories() {
-    final List<Map<String, dynamic>> stories = DummyData.getBySection("Service Stories").map((s) => {
+    final rawStories = DummyData.getBySection("Service Stories");
+    final List<Map<String, dynamic>> stories = rawStories.take(5).map((s) => {
         'title': s.title,
         'rating': s.rating.toString(),
         'videoUrl': null, // Fallback to asset
         'imageUrl': s.image,
     }).toList();
 
+    final bool showViewAllCard = rawStories.length > 5;
+
     return SizedBox(
       height: 220,
       child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 20),
-            itemCount: stories.length,
+            itemCount: stories.length + (showViewAllCard ? 1 : 0),
             itemBuilder: (context, index) {
-              final story = stories[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ServiceListScreen(sectionTitle: story['title']),
+              if (index < stories.length) {
+                final story = stories[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ServiceListScreen(sectionTitle: story['title']),
+                      ),
+                    );
+                  },
+                  child: _VideoStoryCard(
+                    title: story['title'],
+                    rating: story['rating'],
+                    videoPath: story['videoUrl'] ?? "assets/videos/pinsnap-48765608461538391.mp4",
+                    isNetwork: story['videoUrl'] != null,
+                    imageUrl: story['imageUrl'],
+                  ),
+                );
+              } else {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ServiceListScreen(sectionTitle: "Service Stories"),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 140,
+                    margin: const EdgeInsets.only(right: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
-                  );
-                },
-                child: _VideoStoryCard(
-                  title: story['title'],
-                  rating: story['rating'],
-                  videoPath: story['videoUrl'] ?? "assets/videos/pinsnap-48765608461538391.mp4",
-                  isNetwork: story['videoUrl'] != null,
-                  imageUrl: story['imageUrl'],
-                ),
-              );
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          radius: 25,
+                          child: const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryColor, size: 24),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "View All",
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Stories",
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
             },
           ),
         );

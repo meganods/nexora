@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urbanuser/widgets/custom_bottom_nav.dart';
 import 'category_detail_screen.dart';
 import '../theme/app_theme.dart';
@@ -26,6 +27,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _bannerController = PageController();
   int _currentBannerIndex = 0;
+  String _userAddress = "4517 Washington Ave";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserAddress();
+  }
+
+  Future<void> _loadUserAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedAddress = prefs.getString('userAddress');
+    if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+      setState(() {
+        _userAddress = savedAddress.replaceAll(RegExp(r'^,\s*'), '').trim();
+      });
+    }
+  }
 
   final List<BannerData> _banners = [
     BannerData(
@@ -135,34 +153,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const Spacer(),
-          Column(
-            children: [
-              Text(
-                "Address",
-                style: GoogleFonts.outfit(
-                  color: Colors.grey,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    "4517 Washington Ave",
-                    style: GoogleFonts.outfit(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.accentColor,
-                    ),
-                  ),
-                  const Icon(
-                    Icons.keyboard_arrow_down,
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  "Address",
+                  style: GoogleFonts.outfit(
                     color: Colors.grey,
-                    size: 18,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
-              ),
-            ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _userAddress,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentColor,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.grey,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const Spacer(),
           GestureDetector(

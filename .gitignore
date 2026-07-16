@@ -15,3 +15,11 @@
 **/.vscode/
 **/*.iml
 **/.DS_Store
+
+# Environments and Firebase Rules
+.env
+*.env
+**/.env
+firestore.rules
+**/firestore.rules
+

@@ -124,8 +124,8 @@ class CloudinaryService {
       }
     }
 
-    // Using Icons8 as a source, proxied through Cloudinary for optimization and caching
+    // Using Icons8 as a source directly to avoid Cloudinary Fetched URL 401 restriction
     final sourceUrl = 'https://img.icons8.com/fluency/200/$keyword.png';
-    return 'https://res.cloudinary.com/$_cloudName/image/fetch/f_auto,q_auto/$sourceUrl';
+    return sourceUrl;
   }
 }

@@ -25,8 +25,14 @@ class RootGatekeeper extends StatelessWidget {
         }
 
         // User is logged in, now check their vendor status
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('vendors').doc(user.uid).snapshots(),
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('vendors')
+              .where(Filter.or(
+                Filter('uid', isEqualTo: user.uid),
+                Filter('email', isEqualTo: user.email ?? ''),
+              ))
+              .snapshots(),
           builder: (context, vendorSnapshot) {
             if (vendorSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
@@ -34,22 +40,16 @@ class RootGatekeeper extends StatelessWidget {
               );
             }
 
-            if (!vendorSnapshot.hasData || !vendorSnapshot.data!.exists) {
-              // If user is authenticated but has no vendor doc yet, 
-              // they might be in the middle of registration.
-              // For now, redirect to onboarding or profile creation.
-              // Usually, we create the user AFTER the registration steps, 
-              // or at the very beginning. Let's send them to onboarding.
+            if (!vendorSnapshot.hasData || vendorSnapshot.data!.docs.isEmpty) {
               return const OnboardingJourneyScreen();
             }
 
-            final data = vendorSnapshot.data!.data() as Map<String, dynamic>;
+            final data = vendorSnapshot.data!.docs.first.data() as Map<String, dynamic>;
             final status = data['status'] ?? 'PENDING';
 
             if (status == 'APPROVED') {
               return const ExpertPortalDashboard();
             } else {
-              // Show status screen for PENDING, UNDER_REVIEW, REJECTED, PENDING_REGISTRATION
               return const ApplicationStatusScreen();
             }
           },

@@ -852,13 +852,14 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ),
             actions: [
                TextButton(
-                 onPressed: isSaving ? null : () => Navigator.pop(context),
+                 onPressed: isSaving ? null : () => Navigator.pop(dContext),
                  child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-               ),                ElevatedButton(
+               ),                
+               ElevatedButton(
                  onPressed: isSaving ? null : () async {
-                   final messenger = ScaffoldMessenger.of(context);
-                   final navigator = Navigator.of(context);
-                   final admin = Provider.of<AdminProvider>(context, listen: false);
+                   final messenger = ScaffoldMessenger.of(dContext);
+                   final navigator = Navigator.of(dContext);
+                   final admin = Provider.of<AdminProvider>(dContext, listen: false);
                    if (titleC.text.trim().isEmpty) {
                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a name')));
                       return;

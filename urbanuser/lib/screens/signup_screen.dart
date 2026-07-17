@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -65,13 +66,50 @@ class _SignupScreenState extends State<SignupScreen> {
       fullMobile = '+91$fullMobile';
     }
     
-    // Save details to Firestore
     final emailLower = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    UserCredential? userCredential;
+    try {
+      userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailLower,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Hide loading indicator
+        String message = e.message ?? "Registration failed";
+        if (e.code == 'weak-password') message = "The password provided is too weak.";
+        if (e.code == 'email-already-in-use') message = "An account already exists for that email.";
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+        );
+      }
+      return;
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Hide loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+      return;
+    }
+
+    // Save details to Firestore (now authenticated, so permission is granted!)
     try {
       await FirebaseFirestore.instance.collection('users').doc(emailLower).set({
         'name': _nameController.text.trim(),
         'phone': fullMobile,
         'email': emailLower,
+        'uid': userCredential.user?.uid,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -85,6 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
     await prefs.setString('userEmail', emailLower);
     
     if (mounted) {
+      Navigator.pop(context); // Hide loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account Created Successfully!'), backgroundColor: Colors.green),
       );

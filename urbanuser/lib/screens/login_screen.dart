@@ -34,9 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text.trim();
     final prefs = await SharedPreferences.getInstance();
     
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
     // Clear old user details from cache to prevent mixing user sessions
     await prefs.remove('userName');
     await prefs.remove('userMobile');
@@ -49,6 +57,59 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.remove('userState');
     await prefs.remove('userPincode');
     await prefs.remove('userAddressType');
+
+    try {
+      // 1. Sign in with Firebase Auth
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      // If user exists in Firestore but not in Firebase Auth, automatically create auth account
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        try {
+          final userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+          if (userDoc.exists) {
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
+          } else {
+            if (mounted) {
+              Navigator.pop(context); // Hide loading indicator
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(e.message ?? "Invalid credentials"), backgroundColor: Colors.redAccent),
+              );
+            }
+            return;
+          }
+        } catch (innerErr) {
+          if (mounted) {
+            Navigator.pop(context); // Hide loading indicator
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Login failed: $innerErr"), backgroundColor: Colors.redAccent),
+            );
+          }
+          return;
+        }
+      } else {
+        if (mounted) {
+          Navigator.pop(context); // Hide loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? "Authentication failed"), backgroundColor: Colors.redAccent),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Hide loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+      return;
+    }
 
     // Check if user already exists in Firestore
     try {
@@ -80,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final savedAddress = prefs.getString('userAddress');
     
     if (mounted) {
+      Navigator.pop(context); // Hide loading indicator
       // Direct to dashboard ONLY if the user has already filled out their address details
       if (savedAddress != null && savedAddress.trim().isNotEmpty) {
         Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);

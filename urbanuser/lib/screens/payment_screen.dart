@@ -8,7 +8,20 @@ import '../screens/thank_you_screen.dart';
 class PaymentScreen extends StatefulWidget {
   final double? totalAmount;
   final Map<String, dynamic>? coupon;
-  const PaymentScreen({super.key, this.totalAmount, this.coupon});
+  final String? shopName;
+  final String? date;
+  final String? time;
+  final List<Map<String, dynamic>>? selectedItems;
+
+  const PaymentScreen({
+    super.key, 
+    this.totalAmount, 
+    this.coupon,
+    this.shopName,
+    this.date,
+    this.time,
+    this.selectedItems,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -218,12 +231,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'id': bookingId,
               'userId': user.uid,
               'userEmail': user.email,
-              'shopName': 'Classic Bathroom Cleaning',
+              'shopName': widget.shopName ?? 'Urban Service Pro',
               'price': '₹${total.toStringAsFixed(0)}',
-              'date': 'Mon, Oct 12',
-              'time': '10:00 AM',
+              'date': widget.date ?? 'Mon, Oct 12',
+              'time': widget.time ?? '10:00 AM',
               'status': 'UPCOMING',
               'createdAt': FieldValue.serverTimestamp(),
+              'services': widget.selectedItems ?? [],
             });
 
             // Handle coupon usage and increment count via transaction

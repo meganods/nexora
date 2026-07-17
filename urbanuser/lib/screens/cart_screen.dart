@@ -23,6 +23,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  final List<String> _days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  final List<String> _dates = ["Oct 12", "Oct 13", "Oct 14", "Oct 15", "Oct 16", "Oct 17", "Oct 18"];
   int _selectedDayIndex = 0;
   String _selectedTimeSlot = "10:00 AM";
 
@@ -442,20 +444,22 @@ class _CartScreenState extends State<CartScreen> {
                 margin: const EdgeInsets.only(right: 15),
                 child: Column(
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        AspectRatio(
-                          aspectRatio: 1,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: a["img"].toString().startsWith("assets") ? Image.asset(a["img"] as String, fit: BoxFit.cover) : Image.network(a["img"] as String, fit: BoxFit.cover),
+                    SizedBox(
+                      height: 120,
+                      child: Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          SizedBox(
+                            width: 105,
+                            height: 105,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: a["img"].toString().startsWith("assets") ? Image.asset(a["img"] as String, fit: BoxFit.cover) : Image.network(a["img"] as String, fit: BoxFit.cover),
+                            ),
                           ),
-                        ),
-                        Positioned(
-                          bottom: -15,
-                          child: GestureDetector(
+                          Positioned(
+                            bottom: 0,
+                            child: GestureDetector(
                             onTap: () {
                               setState(() {
                                 _selectedItems.add({
@@ -500,12 +504,12 @@ class _CartScreenState extends State<CartScreen> {
                                   fontSize: 12,
                                 ),
                               ),
-                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 22),
+                  ),
+                  const SizedBox(height: 12),
                     Text(
                       a["name"] as String,
                       style: GoogleFonts.outfit(
@@ -536,16 +540,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildDateSelection() {
-    final days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    final dates = [
-      "Oct 12",
-      "Oct 13",
-      "Oct 14",
-      "Oct 15",
-      "Oct 16",
-      "Oct 17",
-      "Oct 18",
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -565,7 +559,7 @@ class _CartScreenState extends State<CartScreen> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 20),
-            itemCount: days.length,
+            itemCount: _days.length,
             itemBuilder: (context, index) => GestureDetector(
               onTap: () => setState(() => _selectedDayIndex = index),
               child: Container(
@@ -586,7 +580,7 @@ class _CartScreenState extends State<CartScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      days[index],
+                      _days[index],
                       style: GoogleFonts.outfit(
                         color: _selectedDayIndex == index
                             ? Colors.white70
@@ -596,7 +590,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      dates[index].split(" ")[1],
+                      _dates[index].split(" ")[1],
                       style: GoogleFonts.outfit(
                         color: _selectedDayIndex == index
                             ? Colors.white
@@ -606,7 +600,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                     Text(
-                      dates[index].split(" ")[0],
+                      _dates[index].split(" ")[0],
                       style: GoogleFonts.outfit(
                         color: _selectedDayIndex == index
                             ? Colors.white60
@@ -1185,8 +1179,14 @@ class _CartScreenState extends State<CartScreen> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      PaymentScreen(totalAmount: _finalTotal, coupon: _appliedCoupon),
+                  builder: (context) => PaymentScreen(
+                    totalAmount: _finalTotal,
+                    coupon: _appliedCoupon,
+                    shopName: widget.shop["name"] as String?,
+                    date: "${_days[_selectedDayIndex]}, ${_dates[_selectedDayIndex]}",
+                    time: _selectedTimeSlot,
+                    selectedItems: _selectedItems,
+                  ),
                 ),
               ),
               style: ElevatedButton.styleFrom(

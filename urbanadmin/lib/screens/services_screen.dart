@@ -692,9 +692,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                ),
                ElevatedButton(
                  onPressed: isSaving ? null : () async {
-                   final messenger = ScaffoldMessenger.of(context);
-                   final navigator = Navigator.of(context);
-                   final admin = Provider.of<AdminProvider>(context, listen: false);
+                   final messenger = ScaffoldMessenger.of(dContext);
+                   final navigator = Navigator.of(dContext);
+                   final admin = Provider.of<AdminProvider>(dContext, listen: false);
                    if (titleController.text.trim().isEmpty) {
                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a title')));
                       return;

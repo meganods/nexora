@@ -9,6 +9,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, getDocs, deleteDoc, addDoc, updateDoc, serverTimestamp } = require('firebase/firestore');
+const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require('firebase/auth');
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -24,6 +25,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 async function runSeeding() {
+  const auth = getAuth(app);
+  try {
+    console.log('🔐 Authenticating admin user (urbanadmin01@gmail.com)...');
+    await signInWithEmailAndPassword(auth, 'urbanadmin01@gmail.com', 'admin123456');
+  } catch (err) {
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/cannot-find-user') {
+      try {
+        console.log('🌱 Admin account not found. Creating new admin user account...');
+        await createUserWithEmailAndPassword(auth, 'urbanadmin01@gmail.com', 'admin123456');
+      } catch (createErr) {
+        console.error('❌ Admin creation failed:', createErr);
+        return;
+      }
+    } else {
+      console.error('❌ Authentication failed:', err);
+      return;
+    }
+  }
+
   console.log('🚀 Wiping database...');
   const servicesSnapshot = await getDocs(collection(db, 'services'));
   for (const doc of servicesSnapshot.docs) {

@@ -51,9 +51,14 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     final prefs = await SharedPreferences.getInstance();
     final savedAddress = prefs.getString('userAddress');
     
+    String mobileText = prefs.getString('userMobile') ?? '';
+    if (mobileText.startsWith('+91')) {
+      mobileText = mobileText.substring(3).trim();
+    }
+
     setState(() {
       _nameController.text = prefs.getString('userName') ?? '';
-      _mobileController.text = prefs.getString('userMobile') ?? '';
+      _mobileController.text = mobileText;
     });
 
     if (savedAddress != null && savedAddress.trim().isNotEmpty) {
@@ -107,12 +112,12 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
 
   Future<void> _fallbackToIpLocation() async {
     try {
-      final response = await http.get(Uri.parse('http://ip-api.com/json/'));
+      final response = await http.get(Uri.parse('https://ipapi.co/json/'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['status'] == 'success') {
-          final lat = data['lat'];
-          final lon = data['lon'];
+        if (data != null && data['latitude'] != null && data['longitude'] != null) {
+          final lat = double.parse(data['latitude'].toString());
+          final lon = double.parse(data['longitude'].toString());
           setState(() {
             _currentLocation = LatLng(lat, lon);
             _mapController.move(_currentLocation, 15.0);

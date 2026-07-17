@@ -66,11 +66,12 @@ class _SignupScreenState extends State<SignupScreen> {
     }
     
     // Save details to Firestore
+    final emailLower = _emailController.text.trim().toLowerCase();
     try {
-      await FirebaseFirestore.instance.collection('users').doc(_emailController.text.trim()).set({
+      await FirebaseFirestore.instance.collection('users').doc(emailLower).set({
         'name': _nameController.text.trim(),
         'phone': fullMobile,
-        'email': _emailController.text.trim(),
+        'email': emailLower,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -79,9 +80,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
     // Save details to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', _nameController.text);
+    await prefs.setString('userName', _nameController.text.trim());
     await prefs.setString('userMobile', fullMobile);
-    await prefs.setString('userEmail', _emailController.text);
+    await prefs.setString('userEmail', emailLower);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

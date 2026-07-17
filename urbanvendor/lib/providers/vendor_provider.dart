@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class VendorProvider with ChangeNotifier {
   Map<String, dynamic>? _vendorData;
+  String? _vendorDocId;
   bool _isLoading = false;
 
   Map<String, dynamic>? get vendorData => _vendorData;
+  String? get vendorDocId => _vendorDocId;
   bool get isLoading => _isLoading;
 
   Future<void> fetchVendorData() async {
@@ -20,6 +22,26 @@ class VendorProvider with ChangeNotifier {
       final doc = await FirebaseFirestore.instance.collection('vendors').doc(user.uid).get();
       if (doc.exists) {
         _vendorData = doc.data();
+        _vendorDocId = doc.id;
+      } else {
+        final query = await FirebaseFirestore.instance
+            .collection('vendors')
+            .where(Filter.or(
+              Filter('uid', isEqualTo: user.uid),
+              Filter('email', isEqualTo: user.email ?? ''),
+            ))
+            .get();
+        if (query.docs.isNotEmpty) {
+          final resolvedDoc = query.docs.first;
+          _vendorData = resolvedDoc.data();
+          _vendorDocId = resolvedDoc.id;
+          
+          if (_vendorData?['uid'] != user.uid) {
+            await FirebaseFirestore.instance.collection('vendors').doc(resolvedDoc.id).update({
+              'uid': user.uid,
+            });
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error fetching vendor data: $e');
@@ -32,9 +54,11 @@ class VendorProvider with ChangeNotifier {
   Future<void> updateVendorProfile(Map<String, dynamic> updates) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    
+    final docId = _vendorDocId ?? user.uid;
 
     try {
-      await FirebaseFirestore.instance.collection('vendors').doc(user.uid).update(updates);
+      await FirebaseFirestore.instance.collection('vendors').doc(docId).update(updates);
       if (_vendorData != null) {
         _vendorData!.addAll(updates);
         notifyListeners();

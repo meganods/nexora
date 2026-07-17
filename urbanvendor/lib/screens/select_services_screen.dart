@@ -287,25 +287,43 @@ class _SelectServicesScreenState extends State<SelectServicesScreen> {
                                         color: themeColor.withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: imageUrl != null 
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.network(
-                                            CloudinaryService.getOptimizedUrl(imageUrl, width: 100, height: 100, crop: 'fill'),
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => Image.network(
-                                              CloudinaryService.getAutoIconUrl(service['title'] ?? service['categoryName'] ?? ''),
-                                              fit: BoxFit.contain,
+                                      child: Builder(
+                                        builder: (context) {
+                                          final titleStr = service['title'] ?? service['categoryName'] ?? '';
+                                          if (imageUrl == null || imageUrl.isEmpty) {
+                                            return Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Image.network(
+                                                CloudinaryService.getAutoIconUrl(titleStr),
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (c, e, s) => Icon(Icons.cleaning_services, color: themeColor, size: 24),
+                                              ),
+                                            );
+                                          }
+                                          if (imageUrl.startsWith("assets")) {
+                                            return ClipRRect(
+                                              borderRadius: BorderRadius.circular(12),
+                                              child: Image.asset(
+                                                imageUrl,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (c, e, s) => Icon(Icons.cleaning_services, color: themeColor, size: 24),
+                                              ),
+                                            );
+                                          }
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.network(
+                                              CloudinaryService.getOptimizedUrl(imageUrl, width: 100, height: 100, crop: 'fill'),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) => Image.network(
+                                                CloudinaryService.getAutoIconUrl(titleStr),
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (c, e, s) => Icon(Icons.cleaning_services, color: themeColor, size: 24),
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                      : Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Image.network(
-                                            CloudinaryService.getAutoIconUrl(service['title'] ?? service['categoryName'] ?? ''),
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
+                                          );
+                                        }
+                                      ),
                                     ),
                                     if (isSelected)
                                       Container(
@@ -337,13 +355,19 @@ class _SelectServicesScreenState extends State<SelectServicesScreen> {
                                 ),
                                 if (service['price'] != null) ...[
                                   const SizedBox(height: 12),
-                                  Text(
-                                    'Base Price: ₹${service['price']}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: themeColor,
-                                    ),
+                                  Builder(
+                                    builder: (context) {
+                                      final String rawPrice = service['price']?.toString() ?? '';
+                                      final String formattedPrice = rawPrice.startsWith('₹') ? rawPrice : '₹$rawPrice';
+                                      return Text(
+                                        'Base Price: $formattedPrice',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: themeColor,
+                                        ),
+                                      );
+                                    }
                                   ),
                                 ]
                               ],

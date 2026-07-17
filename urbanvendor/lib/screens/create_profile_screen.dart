@@ -22,6 +22,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   String? _profileImageUrl;
   bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -581,6 +583,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 color: inputBgColor,
                 primaryBlue: primaryBlue,
                 isPassword: true,
+                obscureText: _obscurePassword,
+                onToggleVisibility: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
                 controller: _passwordController,
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Password is required';
@@ -597,6 +605,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 color: inputBgColor,
                 primaryBlue: primaryBlue,
                 isPassword: true,
+                obscureText: _obscureConfirmPassword,
+                onToggleVisibility: () {
+                  setState(() {
+                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                  });
+                },
                 controller: _confirmPasswordController,
                 validator: (v) {
                   if (v != _passwordController.text) return 'Mismatch';
@@ -620,6 +634,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     required TextEditingController controller,
     String? Function(String?)? validator,
     bool isPassword = false,
+    bool? obscureText,
+    VoidCallback? onToggleVisibility,
     bool isMultiline = false,
   }) {
     return Container(
@@ -656,7 +672,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
           const SizedBox(height: 4),
           TextFormField(
             controller: controller,
-            obscureText: isPassword,
+            obscureText: obscureText ?? isPassword,
             maxLines: isMultiline ? 3 : 1,
             validator: validator,
             autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -679,7 +695,16 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 height: 1.0,
               ),
               suffixIcon: isPassword 
-                  ? Icon(Icons.visibility_off_outlined, color: Colors.grey[400], size: 20)
+                  ? InkWell(
+                      onTap: onToggleVisibility,
+                      child: Icon(
+                        (obscureText ?? true)
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                    )
                   : null,
               suffixIconConstraints: const BoxConstraints(minHeight: 20, minWidth: 20),
             ),

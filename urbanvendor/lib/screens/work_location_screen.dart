@@ -10,6 +10,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/registration_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class WorkLocationScreen extends StatefulWidget {
   const WorkLocationScreen({super.key});
@@ -56,40 +58,74 @@ class _WorkLocationScreenState extends State<WorkLocationScreen> {
   Future<void> _getCurrentLocation() async {
     setState(() => _isLoading = true);
     try {
-      var status = await Permission.location.status;
-      if (status.isPermanentlyDenied) {
-        if (mounted) _showPermissionDialog();
-        setState(() => _useCurrentLocation = false);
-        return;
+      bool permissionGranted = false;
+      try {
+        var status = await Permission.location.status;
+        if (status.isDenied) {
+          status = await Permission.location.request();
+        }
+        permissionGranted = status.isGranted;
+      } catch (e) {
+        debugPrint("Permission check failed, proceeding to geolocation check: $e");
+        permissionGranted = true; // Attempt anyway
       }
-      if (!status.isGranted) status = await Permission.location.request();
 
-      if (status.isGranted) {
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Enable location services.')),
-            );
-          }
-          setState(() => _useCurrentLocation = false);
-          return;
+      if (permissionGranted) {
+        bool serviceEnabled = false;
+        try {
+          serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        } catch (e) {
+          debugPrint("Location services check failed: $e");
         }
 
-        Position position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-          ),
-        );
-        LatLng newPos = LatLng(position.latitude, position.longitude);
+        if (serviceEnabled) {
+          Position position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+            ),
+          );
+          LatLng newPos = LatLng(position.latitude, position.longitude);
 
-        _mapController.move(newPos, 15);
-        _updateAddress(newPos);
+          _mapController.move(newPos, 15);
+          await _updateAddress(newPos);
+          setState(() => _isLoading = false);
+          return;
+        }
       }
+      // If permissions or location services are disabled, fallback
+      await _fallbackIpGeocoding();
     } catch (e) {
-      debugPrint('Location Error: $e');
+      debugPrint('Location Error, trying IP fallback: $e');
+      await _fallbackIpGeocoding();
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fallbackIpGeocoding() async {
+    try {
+      final response = await http.get(Uri.parse('https://ipapi.co/json/'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _city = data['city'] ?? '';
+          _area = data['postal'] ?? '';
+          _fullAddress = "${data['city']}, ${data['region']}, ${data['country_name']}";
+          
+          _cityController.text = _city ?? '';
+          _areaController.text = _area ?? '';
+          _addressController.text = _fullAddress ?? '';
+          
+          if (data['latitude'] != null && data['longitude'] != null) {
+            final lat = double.parse(data['latitude'].toString());
+            final lon = double.parse(data['longitude'].toString());
+            _selectedPosition = LatLng(lat, lon);
+            _mapController.move(_selectedPosition, 15);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("IP fallback reverse geocoding failed: $e");
     }
   }
 
@@ -113,9 +149,12 @@ class _WorkLocationScreenState extends State<WorkLocationScreen> {
           
           _selectedPosition = pos;
         });
+      } else {
+        await _fallbackIpGeocoding();
       }
     } catch (e) {
-      debugPrint('Geocoding Error: $e');
+      debugPrint('Geocoding Error, trying IP fallback: $e');
+      await _fallbackIpGeocoding();
     }
   }
 

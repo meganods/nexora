@@ -196,7 +196,10 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                           title: service['title'] ?? 'Generic Service',
                           description: service['description'] ?? 'No description available.',
                           rateLabel: 'BASE RATE',
-                          price: '₹${service['price'] ?? '0'}',
+                          price: () {
+                            final rawPrice = service['price']?.toString() ?? '0';
+                            return rawPrice.startsWith('₹') ? rawPrice : '₹$rawPrice';
+                          }(),
                           priceSuffix: '',
                           priceColor: primaryBlue,
                           tagText: 'Active',

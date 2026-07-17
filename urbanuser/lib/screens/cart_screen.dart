@@ -460,56 +460,57 @@ class _CartScreenState extends State<CartScreen> {
                           Positioned(
                             bottom: 0,
                             child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedItems.add({
-                                  "name": a["name"],
-                                  "price": a["price"],
-                                  "img": a["img"],
+                              onTap: () {
+                                setState(() {
+                                  _selectedItems.add({
+                                    "name": a["name"],
+                                    "price": a["price"],
+                                    "img": a["img"],
+                                  });
+                                  _addons.remove(a);
                                 });
-                                _addons.remove(a);
-                              });
-                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("${a["name"]} added to cart"),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: const Duration(milliseconds: 800),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 70,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: const Color(0xFFEEEEEE),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("${a["name"]} added to cart"),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(milliseconds: 800),
                                   ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                "ADD",
-                                style: GoogleFonts.outfit(
-                                  color: const Color(0xFF673AB7),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                );
+                              },
+                              child: Container(
+                                width: 70,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFEEEEEE),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "ADD",
+                                  style: GoogleFonts.outfit(
+                                    color: const Color(0xFF673AB7),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
                       a["name"] as String,
                       style: GoogleFonts.outfit(

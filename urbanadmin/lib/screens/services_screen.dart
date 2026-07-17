@@ -565,7 +565,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           return AlertDialog(
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(docId == null ? 'New Category' : 'Edit Category', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            title: Text(docId == null ? 'New Service' : 'Edit Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: SizedBox(
                width: 400,
                child: Column(
@@ -575,7 +575,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     TextField(
                       controller: titleController,
                       enabled: !isSaving,
-                      decoration: InputDecoration(labelText: 'Category Title', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                      decoration: InputDecoration(labelText: 'Service Title', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -595,7 +595,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       onChanged: isSaving ? null : (v) => setStateSB(() => status = v!),
                     ),
                     const SizedBox(height: 16),
-                    Text('Category Icon / Image', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                    Text('Service Icon / Image', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: isSaving ? null : () async {

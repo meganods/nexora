@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -125,10 +126,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         builder: (context) => const Center(child: CircularProgressIndicator()),
                       );
 
-                      await FirebaseAuth.instance.signInWithEmailAndPassword(
-                        email: _emailController.text.trim(),
-                        password: _passwordController.text.trim(),
-                      );
+                      final emailVal = _emailController.text.trim().toLowerCase();
+                      final passwordVal = _passwordController.text.trim();
+
+                      try {
+                        await FirebaseAuth.instance.signInWithEmailAndPassword(
+                          email: emailVal,
+                          password: passwordVal,
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+                          final vendorQuery = await FirebaseFirestore.instance
+                              .collection('vendors')
+                              .where('email', isEqualTo: emailVal)
+                              .get();
+                          if (vendorQuery.docs.isNotEmpty) {
+                            final userCred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                              email: emailVal,
+                              password: passwordVal,
+                            );
+                            final doc = vendorQuery.docs.first;
+                            await FirebaseFirestore.instance.collection('vendors').doc(doc.id).update({
+                              'uid': userCred.user!.uid,
+                            });
+                          } else {
+                            rethrow;
+                          }
+                        } else {
+                          rethrow;
+                        }
+                      }
 
                       if (context.mounted) {
                         Navigator.pop(context); // Close loading indicator

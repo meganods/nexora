@@ -617,16 +617,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           ? kIsWeb 
                              ? Image.network(pickedImage!.path, fit: BoxFit.contain)
                              : Image.file(File(pickedImage!.path), fit: BoxFit.contain)
-                          : imageUrl != null
-                            ? Image.network(imageUrl, fit: BoxFit.contain)
-                            : const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(LucideIcons.imagePlus, color: Colors.grey),
-                                  SizedBox(height: 4),
-                                  Text('Tap to pick image', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                ],
-                              ),
+                          : (imageUrl != null && imageUrl.isNotEmpty && imageUrl.startsWith('http'))
+                             ? Image.network(
+                                 imageUrl, 
+                                 fit: BoxFit.contain,
+                                 errorBuilder: (context, error, stackTrace) => const Center(
+                                   child: Column(
+                                     mainAxisAlignment: MainAxisAlignment.center,
+                                     children: [
+                                       Icon(LucideIcons.imagePlus, color: Colors.grey),
+                                       SizedBox(height: 4),
+                                       Text('Error loading image', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                     ],
+                                   ),
+                                 ),
+                               )
+                             : const Column(
+                                 mainAxisAlignment: MainAxisAlignment.center,
+                                 children: [
+                                   Icon(LucideIcons.imagePlus, color: Colors.grey),
+                                   SizedBox(height: 4),
+                                   Text('Tap to pick image', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                 ],
+                               ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -713,6 +726,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         }
                         if (uploadedUrl != null) {
                           data['categoryImageUrl'] = uploadedUrl;
+                        } else {
+                          throw Exception('Failed to upload category image to Cloudinary. Please try again.');
                         }
                       } else if (imageUrl == null) {
                         data['categoryImageUrl'] = CloudinaryService.getAutoIconUrl(titleController.text.trim());

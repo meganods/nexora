@@ -463,6 +463,9 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                           folder: 'category_requests',
                         );
                       }
+                      if (uploadedUrl == null) {
+                        throw Exception('Failed to upload category image to Cloudinary. Please try again.');
+                      }
                     }
 
                     await provider.requestNewCategory(

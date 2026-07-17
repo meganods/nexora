@@ -75,13 +75,14 @@ class AdminProvider with ChangeNotifier {
   }
 
   // Add a new service (Create)
-  Future<void> addService(Map<String, dynamic> serviceData) async {
+  Future<DocumentReference> addService(Map<String, dynamic> serviceData) async {
     try {
-      await _firestore.collection('services').add({
+      final docRef = await _firestore.collection('services').add({
         ...serviceData,
         'createdAt': FieldValue.serverTimestamp(),
       });
       notifyListeners();
+      return docRef;
     } catch (e) {
       debugPrint('Error adding service: $e');
       rethrow;

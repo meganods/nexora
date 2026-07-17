@@ -548,7 +548,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   // --- DIALOGS & ACTIONS ---
 
-  void _showCategoryDialog(BuildContext context, {String? docId, Map<String, dynamic>? existingData}) {
+  void _showCategoryDialog(BuildContext context, {String? docId, String? requestVendorId, Map<String, dynamic>? existingData}) {
     final titleController = TextEditingController(text: existingData?['categoryName'] ?? existingData?['title']);
     final descController = TextEditingController(text: existingData?['description'] ?? existingData?['desc']);
     String status = existingData?['status'] ?? 'ACTIVE';
@@ -736,7 +736,23 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       if (!mounted) return;
                       if (docId == null) {
                         data['subServices'] = [];
-                        await admin.addService(data);
+                        final newDoc = await admin.addService(data);
+                        if (requestVendorId != null && requestVendorId.isNotEmpty) {
+                          final vendorQuery = await FirebaseFirestore.instance
+                              .collection('vendors')
+                              .where('uid', isEqualTo: requestVendorId)
+                              .get();
+                          if (vendorQuery.docs.isNotEmpty) {
+                            final vendorDoc = vendorQuery.docs.first;
+                            List selectedCategories = List.from(vendorDoc.data()['selectedCategoryIds'] ?? []);
+                            if (!selectedCategories.contains(newDoc.id)) {
+                              selectedCategories.add(newDoc.id);
+                              await FirebaseFirestore.instance.collection('vendors').doc(vendorDoc.id).update({
+                                'selectedCategoryIds': selectedCategories,
+                              });
+                            }
+                          }
+                        }
                       } else {
                         await admin.updateService(docId, data);
                       }
@@ -1043,11 +1059,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               IconButton(
                                 icon: const Icon(LucideIcons.checkCircle2, color: Colors.green, size: 22),
                                 onPressed: () {
-                                  _showCategoryDialog(context, existingData: {
-                                    'categoryName': data['categoryName'] ?? data['title'],
-                                    'description': data['description'] ?? data['desc'],
-                                    'categoryImageUrl': data['categoryImageUrl'] ?? data['imageUrl'],
-                                  });
+                                  _showCategoryDialog(
+                                    context,
+                                    requestVendorId: data['vendorId'],
+                                    existingData: {
+                                      'categoryName': data['categoryName'] ?? data['title'],
+                                      'description': data['description'] ?? data['desc'],
+                                      'categoryImageUrl': data['categoryImageUrl'] ?? data['imageUrl'],
+                                    },
+                                  );
                                   adminProvider.updateCategoryRequestStatus(req.id, 'APPROVED');
                                 },
                                 tooltip: 'Approve & Create',

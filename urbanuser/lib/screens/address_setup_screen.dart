@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 
 class AddressSetupScreen extends StatefulWidget {
@@ -243,6 +244,30 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
       fullMobile = '+91$fullMobile';
     }
     await prefs.setString('userMobile', fullMobile);
+    await prefs.setString('userName', _nameController.text.trim());
+
+    // Save profile and address data to Firestore
+    final email = prefs.getString('userEmail');
+    if (email != null && email.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(email).set({
+          'name': _nameController.text.trim(),
+          'phone': fullMobile,
+          'email': email,
+          'userAddress': "${_houseController.text}, ${_buildingController.text}, ${_streetController.text}",
+          'userAddressHouse': _houseController.text,
+          'userAddressBuilding': _buildingController.text,
+          'userAddressStreet': _streetController.text,
+          'userAddressLandmark': _landmarkController.text,
+          'userCity': _cityController.text,
+          'userState': _stateController.text,
+          'userPincode': _pincodeController.text,
+          'userAddressType': _addressType,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint("Error updating profile and address to Firestore: $e");
+      }
+    }
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address Saved Successfully!'), backgroundColor: Colors.green));

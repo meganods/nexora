@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -64,6 +65,18 @@ class _SignupScreenState extends State<SignupScreen> {
       fullMobile = '+91$fullMobile';
     }
     
+    // Save details to Firestore
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(_emailController.text.trim()).set({
+        'name': _nameController.text.trim(),
+        'phone': fullMobile,
+        'email': _emailController.text.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint("Error writing user to Firestore on signup: $e");
+    }
+
     // Save details to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userName', _nameController.text);

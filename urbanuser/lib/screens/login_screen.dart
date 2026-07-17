@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:urbanuser/screens/signup_screen.dart';
 import 'package:urbanuser/screens/mock_google_login_screen.dart';
@@ -33,14 +34,42 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     
+    final email = _emailController.text.trim();
     final prefs = await SharedPreferences.getInstance();
+    
+    // Check if user already exists in Firestore
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        await prefs.setString('userName', data['name'] ?? '');
+        await prefs.setString('userMobile', data['phone'] ?? '');
+        
+        if (data.containsKey('userAddress') && data['userAddress'] != null) {
+          await prefs.setString('userAddress', data['userAddress'] ?? '');
+          await prefs.setString('userAddressHouse', data['userAddressHouse'] ?? '');
+          await prefs.setString('userAddressBuilding', data['userAddressBuilding'] ?? '');
+          await prefs.setString('userAddressStreet', data['userAddressStreet'] ?? '');
+          await prefs.setString('userAddressLandmark', data['userAddressLandmark'] ?? '');
+          await prefs.setString('userCity', data['userCity'] ?? '');
+          await prefs.setString('userState', data['userState'] ?? '');
+          await prefs.setString('userPincode', data['userPincode'] ?? '');
+          await prefs.setString('userAddressType', data['userAddressType'] ?? 'Home');
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching profile on login: $e");
+    }
+
     await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userEmail', _emailController.text);
+    await prefs.setString('userEmail', email);
     
     final savedAddress = prefs.getString('userAddress');
+    final savedName = prefs.getString('userName');
     
     if (mounted) {
-      if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+      // If user already created the account (profile exists with a name), go directly to home dashboard
+      if ((savedName != null && savedName.isNotEmpty) || (savedAddress != null && savedAddress.trim().isNotEmpty)) {
         Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
@@ -76,11 +105,41 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user == null) return;
       
       final prefs = await SharedPreferences.getInstance();
+      final email = user.email ?? '';
+      
+      // Check if user already exists in Firestore
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+        if (userDoc.exists) {
+          final data = userDoc.data()!;
+          await prefs.setString('userName', data['name'] ?? '');
+          await prefs.setString('userMobile', data['phone'] ?? '');
+          
+          if (data.containsKey('userAddress') && data['userAddress'] != null) {
+            await prefs.setString('userAddress', data['userAddress'] ?? '');
+            await prefs.setString('userAddressHouse', data['userAddressHouse'] ?? '');
+            await prefs.setString('userAddressBuilding', data['userAddressBuilding'] ?? '');
+            await prefs.setString('userAddressStreet', data['userAddressStreet'] ?? '');
+            await prefs.setString('userAddressLandmark', data['userAddressLandmark'] ?? '');
+            await prefs.setString('userCity', data['userCity'] ?? '');
+            await prefs.setString('userState', data['userState'] ?? '');
+            await prefs.setString('userPincode', data['userPincode'] ?? '');
+            await prefs.setString('userAddressType', data['userAddressType'] ?? 'Home');
+          }
+        } else {
+          // If not in Firestore, save basic details
+          await prefs.setString('userName', user.displayName ?? 'Google User');
+        }
+      } catch (e) {
+        debugPrint("Error fetching Google profile on login: $e");
+        await prefs.setString('userName', user.displayName ?? 'Google User');
+      }
+
       await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('userEmail', user.email ?? '');
-      await prefs.setString('userName', user.displayName ?? 'Google User');
+      await prefs.setString('userEmail', email);
       
       final savedAddress = prefs.getString('userAddress');
+      final savedName = prefs.getString('userName');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+        if ((savedName != null && savedName.isNotEmpty) || (savedAddress != null && savedAddress.trim().isNotEmpty)) {
           Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
         } else {
           Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);

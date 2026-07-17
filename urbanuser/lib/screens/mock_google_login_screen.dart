@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MockGoogleLoginScreen extends StatelessWidget {
   const MockGoogleLoginScreen({super.key});
@@ -16,18 +17,46 @@ class MockGoogleLoginScreen extends StatelessWidget {
     await Future.delayed(const Duration(seconds: 1)); // Simulate delay
     
     final prefs = await SharedPreferences.getInstance();
+    
+    // Check if user already exists in Firestore
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        await prefs.setString('userName', data['name'] ?? '');
+        await prefs.setString('userMobile', data['phone'] ?? '');
+        
+        if (data.containsKey('userAddress') && data['userAddress'] != null) {
+          await prefs.setString('userAddress', data['userAddress'] ?? '');
+          await prefs.setString('userAddressHouse', data['userAddressHouse'] ?? '');
+          await prefs.setString('userAddressBuilding', data['userAddressBuilding'] ?? '');
+          await prefs.setString('userAddressStreet', data['userAddressStreet'] ?? '');
+          await prefs.setString('userAddressLandmark', data['userAddressLandmark'] ?? '');
+          await prefs.setString('userCity', data['userCity'] ?? '');
+          await prefs.setString('userState', data['userState'] ?? '');
+          await prefs.setString('userPincode', data['userPincode'] ?? '');
+          await prefs.setString('userAddressType', data['userAddressType'] ?? 'Home');
+        }
+      } else {
+        await prefs.setString('userName', name);
+      }
+    } catch (e) {
+      debugPrint("Error fetching mock profile on login: $e");
+      await prefs.setString('userName', name);
+    }
+
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('userEmail', email);
-    await prefs.setString('userName', name);
     
     final savedAddress = prefs.getString('userAddress');
+    final savedName = prefs.getString('userName');
     
     if (context.mounted) {
       Navigator.pop(context); // hide loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Welcome, $name!'), backgroundColor: Colors.green),
       );
-      if (savedAddress != null && savedAddress.trim().isNotEmpty) {
+      if ((savedName != null && savedName.isNotEmpty) || (savedAddress != null && savedAddress.trim().isNotEmpty)) {
         Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);

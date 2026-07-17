@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../providers/vendor_provider.dart';
 import '../services/cloudinary_service.dart';
 
@@ -354,54 +357,139 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
   void _showRequestCategoryDialog(BuildContext context, VendorProvider provider) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
+    XFile? pickedImage;
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Request Category', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Category Name',
-                  hintText: 'e.g. Pet Grooming, Yoga Instructor',
+      barrierDismissible: false,
+      builder: (dContext) => StatefulBuilder(
+        builder: (sbContext, setStateSB) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text('Request Category', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 350,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      enabled: !isSubmitting,
+                      decoration: InputDecoration(
+                        labelText: 'Category Name',
+                        hintText: 'e.g. Pet Grooming, Yoga Instructor',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descController,
+                      enabled: !isSubmitting,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Description/Requirement',
+                        hintText: 'Tell us more about the services you want to offer...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: isSubmitting ? null : () async {
+                        final picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setStateSB(() => pickedImage = image);
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: pickedImage != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: kIsWeb 
+                                ? Image.network(pickedImage!.path, fit: BoxFit.cover)
+                                : Image.file(File(pickedImage!.path), fit: BoxFit.cover),
+                            )
+                          : const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate_outlined, color: Colors.blueGrey, size: 28),
+                                SizedBox(height: 8),
+                                Text('Upload Category Image', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                              ],
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Description/Requirement',
-                  hintText: 'Tell us more about the services you want to offer...',
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(dContext),
+                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting ? null : () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final navigator = Navigator.of(context);
+                  if (nameController.text.trim().isEmpty) {
+                    messenger.showSnackBar(const SnackBar(content: Text('Please enter a category name')));
+                    return;
+                  }
+
+                  try {
+                    setStateSB(() => isSubmitting = true);
+                    String? uploadedUrl;
+                    if (pickedImage != null) {
+                      if (kIsWeb) {
+                        uploadedUrl = await CloudinaryService.uploadImageBytes(
+                          bytes: await pickedImage!.readAsBytes(),
+                          fileName: pickedImage!.name,
+                          folder: 'category_requests',
+                        );
+                      } else {
+                        uploadedUrl = await CloudinaryService.uploadImage(
+                          filePath: pickedImage!.path,
+                          folder: 'category_requests',
+                        );
+                      }
+                    }
+
+                    await provider.requestNewCategory(
+                      nameController.text.trim(),
+                      descController.text.trim(),
+                      categoryImageUrl: uploadedUrl,
+                    );
+
+                    navigator.pop();
+                    messenger.showSnackBar(const SnackBar(content: Text('Request submitted successfully!')));
+                  } catch (e) {
+                    setStateSB(() => isSubmitting = false);
+                    messenger.showSnackBar(SnackBar(content: Text('Error submitting request: $e')));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B44D3),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                child: isSubmitting
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Submit Request'),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.trim().isNotEmpty) {
-                await provider.requestNewCategory(
-                  nameController.text.trim(),
-                  descController.text.trim(),
-                );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Request submitted successfully!')),
-                  );
-                }
-              }
-            },
-            child: const Text('Submit Request'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

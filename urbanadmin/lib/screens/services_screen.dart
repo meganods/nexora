@@ -726,12 +726,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         await admin.updateService(docId, data);
                       }
                      
-                     if (!mounted) return;
-                     navigator.pop();
-                     messenger.showSnackBar(const SnackBar(content: Text('Saved successfully')));
-                   } catch (e) {
-                     setStateSB(() => isSaving = false);
-                   }
+                      if (!mounted) return;
+                      navigator.pop();
+                      messenger.showSnackBar(const SnackBar(content: Text('Saved successfully')));
+                    } catch (e) {
+                      setStateSB(() => isSaving = false);
+                      if (mounted) {
+                        messenger.showSnackBar(SnackBar(content: Text('Error saving category: $e')));
+                      }
+                    }
                  },
                  style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4C1D95),

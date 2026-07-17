@@ -112,7 +112,7 @@ class VendorProvider with ChangeNotifier {
     return FirebaseFirestore.instance.collection('services').snapshots();
   }
 
-  Future<void> requestNewCategory(String categoryName, String description) async {
+  Future<void> requestNewCategory(String categoryName, String description, {String? categoryImageUrl}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -123,6 +123,7 @@ class VendorProvider with ChangeNotifier {
         'businessName': _vendorData?['businessName'] ?? 'No Business Name',
         'categoryName': categoryName,
         'description': description,
+        'categoryImageUrl': categoryImageUrl,
         'status': 'PENDING',
         'createdAt': FieldValue.serverTimestamp(),
       });

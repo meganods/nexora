@@ -640,8 +640,16 @@ class _AddServiceBottomSheet extends StatelessWidget {
                                   children: [
                                     Text(ss['title'] ?? '', 
                                       style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                                    Text('₹${ss['price'] ?? '0'}', 
-                                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.blueGrey)),
+                                    Builder(
+                                      builder: (context) {
+                                        final String rawPrice = ss['price']?.toString() ?? '0';
+                                        final String formattedPrice = rawPrice.startsWith('₹') ? rawPrice : '₹$rawPrice';
+                                        return Text(
+                                          formattedPrice, 
+                                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.blueGrey),
+                                        );
+                                      }
+                                    ),
                                   ],
                                 ),
                               ),

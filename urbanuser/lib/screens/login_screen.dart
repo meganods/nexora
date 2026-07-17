@@ -37,6 +37,19 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final prefs = await SharedPreferences.getInstance();
     
+    // Clear old user details from cache to prevent mixing user sessions
+    await prefs.remove('userName');
+    await prefs.remove('userMobile');
+    await prefs.remove('userAddress');
+    await prefs.remove('userAddressHouse');
+    await prefs.remove('userAddressBuilding');
+    await prefs.remove('userAddressStreet');
+    await prefs.remove('userAddressLandmark');
+    await prefs.remove('userCity');
+    await prefs.remove('userState');
+    await prefs.remove('userPincode');
+    await prefs.remove('userAddressType');
+
     // Check if user already exists in Firestore
     try {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(email).get();
@@ -45,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('userName', data['name'] ?? '');
         await prefs.setString('userMobile', data['phone'] ?? '');
         
-        if (data.containsKey('userAddress') && data['userAddress'] != null) {
+        if (data.containsKey('userAddress') && data['userAddress'] != null && data['userAddress'].toString().trim().isNotEmpty) {
           await prefs.setString('userAddress', data['userAddress'] ?? '');
           await prefs.setString('userAddressHouse', data['userAddressHouse'] ?? '');
           await prefs.setString('userAddressBuilding', data['userAddressBuilding'] ?? '');
@@ -65,11 +78,10 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setString('userEmail', email);
     
     final savedAddress = prefs.getString('userAddress');
-    final savedName = prefs.getString('userName');
     
     if (mounted) {
-      // If user already created the account (profile exists with a name), go directly to home dashboard
-      if ((savedName != null && savedName.isNotEmpty) || (savedAddress != null && savedAddress.trim().isNotEmpty)) {
+      // Direct to dashboard ONLY if the user has already filled out their address details
+      if (savedAddress != null && savedAddress.trim().isNotEmpty) {
         Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);
@@ -105,6 +117,20 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user == null) return;
       
       final prefs = await SharedPreferences.getInstance();
+      
+      // Clear old user details from cache to prevent mixing user sessions
+      await prefs.remove('userName');
+      await prefs.remove('userMobile');
+      await prefs.remove('userAddress');
+      await prefs.remove('userAddressHouse');
+      await prefs.remove('userAddressBuilding');
+      await prefs.remove('userAddressStreet');
+      await prefs.remove('userAddressLandmark');
+      await prefs.remove('userCity');
+      await prefs.remove('userState');
+      await prefs.remove('userPincode');
+      await prefs.remove('userAddressType');
+
       final email = user.email ?? '';
       
       // Check if user already exists in Firestore
@@ -115,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await prefs.setString('userName', data['name'] ?? '');
           await prefs.setString('userMobile', data['phone'] ?? '');
           
-          if (data.containsKey('userAddress') && data['userAddress'] != null) {
+          if (data.containsKey('userAddress') && data['userAddress'] != null && data['userAddress'].toString().trim().isNotEmpty) {
             await prefs.setString('userAddress', data['userAddress'] ?? '');
             await prefs.setString('userAddressHouse', data['userAddressHouse'] ?? '');
             await prefs.setString('userAddressBuilding', data['userAddressBuilding'] ?? '');
@@ -139,7 +165,6 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('userEmail', email);
       
       final savedAddress = prefs.getString('userAddress');
-      final savedName = prefs.getString('userName');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        if ((savedName != null && savedName.isNotEmpty) || (savedAddress != null && savedAddress.trim().isNotEmpty)) {
+        if (savedAddress != null && savedAddress.trim().isNotEmpty) {
           Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
         } else {
           Navigator.pushNamedAndRemoveUntil(context, '/address_setup', (route) => false);

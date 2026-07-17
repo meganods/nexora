@@ -31,9 +31,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              try {
+                await FirebaseAuth.instance.signOut();
+              } catch (_) {}
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),

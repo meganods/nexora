@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -12,6 +14,24 @@ class BookingDetailScreen extends StatefulWidget {
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   bool _isCancelled = false;
+  String _address = "Indirapuram, Ghaziabad";
+
+  @override
+  void initState() {
+    super.initState();
+    _isCancelled = widget.booking['status'] == 'CANCELLED';
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedAddress = prefs.getString('userAddress') ?? prefs.getString('userAddressStreet') ?? '';
+    if (savedAddress.isNotEmpty) {
+      setState(() {
+        _address = savedAddress;
+      });
+    }
+  }
 
   void _confirmCancellation() {
     showDialog(
@@ -23,11 +43,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text("NO", style: GoogleFonts.outfit(color: Colors.grey, fontWeight: FontWeight.bold))),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() => _isCancelled = true);
-              final messenger = ScaffoldMessenger.of(context);
-              Navigator.pop(context);
-              messenger.showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
+              final String bookingId = widget.booking['id'] ?? '';
+              if (bookingId.isNotEmpty) {
+                try {
+                  await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+                    'status': 'CANCELLED',
+                  });
+                } catch (e) {
+                  debugPrint("Error cancelling booking in database: $e");
+                }
+              }
+              if (mounted) {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(context);
+                messenger.showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
+              }
             },
             child: Text("YES, CANCEL", style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
@@ -117,13 +149,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         children: [
           Icon(_isCancelled ? Icons.cancel : Icons.calendar_today, color: _isCancelled ? Colors.red : Colors.blue, size: 20),
           const SizedBox(width: 12),
-          Text(_isCancelled ? "Booking Cancelled" : "Scheduled For Mon, Oct 12", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: _isCancelled ? Colors.red : Colors.blue)),
+          Text(_isCancelled ? "Booking Cancelled" : "Scheduled For ${widget.booking['date'] ?? 'Mon, Oct 12'}", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: _isCancelled ? Colors.red : Colors.blue)),
         ],
       ),
     );
   }
 
   Widget _buildServiceImage() {
+    final services = widget.booking['services'] as List<dynamic>? ?? [];
+    final firstImg = services.isNotEmpty && services[0]['img'] != null ? services[0]['img'] : 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300&auto=format&fit=crop';
     return Center(
       child: Container(
         margin: const EdgeInsets.all(20),
@@ -132,8 +166,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(25),
-          image: const DecorationImage(
-            image: AssetImage("assets/images/banner1.png"),
+          image: DecorationImage(
+            image: firstImg.toString().startsWith("assets") 
+                ? AssetImage(firstImg) as ImageProvider 
+                : NetworkImage(firstImg),
             fit: BoxFit.cover,
           ),
         ),
@@ -147,9 +183,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Urban Barber Shop", style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
+          Text(widget.booking['shopName'] ?? "Urban Barber Shop", style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
           const SizedBox(height: 8),
-          Text("Ref ID: #UC-882201", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+          Text("Ref ID: #${widget.booking['id'] ?? 'UC-882201'}", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
           const SizedBox(height: 20),
         ],
       ),
@@ -157,12 +193,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildItemizedServices() {
-    final services = [
-      {"name": "Standard Haircut", "price": "₹499", "img": "assets/images/banner1.png"},
-      {"name": "Beard Grooming", "price": "₹299", "img": "assets/images/house_cleaning_demo_1774854111518.png"},
-      {"name": "Face Massage", "price": "₹599", "img": "assets/images/kitchen_cleaning_demo_1774854091381.png"},
-      {"name": "L'Oreal Spa", "price": "₹1,299", "img": "assets/images/car_wash_banner_illustration_1774854072344.png"},
-    ];
+    final List<dynamic> services = widget.booking['services'] as List<dynamic>? ?? [];
     return Padding(
       padding: const EdgeInsets.all(25.0),
       child: Column(
@@ -170,25 +201,51 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         children: [
           Text("Services Booked", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 20),
-          ...services.map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: Row(
-                  children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(s["img"]!, width: 50, height: 50, fit: BoxFit.cover)),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(s["name"]!, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text("Includes preparation & post-service cleanup", style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-                        ],
-                      ),
+          if (services.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network("https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop", width: 50, height: 50, fit: BoxFit.cover)),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.booking['shopName'] ?? "Urban Service", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text("Includes preparation & post-service cleanup", style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                      ],
                     ),
-                    Text(s["price"]!, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
-                  ],
-                ),
-              )),
+                  ),
+                  Text(widget.booking['price'] ?? "₹1,299", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
+                ],
+              ),
+            )
+          else
+            ...services.map((s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10), 
+                        child: s["img"].toString().startsWith("assets") 
+                            ? Image.asset(s["img"]!, width: 50, height: 50, fit: BoxFit.cover) 
+                            : Image.network(s["img"]!, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c, e, st) => Container(width: 50, height: 50, color: Colors.grey[200], child: const Icon(Icons.cleaning_services, color: Colors.grey))),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s["name"] ?? 'Service Item', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text("Includes preparation & post-service cleanup", style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                      Text(s["price"].toString().startsWith("₹") ? s["price"].toString() : "₹${s["price"]}", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.accentColor)),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
@@ -199,9 +256,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       padding: const EdgeInsets.all(25),
       child: Row(
         children: [
-          _buildInfoItem(Icons.calendar_month_outlined, "Date", "Mon, Oct 12"),
+          _buildInfoItem(Icons.calendar_month_outlined, "Date", widget.booking['date'] ?? "Mon, Oct 12"),
           const Spacer(),
-          _buildInfoItem(Icons.access_time_outlined, "Time", "10:00 AM"),
+          _buildInfoItem(Icons.access_time_outlined, "Time", widget.booking['time'] ?? "10:00 AM"),
         ],
       ),
     );
@@ -210,11 +267,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildLocationInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: _buildInfoItem(Icons.location_on_outlined, "Location", "1749 Chaudhray Dhaba Delhi, Indirapuram"),
+      child: _buildInfoItem(Icons.location_on_outlined, "Location", _address),
     );
   }
 
   Widget _buildPricingSection() {
+    final String totalPaid = widget.booking['price'] ?? '₹1,299';
     return Padding(
       padding: const EdgeInsets.all(25.0),
       child: Column(
@@ -222,15 +280,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         children: [
           Text("Billing Summary", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 20),
-          _priceRow("Item Total", "₹2,696"),
-          _priceRow("Taxes", "₹22"),
-          _priceRow("Service Fee", "₹49"),
+          _priceRow("Grand Total", totalPaid),
           const Divider(height: 40),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total Paid", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text("₹2,767", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+              Text(totalPaid, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
             ],
           ),
         ],

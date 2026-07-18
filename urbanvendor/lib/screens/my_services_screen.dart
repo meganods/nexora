@@ -17,6 +17,14 @@ class MyServicesScreen extends StatefulWidget {
 }
 
 class _MyServicesScreenState extends State<MyServicesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<VendorProvider>(context, listen: false).fetchVendorData();
+    });
+  }
+
   void _showAddServiceSheet(BuildContext context, VendorProvider provider) {
     showModalBottomSheet(
       context: context,
@@ -244,7 +252,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 ),
               ),
             ),
-            // Request New Category Section
+            // Request New Service Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -256,12 +264,12 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
               child: Column(
                 children: [
                   Text(
-                    "Can't find your category?",
+                    "Can't find your service?",
                     style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Request a new category or service type to be added to the platform.",
+                    "Request a new service to be added to the platform.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(fontSize: 12, color: Colors.blueGrey[600]),
                   ),
@@ -277,7 +285,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                       ),
                     ),
                     child: Text(
-                      'Request New Category',
+                      'Request New Service',
                       style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF4A55ED)),
                     ),
                   ),
@@ -368,7 +376,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           return AlertDialog(
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text('Request Category', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            title: Text('Request Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
               child: SizedBox(
                 width: 350,
@@ -379,7 +387,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                       controller: nameController,
                       enabled: !isSubmitting,
                       decoration: InputDecoration(
-                        labelText: 'Category Name',
+                        labelText: 'Service Name',
                         hintText: 'e.g. Pet Grooming, Yoga Instructor',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -424,7 +432,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                               children: [
                                 Icon(Icons.add_photo_alternate_outlined, color: Colors.blueGrey, size: 28),
                                 SizedBox(height: 8),
-                                Text('Upload Category Image', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                                Text('Upload Service Image', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
                               ],
                             ),
                       ),
@@ -443,7 +451,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                   final messenger = ScaffoldMessenger.of(context);
                   final navigator = Navigator.of(context);
                   if (nameController.text.trim().isEmpty) {
-                    messenger.showSnackBar(const SnackBar(content: Text('Please enter a category name')));
+                    messenger.showSnackBar(const SnackBar(content: Text('Please enter a service name')));
                     return;
                   }
 

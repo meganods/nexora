@@ -49,7 +49,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               if (bookingId.isNotEmpty) {
                 try {
                   await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-                    'status': 'CANCELLED',
+                    'status': 'cancelled',
                   });
                 } catch (e) {
                   debugPrint("Error cancelling booking in database: $e");

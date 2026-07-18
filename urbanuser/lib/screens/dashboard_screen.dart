@@ -557,10 +557,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         for (var doc in snapshot.data!.docs) {
           final data = doc.data() as Map<String, dynamic>;
           final list = List.from(data['subServices'] ?? []);
+          final catImg = data['imageUrl'] ?? data['categoryImageUrl'];
           for (var ss in list) {
             subServices.add({
               ...ss,
               'categoryName': data['categoryName'] ?? data['title'],
+              'categoryImageUrl': catImg,
             });
           }
         }
@@ -577,6 +579,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemCount: subServices.length,
             itemBuilder: (context, index) {
               final item = subServices[index];
+              final fallbackImage = item['categoryImageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80';
               final serviceModel = ServiceModel(
                 id: item['id'] ?? '',
                 title: item['title'] ?? '',
@@ -587,8 +590,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 rating: 4.8,
                 totalReviews: 12,
                 vendorName: 'Certified Expert',
-                image: item['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80',
-                images: [item['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80'],
+                image: item['imageUrl'] ?? fallbackImage,
+                images: [item['imageUrl'] ?? fallbackImage],
                 shortDescription: item['description'] ?? item['desc'] ?? '',
                 description: item['description'] ?? item['desc'] ?? '',
                 longDescription: item['description'] ?? item['desc'] ?? '',

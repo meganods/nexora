@@ -18,6 +18,8 @@ class ServiceModel {
   final String location;
   final List<String> tags;
 
+  final String? vendorId;
+
   ServiceModel({
     required this.id,
     required this.title,
@@ -37,6 +39,7 @@ class ServiceModel {
     required this.isAvailable,
     required this.location,
     required this.tags,
+    this.vendorId,
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +61,7 @@ class ServiceModel {
       duration: json['duration'] ?? '',
       isAvailable: json['isAvailable'] ?? true,
       location: json['location'] ?? '',
+      vendorId: json['vendorId'],
       tags: List<String>.from(json['tags'] ?? []),
     );
   }

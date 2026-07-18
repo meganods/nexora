@@ -320,6 +320,7 @@ class ServiceDetailScreen extends StatelessWidget {
                         "name": service.vendorName,
                         "img": service.image,
                         "rating": service.rating.toString(),
+                        "vendorId": service.vendorId,
                       },
                       cartCount: 1,
                       totalPrice: parsedPrice,

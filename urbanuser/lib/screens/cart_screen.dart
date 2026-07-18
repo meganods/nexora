@@ -1187,6 +1187,7 @@ class _CartScreenState extends State<CartScreen> {
                     date: "${_days[_selectedDayIndex]}, ${_dates[_selectedDayIndex]}",
                     time: _selectedTimeSlot,
                     selectedItems: _selectedItems,
+                    vendorId: widget.shop["vendorId"] as String?,
                   ),
                 ),
               ),

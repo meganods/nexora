@@ -77,6 +77,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   isAvailable: true,
                   location: 'Local',
                   tags: const [],
+                  vendorId: vendorDoc.id,
                 ),
               );
             }

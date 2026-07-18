@@ -86,6 +86,7 @@ class ServiceModel {
       duration: data['duration'] ?? '',
       isAvailable: data['isAvailable'] ?? true,
       location: data['location'] ?? '',
+      vendorId: data['vendorId'],
       tags: List<String>.from(data['tags'] ?? []),
     );
   }

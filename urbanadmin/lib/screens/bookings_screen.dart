@@ -438,175 +438,229 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   ],
                 ),
               ),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _bookings.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                itemBuilder: (context, index) {
-                  final b = _bookings[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 20,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            b['id'],
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4C1D95),
-                            ),
-                          ),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('bookings').orderBy('createdAt', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(child: Text('Error: ${snapshot.error}')),
+                    );
+                  }
+                  final docs = snapshot.data?.docs ?? [];
+                  if (docs.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Text(
+                          'No bookings found in database.',
+                          style: GoogleFonts.poppins(color: Colors.grey, fontSize: 16),
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: b['customerColor'],
-                                child: Text(
-                                  b['customerInitials'],
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: b['customerTextColor'],
-                                  ),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: docs.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final String id = data['id'] ?? doc.id;
+                      final String userEmail = data['userEmail'] ?? 'User';
+                      final String customerName = userEmail.split('@')[0];
+                      final String initials = customerName.isNotEmpty ? customerName.substring(0, 2).toUpperCase() : 'US';
+                      final String status = data['status'] ?? 'UPCOMING';
+                      Color statusColor = const Color(0xFF8B5CF6); // Pending
+                      if (status == 'COMPLETED') {
+                        statusColor = const Color(0xFF10B981);
+                      } else if (status == 'CANCELLED') {
+                        statusColor = const Color(0xFFEF4444);
+                      }
+
+                      final b = {
+                        'id': id,
+                        'customerInitials': initials,
+                        'customerName': customerName.replaceAll('\n', ' '),
+                        'customerColor': const Color(0xFFDBEAFE),
+                        'customerTextColor': const Color(0xFF1D4ED8),
+                        'vendor': data['shopName'] ?? 'Urban Service Pro',
+                        'services': [data['time'] ?? '10:00 AM'],
+                        'status': status,
+                        'statusColor': statusColor,
+                        'date': data['date'] ?? 'Today',
+                      };
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 20,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                b['id'] as String,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF4C1D95),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  b['customerName'],
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            b['vendor'],
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.blueGrey[700],
-                              fontWeight: FontWeight.w500,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            children: (b['services'] as List<String>)
-                                .map(
-                                  (s) => Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE2E8F0),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: b['customerColor'] as Color,
                                     child: Text(
-                                      s,
+                                      b['customerInitials'] as String,
                                       style: GoogleFonts.poppins(
-                                        fontSize: 9,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.blueGrey[700],
-                                        letterSpacing: 0.5,
+                                        color: b['customerTextColor'] as Color,
                                       ),
                                     ),
                                   ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: (b['statusColor'] as Color).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: b['statusColor'],
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    b['status'],
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: b['statusColor'],
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      b['customerName'] as String,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF1E293B),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            b['date'],
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.blueGrey[600],
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                LucideIcons.moreHorizontal,
-                                color: Colors.blueGrey,
-                                size: 18,
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                b['vendor'] as String,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF334155),
+                                ),
                               ),
                             ),
-                          ),
+                            Expanded(
+                              flex: 3,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: (b['services'] as List<String>)
+                                      .map(
+                                        (s) => Container(
+                                          margin: const EdgeInsets.only(right: 6),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            s,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blueGrey[700],
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (b['statusColor'] as Color).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: b['statusColor'] as Color,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        b['status'] as String,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: b['statusColor'] as Color,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                b['date'] as String,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.blueGrey[600],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.moreHorizontal,
+                                    color: Colors.blueGrey,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),

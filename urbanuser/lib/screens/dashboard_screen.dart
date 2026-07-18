@@ -28,7 +28,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _bannerController = PageController(initialPage: 0);
+  final PageController _bannerController = PageController(initialPage: 300);
   int _currentBannerIndex = 0;
   String _userAddress = "4517 Washington Ave";
   Timer? _bannerTimer;
@@ -44,9 +44,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _bannerTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_bannerController.hasClients) {
         int nextPage = _bannerController.page!.round() + 1;
-        if (nextPage >= _banners.length) {
-          nextPage = 0;
-        }
         _bannerController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 600),
@@ -240,12 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             controller: _bannerController,
             onPageChanged: (index) {
               setState(() {
-                _currentBannerIndex = index;
+                _currentBannerIndex = index % _banners.length;
               });
             },
-            itemCount: _banners.length,
+            itemCount: 10000,
             itemBuilder: (context, index) {
-              final banner = _banners[index];
+              final banner = _banners[index % _banners.length];
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 clipBehavior: Clip.antiAlias,

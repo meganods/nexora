@@ -22,7 +22,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<VendorProvider>(context, listen: false).fetchVendorData();
+      Provider.of<VendorProvider>(context, listen: false).fetchVendorDataRealtime();
     });
   }
 

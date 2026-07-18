@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 class VendorProvider with ChangeNotifier {
   Map<String, dynamic>? _vendorData;
   String? _vendorDocId;
   bool _isLoading = false;
+  StreamSubscription? _vendorSubscription;
 
   Map<String, dynamic>? get vendorData => _vendorData;
   String? get vendorDocId => _vendorDocId;
@@ -165,5 +167,42 @@ class VendorProvider with ChangeNotifier {
       'rating': double.parse(avgRating.toStringAsFixed(1)),
       'reviewsCount': reviews.docs.length,
     });
+  }
+
+  void fetchVendorDataRealtime() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _vendorSubscription?.cancel();
+    
+    _vendorSubscription = FirebaseFirestore.instance.collection('vendors').doc(user.uid).snapshots().listen((doc) {
+      if (doc.exists) {
+        _vendorData = doc.data();
+        _vendorDocId = doc.id;
+        notifyListeners();
+      } else {
+        FirebaseFirestore.instance
+            .collection('vendors')
+            .where(Filter.or(
+              Filter('uid', isEqualTo: user.uid),
+              Filter('email', isEqualTo: user.email ?? ''),
+            ))
+            .snapshots()
+            .listen((query) {
+              if (query.docs.isNotEmpty) {
+                final resolvedDoc = query.docs.first;
+                _vendorData = resolvedDoc.data();
+                _vendorDocId = resolvedDoc.id;
+                notifyListeners();
+              }
+            });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _vendorSubscription?.cancel();
+    super.dispose();
   }
 }

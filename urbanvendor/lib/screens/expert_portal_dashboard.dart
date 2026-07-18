@@ -54,6 +54,19 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
     final vendorProvider = Provider.of<VendorProvider>(context);
     final vendor = vendorProvider.vendorData;
 
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args.containsKey('initialTab')) {
+      final targetTab = args['initialTab'] as int;
+      // Only set if different to prevent resetting tab switch within dashboard
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _currentTab != targetTab) {
+          setState(() {
+            _currentTab = targetTab;
+          });
+        }
+      });
+    }
+
     if (vendorProvider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

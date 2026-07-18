@@ -305,7 +305,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             }),
             _buildBottomNavIcon(Icons.layers, 'Services', true, () {}),
             _buildBottomNavIcon(Icons.calendar_month_outlined, 'Bookings', false, () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookings coming soon')));
+              Navigator.pushReplacementNamed(context, '/expert_dashboard', arguments: {'initialTab': 1});
             }),
             _buildBottomNavIcon(Icons.person_outline, 'Account', false, () {
               Navigator.pushReplacementNamed(context, '/partner_profile');

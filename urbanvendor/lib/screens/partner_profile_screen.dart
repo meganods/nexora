@@ -72,9 +72,9 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
             _buildBottomNavIcon(Icons.layers_outlined, 'Services', false, () {
               Navigator.pushReplacementNamed(context, '/my_services');
             }),
-            _buildBottomNavIcon(Icons.calendar_month_outlined, 'Bookings', false, () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookings coming soon')));
-            }),
+             _buildBottomNavIcon(Icons.calendar_month_outlined, 'Bookings', false, () {
+               Navigator.pushReplacementNamed(context, '/expert_dashboard', arguments: {'initialTab': 1});
+             }),
             _buildBottomNavIcon(Icons.person_rounded, 'Account', true, () {}),
           ],
         ),

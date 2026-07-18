@@ -163,6 +163,16 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                                       ),
                                     ),
                                     IconButton(
+                                      icon: const Icon(Icons.edit_outlined, color: Color(0xFF4A55ED), size: 18),
+                                      onPressed: () {
+                                        _showEditSubServiceInput(dContext, ss, (editedSvc) {
+                                          setStateSB(() {
+                                            subServices[idx] = editedSvc;
+                                          });
+                                        });
+                                      },
+                                    ),
+                                    IconButton(
                                       icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
                                       onPressed: () {
                                         setStateSB(() {
@@ -581,6 +591,110 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditSubServiceInput(BuildContext context, Map<String, dynamic> existingSvc, Function(Map<String, dynamic>) onEdited) {
+    final formKey = GlobalKey<FormState>();
+    final titleC = TextEditingController(text: existingSvc['title']);
+    final descC = TextEditingController(text: existingSvc['description']);
+    final priceC = TextEditingController(text: existingSvc['price']);
+    final durationC = TextEditingController(text: existingSvc['duration']);
+
+    showDialog(
+      context: context,
+      builder: (dContext2) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Edit Sub-Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: SizedBox(
+          width: 320,
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleC,
+                  decoration: InputDecoration(
+                    labelText: 'Sub Service name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descC,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'description',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: priceC,
+                        decoration: InputDecoration(
+                          labelText: 'price',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty || v.trim() == '₹') {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: durationC,
+                        decoration: InputDecoration(
+                          labelText: 'Duration',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dContext2),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                onEdited({
+                  ...existingSvc,
+                  'title': titleC.text.trim(),
+                  'description': descC.text.trim(),
+                  'price': priceC.text.trim(),
+                  'duration': durationC.text.trim(),
+                });
+                Navigator.pop(dContext2);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4A55ED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Save', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

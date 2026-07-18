@@ -142,7 +142,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(15),
                         child: Image.network(
-                          data['imageUrl'] ?? data['image'] ?? "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop",
+                          _getServiceImageUrl(shopName, data['imageUrl'] ?? data['image']),
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
@@ -345,4 +345,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
+  String _getServiceImageUrl(String shopName, String? dbImageUrl) {
+    if (dbImageUrl != null && dbImageUrl.startsWith('http')) {
+      return dbImageUrl;
+    }
+    final name = shopName.toLowerCase();
+    if (name.contains('meganods')) {
+      return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?q=80&w=120'; // AC/Salon fallback
+    } else if (name.contains('welder') || name.contains('welding')) {
+      return 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=120';
+    } else if (name.contains('ac') || name.contains('air conditioning')) {
+      return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?q=80&w=120';
+    } else if (name.contains('garden') || name.contains('lawn')) {
+      return 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=120';
+    } else if (name.contains('contactor') || name.contains('renovation') || name.contains('civil')) {
+      return 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=120';
+    } else if (name.contains('deep') || name.contains('clean')) {
+      return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120';
+    }
+    return 'https://images.unsplash.com/photo-1521791136368-1a8682707636?q=80&w=120';
+  }
 }

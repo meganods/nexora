@@ -784,6 +784,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   void _showSubServiceDialog(BuildContext context, String categoryId, List currentSubServices, {Map<String, dynamic>? existingSubService}) {
+    final formKey = GlobalKey<FormState>();
     final titleC = TextEditingController(text: existingSubService?['title']);
     final descC = TextEditingController(text: existingSubService?['desc']);
     final priceC = TextEditingController(text: existingSubService?['price'] ?? '\$');
@@ -804,66 +805,93 @@ class _ServicesScreenState extends State<ServicesScreen> {
             title: Text(existingSubService == null ? 'New Sub-Service' : 'Edit Sub-Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: SizedBox(
                width: 400,
-               child: Column(
-                 mainAxisSize: MainAxisSize.min,
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                    TextField(
-                      controller: titleC,
-                      enabled: !isSaving,
-                      decoration: InputDecoration(labelText: 'Service Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: descC,
-                      enabled: !isSaving,
-                      decoration: InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: TextField(controller: priceC, enabled: !isSaving, decoration: InputDecoration(labelText: 'Price', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))))),
-                        const SizedBox(width: 12),
-                        Expanded(child: TextField(controller: durationC, enabled: !isSaving, decoration: InputDecoration(labelText: 'Duration', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))))),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: status,
-                      decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                      items: const [
-                        DropdownMenuItem(value: 'Enabled', child: Text('Enabled')),
-                        DropdownMenuItem(value: 'Paused', child: Text('Paused')),
-                      ],
-                      onChanged: isSaving ? null : (v) => setStateSB(() => status = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: isSaving ? null : () async {
-                        final picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) {
-                          setStateSB(() => pickedImage = image);
-                        }
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+               child: Form(
+                 key: formKey,
+                 child: SingleChildScrollView(
+                   child: Column(
+                     mainAxisSize: MainAxisSize.min,
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                        TextFormField(
+                          controller: titleC,
+                          enabled: !isSaving,
+                          decoration: InputDecoration(labelText: 'Service Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Service name is required' : null,
                         ),
-                        child: pickedImage != null
-                          ? kIsWeb 
-                             ? Image.network(pickedImage!.path, fit: BoxFit.cover)
-                             : Image.file(File(pickedImage!.path), fit: BoxFit.cover)
-                          : imageUrl != null
-                            ? Image.network(imageUrl, fit: BoxFit.cover)
-                            : const Center(child: Text('Pick Image')),
-                      ),
-                    ),
-                 ],
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: descC,
+                          enabled: !isSaving,
+                          decoration: InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: priceC,
+                                enabled: !isSaving,
+                                decoration: InputDecoration(labelText: 'Price', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty || v.trim() == '\$' || v.trim() == '₹' || v.trim() == '₹ ') {
+                                    return 'Price is required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: durationC,
+                                enabled: !isSaving,
+                                decoration: InputDecoration(labelText: 'Duration', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Duration is required' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: status,
+                          decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          items: const [
+                            DropdownMenuItem(value: 'Enabled', child: Text('Enabled')),
+                            DropdownMenuItem(value: 'Paused', child: Text('Paused')),
+                          ],
+                          onChanged: isSaving ? null : (v) => setStateSB(() => status = v!),
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: isSaving ? null : () async {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              setStateSB(() => pickedImage = image);
+                            }
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: pickedImage != null
+                              ? kIsWeb 
+                                 ? Image.network(pickedImage!.path, fit: BoxFit.cover)
+                                 : Image.file(File(pickedImage!.path), fit: BoxFit.cover)
+                              : imageUrl != null
+                                ? Image.network(imageUrl, fit: BoxFit.cover)
+                                : const Center(child: Text('Pick Image')),
+                          ),
+                        ),
+                     ],
+                   ),
+                 ),
                ),
             ),
             actions: [
@@ -876,23 +904,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                    final messenger = ScaffoldMessenger.of(dContext);
                    final navigator = Navigator.of(dContext);
                    final admin = Provider.of<AdminProvider>(dContext, listen: false);
-                    if (titleC.text.trim().isEmpty) {
-                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a service name')));
-                       return;
-                    }
-                    if (descC.text.trim().isEmpty) {
-                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a description')));
-                       return;
-                    }
-                    final priceStr = priceC.text.trim();
-                    if (priceStr.isEmpty || priceStr == '\$' || priceStr == '₹' || priceStr == '₹ ') {
-                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a valid price')));
-                       return;
-                    }
-                    if (durationC.text.trim().isEmpty) {
-                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a duration')));
-                       return;
-                    }
+                   if (!formKey.currentState!.validate()) return;
 
                    try {
                      setStateSB(() => isSaving = true);

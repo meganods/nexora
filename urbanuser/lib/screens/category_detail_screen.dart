@@ -31,13 +31,11 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   Future<List<ServiceModel>> _fetchVendorServices() async {
     List<ServiceModel> combinedServices = [];
     try {
-      // 1. Fetch all global services for this category
+      // 1. Fetch all category documents for this categoryName
       final servicesSnapshot = await FirebaseFirestore.instance
           .collection('services')
           .where('categoryName', isEqualTo: widget.categoryName)
           .get();
-
-      if (servicesSnapshot.docs.isEmpty) return DummyData.getByCategory(widget.categoryName);
 
       // 2. Fetch all approved vendors
       final vendorsSnapshot = await FirebaseFirestore.instance
@@ -45,38 +43,43 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           .where('status', isEqualTo: 'APPROVED')
           .get();
 
-      // 3. Cross-reference
-      for (var vendorDoc in vendorsSnapshot.docs) {
-        final vendorData = vendorDoc.data();
-        final enabledServices = vendorData['enabledServices'] as List<dynamic>? ?? [];
+      // 3. Cross-reference subServices with approved vendors
+      for (var serviceDoc in servicesSnapshot.docs) {
+        final serviceData = serviceDoc.data();
+        final subServicesList = List.from(serviceData['subServices'] ?? []);
 
-        for (var serviceDoc in servicesSnapshot.docs) {
-          if (enabledServices.contains(serviceDoc.id)) {
-            final serviceData = serviceDoc.data();
-            final fallbackImg = DummyData.allServices.first.image;
-            
-            combinedServices.add(
-              ServiceModel(
-                id: serviceDoc.id,
-                title: (serviceData['title'] as String?) ?? '',
-                category: (serviceData['categoryName'] as String?) ?? widget.categoryName,
-                subCategory: 'Certified',
-                price: serviceData['price'] != null ? '₹${serviceData['price']}' : '₹0',
-                discountPercent: 0,
-                rating: (vendorData['rating'] as num?)?.toDouble() ?? 4.5,
-                totalReviews: (vendorData['reviewsCount'] as num?)?.toInt() ?? 0,
-                vendorName: (vendorData['brandName'] as String?) ?? (vendorData['businessName'] as String?) ?? 'Vendor',
-                image: (serviceData['imageUrl'] as String?) ?? fallbackImg,
-                images: <String>[(serviceData['imageUrl'] as String?) ?? fallbackImg],
-                shortDescription: (serviceData['description'] as String?) ?? '',
-                description: (serviceData['description'] as String?) ?? '',
-                longDescription: (serviceData['description'] as String?) ?? '',
-                duration: (serviceData['duration'] as String?) ?? '1 hour',
-                isAvailable: true,
-                location: 'Local',
-                tags: const [],
-              ),
-            );
+        for (var ss in subServicesList) {
+          final subServiceId = ss['id'] ?? '';
+
+          for (var vendorDoc in vendorsSnapshot.docs) {
+            final vendorData = vendorDoc.data();
+            final enabledServices = vendorData['enabledServices'] as List<dynamic>? ?? [];
+
+            if (enabledServices.contains(subServiceId)) {
+              final fallbackImg = serviceData['imageUrl'] ?? serviceData['categoryImageUrl'] ?? DummyData.allServices.first.image;
+              combinedServices.add(
+                ServiceModel(
+                  id: subServiceId,
+                  title: (ss['title'] as String?) ?? '',
+                  category: widget.categoryName,
+                  subCategory: 'Certified',
+                  price: ss['price'] != null ? (ss['price'].toString().startsWith('₹') ? ss['price'].toString() : '₹${ss['price']}') : '₹0',
+                  discountPercent: 0,
+                  rating: (vendorData['rating'] as num?)?.toDouble() ?? 4.8,
+                  totalReviews: (vendorData['reviewsCount'] as num?)?.toInt() ?? 15,
+                  vendorName: (vendorData['brandName'] as String?) ?? (vendorData['businessName'] as String?) ?? 'Certified Expert',
+                  image: ss['imageUrl'] ?? fallbackImg,
+                  images: <String>[ss['imageUrl'] ?? fallbackImg],
+                  shortDescription: (ss['description'] as String?) ?? (ss['desc'] as String?) ?? '',
+                  description: (ss['description'] as String?) ?? (ss['desc'] as String?) ?? '',
+                  longDescription: (ss['description'] as String?) ?? (ss['desc'] as String?) ?? '',
+                  duration: (ss['duration'] as String?) ?? '45 Mins',
+                  isAvailable: true,
+                  location: 'Local',
+                  tags: const [],
+                ),
+              );
+            }
           }
         }
       }

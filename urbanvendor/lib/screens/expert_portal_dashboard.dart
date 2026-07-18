@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/vendor_provider.dart';
 import '../services/cloudinary_service.dart';
@@ -242,20 +243,54 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
   }
 
   Widget _buildStatsGrid(Map<String, dynamic>? vendor) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          _buildStatCard('Earnings', '₹12,450', Icons.account_balance_wallet_rounded, [const Color(0xFF6366F1), const Color(0xFF4F46E5)]),
-          const SizedBox(width: 12),
-          _buildStatCard('Bookings', '28', Icons.calendar_today_rounded, [const Color(0xFFF59E0B), const Color(0xFFD97706)]),
-          const SizedBox(width: 12),
-          _buildStatCard('Pending', '03', Icons.pending_actions_rounded, [const Color(0xFFEC4899), const Color(0xFFDB2777)]),
-          const SizedBox(width: 12),
-          _buildStatCard('Profile Views', '1.2k', Icons.visibility_rounded, [const Color(0xFF10B981), const Color(0xFF059669)]),
-        ],
-      ),
+    final user = FirebaseAuth.instance.currentUser;
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('bookings').where('vendorId', isEqualTo: user?.uid).snapshots(),
+      builder: (context, snapshot) {
+        int totalBookings = 0;
+        int pendingBookings = 0;
+        double earnings = 0.0;
+
+        if (snapshot.hasData) {
+          final docs = snapshot.data!.docs;
+          totalBookings = docs.length;
+          for (var doc in docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = data['status'] ?? 'UPCOMING';
+            if (status == 'UPCOMING') {
+              pendingBookings++;
+            }
+            if (status == 'COMPLETED') {
+              final rawPrice = data['price']?.toString() ?? '0';
+              final double p = double.tryParse(rawPrice.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+              earnings += p;
+            }
+          }
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildStatCard('Earnings', '₹${earnings.toStringAsFixed(0)}', Icons.account_balance_wallet_rounded, [const Color(0xFF6366F1), const Color(0xFF4F46E5)]),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _currentTab = 1;
+                  });
+                },
+                child: _buildStatCard('Bookings', totalBookings.toString(), Icons.calendar_today_rounded, [const Color(0xFFF59E0B), const Color(0xFFD97706)]),
+              ),
+              const SizedBox(width: 12),
+              _buildStatCard('Pending', pendingBookings.toString().padLeft(2, '0'), Icons.pending_actions_rounded, [const Color(0xFFEC4899), const Color(0xFFDB2777)]),
+              const SizedBox(width: 12),
+              _buildStatCard('Profile Views', '1.2k', Icons.visibility_rounded, [const Color(0xFF10B981), const Color(0xFF059669)]),
+            ],
+          ),
+        );
+      },
     );
   }
 

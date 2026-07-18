@@ -29,15 +29,32 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _bannerController = PageController(initialPage: 300);
+  final PageController _newServicesController = PageController(viewportFraction: 0.45, initialPage: 300);
   int _currentBannerIndex = 0;
   String _userAddress = "4517 Washington Ave";
   Timer? _bannerTimer;
+  Timer? _newServicesTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUserAddress();
     _startBannerTimer();
+  }
+
+  void _startNewServicesTimer(int docsLength) {
+    if (docsLength == 0) return;
+    _newServicesTimer?.cancel();
+    _newServicesTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted && _newServicesController.hasClients) {
+        int nextPage = _newServicesController.page!.round() + 1;
+        _newServicesController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void _startBannerTimer() {
@@ -57,6 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _bannerTimer?.cancel();
     _bannerController.dispose();
+    _newServicesTimer?.cancel();
+    _newServicesController.dispose();
     super.dispose();
   }
 
@@ -608,17 +627,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return const Center(child: Text("No new services available."));
         }
 
+        // Start slide timer automatically
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && (_newServicesTimer == null || !_newServicesTimer!.isActive)) {
+            _startNewServicesTimer(docs.length);
+          }
+        });
+
         return SizedBox(
-          height: 110,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 20),
-            itemCount: docs.length,
+          height: 130,
+          child: PageView.builder(
+            controller: _newServicesController,
+            itemCount: 10000,
             itemBuilder: (context, index) {
-              final doc = docs[index];
+              final doc = docs[index % docs.length];
               final data = doc.data() as Map<String, dynamic>;
               final title = data['categoryName'] ?? data['title'] ?? 'Service';
               final subSvcs = List.from(data['subServices'] ?? []);
+              final imageUrl = data['categoryImageUrl'] ?? data['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800';
 
               return GestureDetector(
                 onTap: () {
@@ -630,27 +656,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 },
                 child: Container(
-                  width: 160,
-                  margin: const EdgeInsets.only(right: 15),
-                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF00796B),
-                        const Color(0xFF00796B).withOpacity(0.85),
-                      ],
-                    ),
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Stack(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
+                      Positioned.fill(
+                        child: imageUrl.startsWith("http")
+                            ? Image.network(imageUrl, fit: BoxFit.cover)
+                            : Image.asset(imageUrl, fit: BoxFit.cover),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.75),
+                                Colors.black.withValues(alpha: 0.1),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 14,
+                        right: 14,
+                        bottom: 14,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               title,
@@ -662,7 +707,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               '${subSvcs.length} Options',
                               style: GoogleFonts.outfit(

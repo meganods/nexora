@@ -876,10 +876,23 @@ class _ServicesScreenState extends State<ServicesScreen> {
                    final messenger = ScaffoldMessenger.of(dContext);
                    final navigator = Navigator.of(dContext);
                    final admin = Provider.of<AdminProvider>(dContext, listen: false);
-                   if (titleC.text.trim().isEmpty) {
-                      messenger.showSnackBar(const SnackBar(content: Text('Please enter a name')));
-                      return;
-                   }
+                    if (titleC.text.trim().isEmpty) {
+                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a service name')));
+                       return;
+                    }
+                    if (descC.text.trim().isEmpty) {
+                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a description')));
+                       return;
+                    }
+                    final priceStr = priceC.text.trim();
+                    if (priceStr.isEmpty || priceStr == '\$' || priceStr == '₹' || priceStr == '₹ ') {
+                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a valid price')));
+                       return;
+                    }
+                    if (durationC.text.trim().isEmpty) {
+                       messenger.showSnackBar(const SnackBar(content: Text('Please enter a duration')));
+                       return;
+                    }
 
                    try {
                      setStateSB(() => isSaving = true);

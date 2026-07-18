@@ -13,6 +13,7 @@ class PaymentScreen extends StatefulWidget {
   final String? time;
   final List<Map<String, dynamic>>? selectedItems;
   final String? vendorId;
+  final String? imageUrl;
 
   const PaymentScreen({
     super.key, 
@@ -23,6 +24,7 @@ class PaymentScreen extends StatefulWidget {
     this.time,
     this.selectedItems,
     this.vendorId,
+    this.imageUrl,
   });
 
   @override
@@ -241,6 +243,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'createdAt': FieldValue.serverTimestamp(),
               'services': widget.selectedItems ?? [],
               'vendorId': widget.vendorId,
+              'imageUrl': widget.imageUrl,
             });
 
             // Handle coupon usage and increment count via transaction

@@ -64,6 +64,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'paymentMethod': _paymentMethods[_selectedPaymentIndex]['title'],
           'status': 'pending',
           'vendorId': vendorId,
+          'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop',
           'createdAt': FieldValue.serverTimestamp(),
         });
       } catch (e) {

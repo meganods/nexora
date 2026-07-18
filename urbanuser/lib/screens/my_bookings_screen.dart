@@ -142,7 +142,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(15),
                         child: Image.network(
-                          "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop",
+                          data['imageUrl'] ?? data['image'] ?? "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120&auto=format&fit=crop",
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,

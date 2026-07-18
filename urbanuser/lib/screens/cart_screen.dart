@@ -1188,6 +1188,7 @@ class _CartScreenState extends State<CartScreen> {
                     time: _selectedTimeSlot,
                     selectedItems: _selectedItems,
                     vendorId: widget.shop["vendorId"] as String?,
+                    imageUrl: widget.shop["image"] as String? ?? widget.shop["imageUrl"] as String? ?? widget.shop["categoryImageUrl"] as String?,
                   ),
                 ),
               ),

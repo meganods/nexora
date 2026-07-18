@@ -25,13 +25,12 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     });
   }
 
-  void _showEditServiceDialog(BuildContext context, Map<String, dynamic> service) {
+  void _showEditServiceDialog(BuildContext context, String categoryId, Map<String, dynamic> categoryData) {
     final formKey = GlobalKey<FormState>();
-    final titleC = TextEditingController(text: service['title']);
-    final descC = TextEditingController(text: service['desc'] ?? service['description']);
-    final priceC = TextEditingController(text: (service['price'] as String?)?.replaceAll('\$', '₹') ?? '₹');
-    final durationC = TextEditingController(text: service['duration'] ?? '45 Mins');
-    String? imageUrl = service['imageUrl'];
+    final titleC = TextEditingController(text: categoryData['categoryName'] ?? categoryData['title']);
+    final descC = TextEditingController(text: categoryData['description'] ?? categoryData['desc']);
+    String? imageUrl = categoryData['imageUrl'] ?? categoryData['categoryImageUrl'];
+    final List<Map<String, dynamic>> subServices = List<Map<String, dynamic>>.from(categoryData['subServices'] ?? []);
     XFile? pickedImage;
     bool isSaving = false;
 
@@ -45,7 +44,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Text('Edit Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             content: SizedBox(
-               width: 400,
+               width: 420,
                child: Form(
                  key: formKey,
                  child: SingleChildScrollView(
@@ -63,36 +62,9 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                         TextFormField(
                           controller: descC,
                           enabled: !isSaving,
+                          maxLines: 2,
                           decoration: InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                           validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: priceC,
-                                enabled: !isSaving,
-                                decoration: InputDecoration(labelText: 'Price', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                                validator: (v) {
-                                  if (v == null || v.trim().isEmpty || v.trim() == '\$' || v.trim() == '₹' || v.trim() == '₹ ') {
-                                    return 'Price is required';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: durationC,
-                                enabled: !isSaving,
-                                decoration: InputDecoration(labelText: 'Duration', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Duration is required' : null,
-                              ),
-                            ),
-                          ],
                         ),
                         const SizedBox(height: 12),
                         GestureDetector(
@@ -105,21 +77,103 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                           },
                           child: Container(
                             width: double.infinity,
-                            height: 80,
+                            height: 100,
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[300]!),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
                             child: pickedImage != null
-                              ? kIsWeb 
-                                 ? Image.network(pickedImage!.path, fit: BoxFit.cover)
-                                 : Image.file(File(pickedImage!.path), fit: BoxFit.cover)
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: kIsWeb 
+                                     ? Image.network(pickedImage!.path, fit: BoxFit.cover)
+                                     : Image.file(File(pickedImage!.path), fit: BoxFit.cover),
+                                )
                               : imageUrl != null
-                                ? Image.network(imageUrl!, fit: BoxFit.cover)
-                                : const Center(child: Text('Pick Image')),
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(imageUrl!, fit: BoxFit.cover),
+                                  )
+                                : const Center(child: Text('Pick Service Image')),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Sub-Services', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+                            TextButton.icon(
+                              onPressed: isSaving ? null : () {
+                                _showAddSubServiceInput(dContext, (subSvc) {
+                                  setStateSB(() {
+                                    subServices.add(subSvc);
+                                  });
+                                });
+                              },
+                              icon: const Icon(Icons.add, size: 16, color: Color(0xFF4A55ED)),
+                              label: Text('Add Sub-Service', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF4A55ED), fontWeight: FontWeight.bold)),
+                            )
+                          ],
+                        ),
+                        if (subServices.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            child: Text(
+                              'No sub-services inside.',
+                              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: subServices.length,
+                            itemBuilder: (ctx, idx) {
+                              final ss = subServices[idx];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(ss['title'] ?? '', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13)),
+                                          Text(ss['description'] ?? '', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(ss['price'] ?? '', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF4A55ED))),
+                                              Text(ss['duration'] ?? '', style: GoogleFonts.poppins(fontSize: 11, color: Colors.blueGrey)),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                      onPressed: () {
+                                        setStateSB(() {
+                                          subServices.removeAt(idx);
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                      ],
                    ),
                  ),
@@ -145,12 +199,12 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                         uploadedUrl = await CloudinaryService.uploadImageBytes(
                           bytes: await pickedImage!.readAsBytes(),
                           fileName: pickedImage!.name,
-                          folder: 'sub_services',
+                          folder: 'services',
                         );
                       } else {
                         uploadedUrl = await CloudinaryService.uploadImage(
                           filePath: pickedImage!.path,
-                          folder: 'sub_services',
+                          folder: 'services',
                         );
                       }
                       if (uploadedUrl == null) {
@@ -158,38 +212,15 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                       }
                     }
 
-                    // Search for the category doc containing this subservice ID
-                    final servicesQuery = await FirebaseFirestore.instance.collection('services').get();
-                    DocumentReference? targetDocRef;
-                    List<dynamic>? subServicesList;
-
-                    for (var doc in servicesQuery.docs) {
-                      final subSvcs = List.from(doc.data()['subServices'] ?? []);
-                      final match = subSvcs.any((ss) => ss['id'] == service['id']);
-                      if (match) {
-                        targetDocRef = doc.reference;
-                        subServicesList = subSvcs;
-                        break;
-                      }
-                    }
-
-                    if (targetDocRef != null && subServicesList != null) {
-                      final updatedList = subServicesList.map((ss) {
-                        if (ss['id'] == service['id']) {
-                          return {
-                            ...ss,
-                            'title': titleC.text.trim(),
-                            'desc': descC.text.trim(),
-                            'price': priceC.text.trim(),
-                            'duration': durationC.text.trim(),
-                            if (uploadedUrl != null) 'imageUrl': uploadedUrl,
-                          };
-                        }
-                        return ss;
-                      }).toList();
-
-                      await targetDocRef.update({'subServices': updatedList});
-                    }
+                    await FirebaseFirestore.instance.collection('services').doc(categoryId).update({
+                      'categoryName': titleC.text.trim(),
+                      'title': titleC.text.trim(),
+                      'description': descC.text.trim(),
+                      'desc': descC.text.trim(),
+                      'subServices': subServices,
+                      if (uploadedUrl != null) 'imageUrl': uploadedUrl,
+                      if (uploadedUrl != null) 'categoryImageUrl': uploadedUrl,
+                    });
 
                     navigator.pop();
                     messenger.showSnackBar(const SnackBar(content: Text('Service updated successfully')));
@@ -344,8 +375,10 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             ),
             const SizedBox(height: 30),
 
+            final selectedCategoryIds = List<String>.from(vendorData?['selectedCategoryIds'] ?? []);
+
             // DYNAMIC SERVICES LIST
-            if (enabledServiceIds.isEmpty)
+            if (selectedCategoryIds.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(40),
@@ -373,40 +406,42 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                   
-                  // Filter out only the subServices that are enabled in vendor document
-                  List<Map<String, dynamic>> displayedServices = [];
+                  List<DocumentSnapshot> displayedCategories = [];
                   for (var doc in snapshot.data!.docs) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    final subServices = List<Map<String, dynamic>>.from(data['subServices'] ?? []);
-                    for (var ss in subServices) {
-                      if (enabledServiceIds.contains(ss['id'])) {
-                        displayedServices.add(ss);
-                      }
+                    if (selectedCategoryIds.contains(doc.id)) {
+                      displayedCategories.add(doc);
                     }
                   }
 
                   return Column(
-                    children: displayedServices.map((service) {
+                    children: displayedCategories.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final title = data['categoryName'] ?? data['title'] ?? 'Generic Service';
+                      final desc = data['description'] ?? data['desc'] ?? 'No description available.';
+                      final img = data['imageUrl'] ?? data['categoryImageUrl'];
+                      final subSvcs = List.from(data['subServices'] ?? []);
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 20.0),
                         child: _buildServiceCard(
-                          imageUrl: service['imageUrl'],
+                          imageUrl: img,
                           iconColor: primaryBlue,
                           iconBgColor: const Color(0xFFF1EFFF),
-                          title: service['title'] ?? 'Generic Service',
-                          description: service['description'] ?? 'No description available.',
-                          rateLabel: 'BASE RATE',
-                          price: () {
-                            final rawPrice = service['price']?.toString() ?? '0';
-                            return rawPrice.startsWith('₹') ? rawPrice : '₹$rawPrice';
-                          }(),
+                          title: title,
+                          description: desc,
+                          rateLabel: 'SUB-SERVICES',
+                          price: '${subSvcs.length} Options',
                           priceSuffix: '',
                           priceColor: primaryBlue,
                           tagText: 'Active',
                           tagColor: const Color(0xFFC4F1F9),
                           tagTextColor: const Color(0xFF007A99),
-                          onDelete: () => vendorProvider.removeService(service['id']),
-                          onEdit: () => _showEditServiceDialog(context, service),
+                          onDelete: () async {
+                            final list = List<String>.from(selectedCategoryIds);
+                            list.remove(doc.id);
+                            await vendorProvider.updateVendorProfile({'selectedCategoryIds': list});
+                          },
+                          onEdit: () => _showEditServiceDialog(context, doc.id, data),
                         ),
                       );
                     }).toList(),

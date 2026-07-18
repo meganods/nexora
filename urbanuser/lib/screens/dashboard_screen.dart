@@ -553,21 +553,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         
-        List<Map<String, dynamic>> subServices = [];
-        for (var doc in snapshot.data!.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final list = List.from(data['subServices'] ?? []);
-          final catImg = data['imageUrl'] ?? data['categoryImageUrl'];
-          for (var ss in list) {
-            subServices.add({
-              ...ss,
-              'categoryName': data['categoryName'] ?? data['title'],
-              'categoryImageUrl': catImg,
-            });
-          }
-        }
-
-        if (subServices.isEmpty) {
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
           return const Center(child: Text("No new services available."));
         }
 
@@ -576,37 +563,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 20),
-            itemCount: subServices.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final item = subServices[index];
-              final fallbackImage = item['categoryImageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80';
-              final serviceModel = ServiceModel(
-                id: item['id'] ?? '',
-                title: item['title'] ?? '',
-                category: item['categoryName'] ?? '',
-                subCategory: 'New Service',
-                price: item['price'] != null ? (item['price'].toString().startsWith('₹') ? item['price'].toString() : '₹${item['price']}') : '₹0',
-                discountPercent: 0,
-                rating: 4.8,
-                totalReviews: 12,
-                vendorName: 'Certified Expert',
-                image: item['imageUrl'] ?? fallbackImage,
-                images: [item['imageUrl'] ?? fallbackImage],
-                shortDescription: item['description'] ?? item['desc'] ?? '',
-                description: item['description'] ?? item['desc'] ?? '',
-                longDescription: item['description'] ?? item['desc'] ?? '',
-                duration: item['duration'] ?? '45 Mins',
-                isAvailable: true,
-                location: 'Nearby',
-                tags: ['New'],
-              );
+              final doc = docs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final title = data['categoryName'] ?? data['title'] ?? 'Service';
+              final subSvcs = List.from(data['subServices'] ?? []);
 
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ServiceDetailScreen(service: serviceModel),
+                      builder: (context) => CategoryDetailScreen(categoryName: title),
                     ),
                   );
                 },
@@ -634,7 +603,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              item['title'] ?? '',
+                              title,
                               style: GoogleFonts.outfit(
                                 color: Colors.white,
                                 fontSize: 13,
@@ -645,7 +614,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              serviceModel.price,
+                              '${subSvcs.length} Options',
                               style: GoogleFonts.outfit(
                                 color: Colors.white70,
                                 fontSize: 11,

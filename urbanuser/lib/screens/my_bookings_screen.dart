@@ -65,13 +65,26 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('userId', isEqualTo: user.uid)
-          .where('status', isEqualTo: status)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+
+        final allDocs = snapshot.data?.docs ?? [];
+        final docs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final bookingStatus = (data['status'] ?? 'pending').toString().toLowerCase();
+          if (status == 'UPCOMING') {
+            return bookingStatus == 'pending' || bookingStatus == 'confirmed' || bookingStatus == 'updated_by_vendor' || bookingStatus == 'upcoming';
+          } else if (status == 'COMPLETED') {
+            return bookingStatus == 'completed';
+          } else {
+            return bookingStatus == 'cancelled';
+          }
+        }).toList();
+
+        if (docs.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -87,8 +100,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           );
         }
 
-        final docs = snapshot.data!.docs;
-
         return ListView.builder(
           padding: const EdgeInsets.all(20),
           itemCount: docs.length,
@@ -98,16 +109,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             final String bookingId = data['id'] ?? doc.id;
             final String shopName = data['shopName'] ?? 'Urban Service Pro';
             final String price = data['price'] ?? '₹1,299';
-            final String date = data['date'] ?? 'Mon, Oct 12';
-            final String time = data['time'] ?? '10:00 AM';
+            final String originalDate = data['date'] ?? 'Mon, Oct 12';
+            final String originalTime = data['time'] ?? '10:00 AM';
+            final String bookingStatus = (data['status'] ?? 'pending').toString().toLowerCase();
+
+            final String? proposedDate = data['proposedDate'];
+            final String? proposedTime = data['proposedTime'];
+
+            final bool isRescheduledByVendor = bookingStatus == 'updated_by_vendor';
 
             return Container(
               margin: const EdgeInsets.only(bottom: 20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isRescheduledByVendor ? const Color(0xFFFFFDF0) : Colors.white,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.grey[100]!),
+                border: Border.all(
+                  color: isRescheduledByVendor ? const Color(0xFFFFCC80) : Colors.grey[100]!,
+                  width: isRescheduledByVendor ? 1.5 : 1.0,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -145,13 +165,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: status == "UPCOMING" ? Colors.blue[50] : Colors.green[50],
+                                color: isRescheduledByVendor
+                                    ? const Color(0xFFFFF3E0)
+                                    : (bookingStatus == 'confirmed' ? Colors.green[50] : Colors.blue[50]),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                status,
+                                isRescheduledByVendor ? "ACTION REQUIRED" : bookingStatus.toUpperCase().replaceAll('_', ' '),
                                 style: TextStyle(
-                                  color: status == "UPCOMING" ? Colors.blue : Colors.green,
+                                  color: isRescheduledByVendor
+                                      ? const Color(0xFFE65100)
+                                      : (bookingStatus == 'confirmed' ? Colors.green : Colors.blue),
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -169,41 +193,149 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       Row(children: [
                         const Icon(Icons.calendar_month, color: Colors.grey, size: 16),
                         const SizedBox(width: 8),
-                        Text(date, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        if (isRescheduledByVendor && proposedDate != null) ...[
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: originalDate,
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: " ➔ ",
+                                  style: TextStyle(color: Color(0xFFE65100)),
+                                ),
+                                TextSpan(
+                                  text: proposedDate,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE65100),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
+                          ),
+                        ] else ...[
+                          Text(originalDate, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
                       ]),
                       Row(children: [
                         const Icon(Icons.access_time, color: Colors.grey, size: 16),
                         const SizedBox(width: 8),
-                        Text(time, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        if (isRescheduledByVendor && proposedTime != null) ...[
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: originalTime,
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: " ➔ ",
+                                  style: TextStyle(color: Color(0xFFE65100)),
+                                ),
+                                TextSpan(
+                                  text: proposedTime,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE65100),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
+                          ),
+                        ] else ...[
+                          Text(originalTime, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
                       ]),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BookingDetailScreen(
-                            booking: {
-                              "id": bookingId,
-                              "shopName": shopName,
-                              "price": price,
-                              "date": date,
-                              "time": time,
-                              "status": status,
+                  if (isRescheduledByVendor) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('bookings')
+                                  .doc(bookingId)
+                                  .update({'status': 'cancelled'});
                             },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.redAccent),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              "Decline & Cancel",
+                              style: GoogleFonts.outfit(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text("VIEW DETAILS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('bookings')
+                                  .doc(bookingId)
+                                  .update({
+                                'status': 'confirmed',
+                                'date': proposedDate ?? originalDate,
+                                'time': proposedTime ?? originalTime,
+                                'proposedDate': null,
+                                'proposedTime': null,
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4F46E5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              "Accept New Time",
+                              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ] else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookingDetailScreen(
+                              booking: {
+                                "id": bookingId,
+                                "shopName": shopName,
+                                "price": price,
+                                "date": originalDate,
+                                "time": originalTime,
+                                "status": bookingStatus.toUpperCase(),
+                              },
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accentColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text("VIEW DETAILS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );

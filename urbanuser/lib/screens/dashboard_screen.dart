@@ -28,7 +28,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _bannerController = PageController(initialPage: 999);
+  final PageController _bannerController = PageController(initialPage: 0);
   int _currentBannerIndex = 0;
   String _userAddress = "4517 Washington Ave";
   Timer? _bannerTimer;
@@ -240,12 +240,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             controller: _bannerController,
             onPageChanged: (index) {
               setState(() {
-                _currentBannerIndex = index % _banners.length;
+                _currentBannerIndex = index;
               });
             },
-            itemCount: 10000,
+            itemCount: _banners.length,
             itemBuilder: (context, index) {
-              final banner = _banners[index % _banners.length];
+              final banner = _banners[index];
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 clipBehavior: Clip.antiAlias,
@@ -253,15 +253,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: banner.image.startsWith("http")
-                    ? Image.network(banner.image, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
-                    : Image.asset(banner.image, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: banner.image.startsWith("http")
+                          ? Image.network(banner.image, fit: BoxFit.cover)
+                          : Image.asset(banner.image, fit: BoxFit.cover),
+                    ),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.leftCenter,
+                            end: Alignment.rightCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.55),
+                              Colors.black.withValues(alpha: 0.15),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 20,
+                      top: 0,
+                      bottom: 0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              banner.discount.toUpperCase(),
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            banner.title,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            banner.subtitle,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      right: 20,
+                      bottom: 20,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          String targetCategory = "Cleaning";
+                          if (banner.title.contains("Repair") || banner.title.contains("Maintenance")) {
+                            targetCategory = "Plumber";
+                          } else if (banner.title.contains("Car")) {
+                            targetCategory = "Car Wash";
+                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CategoryDetailScreen(categoryName: targetCategory),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF673AB7),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          elevation: 4,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Details",
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF673AB7)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),

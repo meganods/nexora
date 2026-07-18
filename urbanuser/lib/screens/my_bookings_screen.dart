@@ -343,26 +343,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         );
       },
     );
-  }
-
-  String _getServiceImageUrl(String shopName, String? dbImageUrl) {
+   String _getServiceImageUrl(String shopName, String? dbImageUrl) {
     if (dbImageUrl != null && dbImageUrl.startsWith('http')) {
       return dbImageUrl;
     }
     final name = shopName.toLowerCase();
-    if (name.contains('meganods')) {
-      return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?q=80&w=120'; // AC/Salon fallback
+    if (name.contains('meganods') || name.contains('salon') || name.contains('beauty')) {
+      return 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=300';
     } else if (name.contains('welder') || name.contains('welding')) {
-      return 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=120';
-    } else if (name.contains('ac') || name.contains('air conditioning')) {
-      return 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?q=80&w=120';
+      return 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300';
+    } else if (name.contains('ac') || name.contains('air conditioning') || name.contains('appliance')) {
+      return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300';
     } else if (name.contains('garden') || name.contains('lawn')) {
-      return 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=120';
-    } else if (name.contains('contactor') || name.contains('renovation') || name.contains('civil')) {
-      return 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=120';
-    } else if (name.contains('deep') || name.contains('clean')) {
-      return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=120';
+      return 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=300';
+    } else if (name.contains('contactor') || name.contains('renovation') || name.contains('civil') || name.contains('painting')) {
+      return 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300';
     }
-    return 'https://images.unsplash.com/photo-1521791136368-1a8682707636?q=80&w=120';
+    return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300';
   }
 }

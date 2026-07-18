@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/vendor_provider.dart';
 import '../services/cloudinary_service.dart';
 import 'bookings_screen.dart';
+import 'my_services_screen.dart';
+import 'partner_profile_screen.dart';
 
 class ExpertPortalDashboard extends StatefulWidget {
   const ExpertPortalDashboard({super.key});
@@ -74,7 +76,13 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: _currentTab == 0 ? _buildDashboardTab(vendorProvider, vendor) : _buildBookingsTab(),
+      body: _currentTab == 0
+          ? _buildDashboardTab(vendorProvider, vendor)
+          : _currentTab == 1
+              ? _buildBookingsTab()
+              : _currentTab == 2
+                  ? const MyServicesScreen(isTab: true)
+                  : const PartnerProfileScreen(isTab: true),
       floatingActionButton: _currentTab == 0 ? _buildFAB() : null,
       bottomNavigationBar: _buildBottomTabs(),
     );
@@ -463,7 +471,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
 
   Widget _buildFAB() {
     return FloatingActionButton.extended(
-      onPressed: () => Navigator.pushNamed(context, '/my_services'),
+      onPressed: () => setState(() => _currentTab = 2),
       backgroundColor: const Color(0xFF4F46E5),
       icon: const Icon(Icons.add_rounded, color: Colors.white),
       label: Text('Add Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -476,13 +484,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
       child: BottomNavigationBar(
         currentIndex: _currentTab,
         onTap: (i) {
-          if (i == 3) {
-            Navigator.pushNamed(context, '/partner_profile');
-          } else if (i == 2) {
-            Navigator.pushNamed(context, '/my_services');
-          } else {
-            setState(() => _currentTab = i);
-          }
+          setState(() => _currentTab = i);
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF4F46E5),

@@ -10,7 +10,8 @@ import '../providers/vendor_provider.dart';
 import '../services/cloudinary_service.dart';
 
 class MyServicesScreen extends StatefulWidget {
-  const MyServicesScreen({super.key});
+  final bool isTab;
+  const MyServicesScreen({super.key, this.isTab = false});
 
   @override
   State<MyServicesScreen> createState() => _MyServicesScreenState();
@@ -267,10 +268,10 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        titleSpacing: 0,
+        titleSpacing: widget.isTab ? 16 : 0,
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
+        leading: widget.isTab ? null : IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.blueGrey),
           onPressed: () => Navigator.pop(context),
         ),
@@ -293,7 +294,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           )
         ],
       ),
-      bottomNavigationBar: SafeArea(
+      bottomNavigationBar: widget.isTab ? null : SafeArea(
         child: Container(
         color: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 8),

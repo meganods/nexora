@@ -6,7 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/vendor_provider.dart';
 
 class PartnerProfileScreen extends StatefulWidget {
-  const PartnerProfileScreen({super.key});
+  final bool isTab;
+  const PartnerProfileScreen({super.key, this.isTab = false});
 
   @override
   State<PartnerProfileScreen> createState() => _PartnerProfileScreenState();
@@ -36,11 +37,12 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.isTab,
         titleSpacing: 0,
         backgroundColor: bgColor,
         elevation: 0,
         title: Padding(
-          padding: const EdgeInsets.only(left: 24.0),
+          padding: EdgeInsets.only(left: widget.isTab ? 16.0 : 24.0),
           child: Text(
             'Partner Profile',
             style: GoogleFonts.poppins(
@@ -59,7 +61,7 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      bottomNavigationBar: SafeArea(
+      bottomNavigationBar: widget.isTab ? null : SafeArea(
         child: Container(
         color: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 8),

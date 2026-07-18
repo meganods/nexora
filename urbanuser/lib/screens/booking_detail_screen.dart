@@ -57,7 +57,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               }
               if (mounted) {
                 final messenger = ScaffoldMessenger.of(context);
-                Navigator.pop(context);
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Close detail screen
                 messenger.showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
               }
             },

@@ -332,6 +332,201 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           backgroundColor: AppTheme.accentColor,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          _getServiceImageUrl(shopName, data['imageUrl'] ?? data['image']),
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.cleaning_services, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(shopName, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text("Ref #$bookingId", style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isRescheduledByVendor
+                                    ? const Color(0xFFFFF3E0)
+                                    : (bookingStatus == 'confirmed' ? Colors.green[50] : Colors.blue[50]),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                isRescheduledByVendor ? "ACTION REQUIRED" : bookingStatus.toUpperCase().replaceAll('_', ' '),
+                                style: TextStyle(
+                                  color: isRescheduledByVendor
+                                      ? const Color(0xFFE65100)
+                                      : (bookingStatus == 'confirmed' ? Colors.green : Colors.blue),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(children: [
+                        const Icon(Icons.calendar_month, color: Colors.grey, size: 16),
+                        const SizedBox(width: 8),
+                        if (isRescheduledByVendor && proposedDate != null) ...[
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: originalDate,
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: " ➔ ",
+                                  style: TextStyle(color: Color(0xFFE65100)),
+                                ),
+                                TextSpan(
+                                  text: proposedDate,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE65100),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
+                          ),
+                        ] else ...[
+                          Text(originalDate, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
+                      ]),
+                      Row(children: [
+                        const Icon(Icons.access_time, color: Colors.grey, size: 16),
+                        const SizedBox(width: 8),
+                        if (isRescheduledByVendor && proposedTime != null) ...[
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: originalTime,
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: " ➔ ",
+                                  style: TextStyle(color: Color(0xFFE65100)),
+                                ),
+                                TextSpan(
+                                  text: proposedTime,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE65100),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
+                          ),
+                        ] else ...[
+                          Text(originalTime, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
+                      ]),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  if (isRescheduledByVendor) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('bookings')
+                                  .doc(bookingId)
+                                  .update({'status': 'cancelled'});
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.redAccent),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              "Decline & Cancel",
+                              style: GoogleFonts.outfit(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('bookings')
+                                  .doc(bookingId)
+                                  .update({
+                                'status': 'confirmed',
+                                'date': proposedDate ?? originalDate,
+                                'time': proposedTime ?? originalTime,
+                                'proposedDate': null,
+                                'proposedTime': null,
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4F46E5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              "Accept New Time",
+                              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookingDetailScreen(
+                              booking: {
+                                "id": bookingId,
+                                "shopName": shopName,
+                                "price": price,
+                                "date": originalDate,
+                                "time": originalTime,
+                                "status": bookingStatus.toUpperCase(),
+                              },
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accentColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                         child: Text("VIEW DETAILS", style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -343,7 +538,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         );
       },
     );
-   String _getServiceImageUrl(String shopName, String? dbImageUrl) {
+  }
+
+  String _getServiceImageUrl(String shopName, String? dbImageUrl) {
     if (dbImageUrl != null && dbImageUrl.startsWith('http')) {
       return dbImageUrl;
     }

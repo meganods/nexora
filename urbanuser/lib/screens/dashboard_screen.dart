@@ -771,19 +771,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.zero,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F5F9), // Light grey/blue premium tint
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: image == "others"
-                      ? const Icon(Icons.more_horiz_rounded, size: 36, color: AppTheme.accentColor)
-                      : Image.asset(
-                          image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.category_outlined, color: Colors.grey),
-                        ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: image == "others"
+                        ? const Icon(Icons.more_horiz_rounded, size: 36, color: AppTheme.accentColor)
+                        : Image.asset(
+                            image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.category_outlined, color: Colors.grey),
+                          ),
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

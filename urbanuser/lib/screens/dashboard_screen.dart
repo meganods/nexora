@@ -707,15 +707,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${subSvcs.length} Options',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                           ],
                         ),
                       ),

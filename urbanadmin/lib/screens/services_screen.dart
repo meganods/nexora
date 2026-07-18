@@ -1015,7 +1015,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 120,
+              height: 250,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: pending.length,
@@ -1024,92 +1024,169 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     if (index >= pending.length) return const SizedBox.shrink();
                     final req = pending[index];
                     final data = req.data() as Map<String, dynamic>;
+                    final subSvcs = List.from(data['subServices'] ?? []);
+                    
                     return Container(
-                      width: 350,
+                      width: 360,
                       margin: const EdgeInsets.only(right: 16),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFFED7D7)),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            margin: const EdgeInsets.only(right: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: (data['categoryImageUrl'] ?? data['imageUrl']) != null 
-                              ? ClipRRect(
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEE2E2),
                                   borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    CloudinaryService.getOptimizedUrl(data['categoryImageUrl'] ?? data['imageUrl'], width: 80, height: 80, crop: 'fill'),
-                                    fit: BoxFit.cover,
+                                ),
+                                child: (data['categoryImageUrl'] ?? data['imageUrl']) != null 
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        CloudinaryService.getOptimizedUrl(data['categoryImageUrl'] ?? data['imageUrl'], width: 80, height: 80, crop: 'fill'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(LucideIcons.helpCircle, color: Color(0xFFDC2626), size: 18),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data['categoryName'] ?? data['title'] ?? 'Untitled',
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    Text(
+                                      'By: ${data['vendorName'] ?? 'Vendor'} (${data['businessName'] ?? 'Business'})',
+                                      style: GoogleFonts.poppins(fontSize: 10, color: Colors.blueGrey),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.checkCircle2, color: Colors.green, size: 20),
+                                    onPressed: () {
+                                      _showCategoryDialog(
+                                        context,
+                                        requestVendorId: data['vendorId'],
+                                        existingData: {
+                                          'categoryName': data['categoryName'] ?? data['title'],
+                                          'description': data['description'] ?? data['desc'],
+                                          'categoryImageUrl': data['categoryImageUrl'] ?? data['imageUrl'],
+                                          'subServices': data['subServices'],
+                                        },
+                                      );
+                                      adminProvider.updateCategoryRequestStatus(req.id, 'APPROVED');
+                                    },
+                                    tooltip: 'Approve & Create',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.xCircle, color: Colors.redAccent, size: 20),
+                                    onPressed: () => adminProvider.updateCategoryRequestStatus(req.id, 'REJECTED'),
+                                    tooltip: 'Reject',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            data['description'] ?? data['desc'] ?? '',
+                            style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          const Divider(height: 1, color: Color(0xFFFEE2E2)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Requested Sub-Services (${subSvcs.length}):',
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: subSvcs.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No sub-services requested',
+                                    style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey, fontStyle: FontStyle.italic),
                                   ),
                                 )
-                              : const Icon(LucideIcons.helpCircle, color: Color(0xFFDC2626), size: 20),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  data['categoryName'] ?? data['title'] ?? 'Untitled',
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15),
+                              : ListView.builder(
+                                  itemCount: subSvcs.length,
+                                  padding: EdgeInsets.zero,
+                                  itemBuilder: (ctx, idx) {
+                                    final ss = subSvcs[idx];
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 6),
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFF5F5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  ss['title'] ?? '',
+                                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 10),
+                                                ),
+                                                Text(
+                                                  ss['description'] ?? '',
+                                                  style: GoogleFonts.poppins(fontSize: 8, color: Colors.grey[600]),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                ss['price'] ?? '',
+                                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 10, color: const Color(0xFF4A55ED)),
+                                              ),
+                                              Text(
+                                                ss['duration'] ?? '',
+                                                style: GoogleFonts.poppins(fontSize: 8, color: Colors.blueGrey),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'By: ${data['vendorName'] ?? 'Vendor'} (${data['businessName'] ?? 'Business'})',
-                                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.blueGrey),
-                                ),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: Text(
-                                    data['description'] ?? data['desc'] ?? '',
-                                    style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                icon: const Icon(LucideIcons.checkCircle2, color: Colors.green, size: 22),
-                                onPressed: () {
-                                  _showCategoryDialog(
-                                    context,
-                                    requestVendorId: data['vendorId'],
-                                    existingData: {
-                                      'categoryName': data['categoryName'] ?? data['title'],
-                                      'description': data['description'] ?? data['desc'],
-                                      'categoryImageUrl': data['categoryImageUrl'] ?? data['imageUrl'],
-                                      'subServices': data['subServices'],
-                                    },
-                                  );
-                                  adminProvider.updateCategoryRequestStatus(req.id, 'APPROVED');
-                                },
-                                tooltip: 'Approve & Create',
-                              ),
-                              IconButton(
-                                icon: const Icon(LucideIcons.xCircle, color: Colors.redAccent, size: 22),
-                                onPressed: () => adminProvider.updateCategoryRequestStatus(req.id, 'REJECTED'),
-                                tooltip: 'Reject',
-                              ),
-                            ],
                           )
                         ],
                       ),
                     );
                   } catch (e) {
-                     return Center(child: Text('Request Error: $e', style: const TextStyle(color: Colors.red, fontSize: 10)));
+                    return const SizedBox.shrink();
                   }
                 },
               ),
@@ -1119,5 +1196,4 @@ class _ServicesScreenState extends State<ServicesScreen> {
       },
     );
   }
-}
 

@@ -28,7 +28,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _bannerController = PageController();
+  final PageController _bannerController = PageController(initialPage: 999);
   int _currentBannerIndex = 0;
   String _userAddress = "4517 Washington Ave";
   Timer? _bannerTimer;
@@ -83,20 +83,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: "Best Professional\nHome Cleaning",
       subtitle: "Kitchen & House",
       discount: "40% OFF",
-      image: "assets/images/banner1.png",
+      image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800",
     ),
     BannerData(
       title: "Expert Repair\n& Maintenance",
       subtitle: "Plumbing & Electrical",
       discount: "20% OFF",
-      image:
-          "assets/images/onboarding_2_home_cleaning_illustration_retry_1774853265369.png",
+      image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800",
     ),
     BannerData(
       title: "Deep Car Wash\n& Detailing",
       subtitle: "Auto Care",
       discount: "30% OFF",
-      image: "assets/images/car_wash_banner_illustration_1774854072344.png",
+      image: "https://images.unsplash.com/photo-1601362840469-51e4d8d59085?w=800",
     ),
   ];
 
@@ -241,108 +240,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
             controller: _bannerController,
             onPageChanged: (index) {
               setState(() {
-                _currentBannerIndex = index;
+                _currentBannerIndex = index % _banners.length;
               });
             },
-            itemCount: _banners.length,
+            itemCount: 10000,
             itemBuilder: (context, index) {
-              final banner = _banners[index];
+              final banner = _banners[index % _banners.length];
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: index == 0
-                        ? [const Color(0xFF673AB7), const Color(0xFF512DA8), const Color(0xFF3F51B5)]
-                        : index == 1
-                            ? [const Color(0xFF00796B), const Color(0xFF00897B), const Color(0xFF009688)]
-                            : [const Color(0xFF2E7D32), const Color(0xFF388E3C), const Color(0xFF4CAF50)],
-                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -30,
-                      top: -30,
-                      child: CircleAvatar(
-                        radius: 90,
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                    Positioned(
-                      left: -10,
-                      bottom: -30,
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                    Positioned(
-                      right: 10,
-                      bottom: 0,
-                      top: 0,
-                      child: Opacity(
-                        opacity: 0.25,
-                        child: banner.image.startsWith("http")
-                            ? Image.network(banner.image, width: 140, fit: BoxFit.contain)
-                            : Image.asset(banner.image, width: 140, fit: BoxFit.contain),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              banner.discount.toUpperCase(),
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            banner.title,
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            banner.subtitle,
-                            style: GoogleFonts.outfit(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                child: banner.image.startsWith("http")
+                    ? Image.network(banner.image, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+                    : Image.asset(banner.image, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
               );
             },
           ),

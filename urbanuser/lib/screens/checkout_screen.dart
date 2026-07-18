@@ -42,6 +42,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
+        String vendorId = 'antigravity_labs_01';
+        try {
+          final vendorSnap = await FirebaseFirestore.instance.collection('vendors').limit(1).get();
+          if (vendorSnap.docs.isNotEmpty) {
+            vendorId = vendorSnap.docs.first.id;
+          }
+        } catch (e) {
+          print("Error fetching vendor ID: $e");
+        }
+
         final bookingId = "UC-${100000 + DateTime.now().millisecond + DateTime.now().second * 1000}";
         await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
           'id': bookingId,
@@ -52,7 +62,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'date': _dates[_selectedDateIndex],
           'time': _times[_selectedTimeIndex],
           'paymentMethod': _paymentMethods[_selectedPaymentIndex]['title'],
-          'status': 'UPCOMING',
+          'status': 'pending',
+          'vendorId': vendorId,
           'createdAt': FieldValue.serverTimestamp(),
         });
       } catch (e) {

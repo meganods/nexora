@@ -237,7 +237,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               'price': '₹${total.toStringAsFixed(0)}',
               'date': widget.date ?? 'Mon, Oct 12',
               'time': widget.time ?? '10:00 AM',
-              'status': 'UPCOMING',
+              'status': 'pending',
               'createdAt': FieldValue.serverTimestamp(),
               'services': widget.selectedItems ?? [],
               'vendorId': widget.vendorId,

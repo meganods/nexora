@@ -92,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildWhatDoYouNeedHeader(),
               _buildCategoryGrid(),
               const SizedBox(height: 24),
-              _buildSectionHeader("New & Noteworthy", ""),
+              _buildSectionHeader("New Services", ""),
               _buildNewServicesCarousel(),
               const SizedBox(height: 24),
               _buildSectionHeader("Service Stories", "View All"),
@@ -547,73 +547,118 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNewServicesCarousel() {
-    final List<Map<String, dynamic>> items = [
-      {"title": "Kitchen\nCleaning", "color": 0xFF00796B},
-      {"title": "Sofa\nCleaning", "color": 0xFF00695C},
-      {"title": "Carpet\nCleaning", "color": 0xFF00897B},
-      {"title": "Bathroom\nCleaning", "color": 0xFF00796B},
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('services').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        
+        List<Map<String, dynamic>> subServices = [];
+        for (var doc in snapshot.data!.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final list = List.from(data['subServices'] ?? []);
+          for (var ss in list) {
+            subServices.add({
+              ...ss,
+              'categoryName': data['categoryName'] ?? data['title'],
+            });
+          }
+        }
 
-    return SizedBox(
-      height: 110,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 20),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+        if (subServices.isEmpty) {
+          return const Center(child: Text("No new services available."));
+        }
+
+        return SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(left: 20),
+            itemCount: subServices.length,
+            itemBuilder: (context, index) {
+              final item = subServices[index];
+              final serviceModel = ServiceModel(
+                id: item['id'] ?? '',
+                title: item['title'] ?? '',
+                category: item['categoryName'] ?? '',
+                subCategory: 'New Service',
+                price: item['price'] != null ? (item['price'].toString().startsWith('₹') ? item['price'].toString() : '₹${item['price']}') : '₹0',
+                discountPercent: 0,
+                rating: 4.8,
+                totalReviews: 12,
+                vendorName: 'Certified Expert',
+                image: item['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80',
+                images: [item['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80'],
+                shortDescription: item['description'] ?? item['desc'] ?? '',
+                description: item['description'] ?? item['desc'] ?? '',
+                longDescription: item['description'] ?? item['desc'] ?? '',
+                duration: item['duration'] ?? '45 Mins',
+                isAvailable: true,
+                location: 'Nearby',
+                tags: ['New'],
+              );
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ServiceDetailScreen(service: serviceModel),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 160,
+                  margin: const EdgeInsets.only(right: 15),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF00796B),
+                        const Color(0xFF00796B).withOpacity(0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              item['title'] ?? '',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              serviceModel.price,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
-            child: Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 15),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(item["color"]),
-                    Color(item["color"]).withValues(alpha: 0.85),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      item["title"],
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      child: const Icon(Icons.cleaning_services, size: 16, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

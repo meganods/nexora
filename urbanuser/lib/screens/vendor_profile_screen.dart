@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../models/service_model.dart';
 import 'all_reviews_screen.dart';
@@ -25,25 +26,56 @@ class VendorProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildProfileHeader(),
-            const SizedBox(height: 30),
-            _buildStats(),
-            const SizedBox(height: 30),
-            _buildSectionDivider(),
-            _buildAboutSection(),
-            _buildSectionDivider(),
-            _buildReviewsSection(context),
-          ],
-        ),
+      body: FutureBuilder<QuerySnapshot>(
+        future: FirebaseFirestore.instance
+            .collection('vendors')
+            .where('enabledServices', arrayContains: service.id)
+            .get(),
+        builder: (context, snapshot) {
+          Map<String, dynamic> vendorInfo = {
+            'name': service.vendorName,
+            'rating': service.rating,
+            'reviewsCount': service.totalReviews,
+            'experience': 'Professional Partner • Member since 2021',
+            'about': "Hi, I am ${service.vendorName}, a verified professional at NEXORA. I specialize in providing top-notch services directly at your doorstep with a 100% satisfaction guarantee. I follow all safety protocols and use premium quality products.",
+            'jobs': '500+',
+            'completion': '98%',
+            'replyTime': '2 hrs',
+          };
+
+          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+            final doc = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+            vendorInfo['name'] = doc['name'] ?? doc['businessName'] ?? service.vendorName;
+            vendorInfo['rating'] = doc['rating'] ?? service.rating;
+            vendorInfo['reviewsCount'] = doc['reviewsCount'] ?? service.totalReviews;
+            vendorInfo['experience'] = "Verified Partner • ${doc['businessName'] ?? 'NEXORA Expert'}";
+            vendorInfo['about'] = doc['about'] ?? "Hi, I am ${vendorInfo['name']}, a verified professional at NEXORA. I specialize in providing top-notch services directly at your doorstep with a 100% satisfaction guarantee.";
+            vendorInfo['jobs'] = doc['jobsCount']?.toString() ?? '150+';
+            vendorInfo['completion'] = doc['completionRate']?.toString() ?? '99%';
+            vendorInfo['replyTime'] = doc['replyTime'] ?? '1 hr';
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                _buildProfileHeader(vendorInfo),
+                const SizedBox(height: 30),
+                _buildStats(vendorInfo),
+                const SizedBox(height: 30),
+                _buildSectionDivider(),
+                _buildAboutSection(vendorInfo),
+                _buildSectionDivider(),
+                _buildReviewsSection(context),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(Map<String, dynamic> vendorInfo) {
     return Column(
       children: [
         const CircleAvatar(
@@ -53,7 +85,7 @@ class VendorProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 15),
         Text(
-          service.vendorName,
+          vendorInfo['name'],
           style: GoogleFonts.outfit(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -62,7 +94,7 @@ class VendorProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Text(
-          "Professional Partner • Member since 2021",
+          vendorInfo['experience'],
           style: GoogleFonts.outfit(
             fontSize: 14,
             color: Colors.grey,
@@ -75,14 +107,14 @@ class VendorProfileScreen extends StatelessWidget {
             const Icon(Icons.star, color: Colors.amber, size: 20),
             const SizedBox(width: 5),
             Text(
-              "${service.rating}",
+              "${vendorInfo['rating']}",
               style: GoogleFonts.outfit(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              " (${service.totalReviews} reviews)",
+              " (${vendorInfo['reviewsCount']} reviews)",
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 color: Colors.grey,
@@ -94,13 +126,13 @@ class VendorProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStats() {
+  Widget _buildStats(Map<String, dynamic> vendorInfo) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildStatItem("500+", "Jobs Done"),
-        _buildStatItem("98%", "Completion"),
-        _buildStatItem("2 hrs", "Avg Reply"),
+        _buildStatItem(vendorInfo['jobs'], "Jobs Done"),
+        _buildStatItem(vendorInfo['completion'], "Completion"),
+        _buildStatItem(vendorInfo['replyTime'], "Avg Reply"),
       ],
     );
   }
@@ -135,7 +167,7 @@ class VendorProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(Map<String, dynamic> vendorInfo) {
     return Padding(
       padding: const EdgeInsets.all(25.0),
       child: Column(
@@ -151,7 +183,7 @@ class VendorProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           Text(
-            "Hi, I am ${service.vendorName}, a verified professional at NEXORA. I specialize in providing top-notch services directly at your doorstep with a 100% satisfaction guarantee. I follow all safety protocols and use premium quality products.",
+            vendorInfo['about'],
             style: GoogleFonts.outfit(
               fontSize: 15,
               color: Colors.grey[700],

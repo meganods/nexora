@@ -259,6 +259,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     final vendorProvider = Provider.of<VendorProvider>(context);
     final vendor = vendorProvider.vendorData;
     final enabledServiceIds = List<String>.from(vendor?['enabledServices'] ?? []);
+    final selectedCategoryIds = List<String>.from(vendor?['selectedCategoryIds'] ?? []);
     
     const primaryBlue = Color(0xFF4A55ED);
     const bgColor = Color(0xFFFCFBFF);
@@ -373,10 +374,6 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-
-            final selectedCategoryIds = List<String>.from(vendorData?['selectedCategoryIds'] ?? []);
-
             // DYNAMIC SERVICES LIST
             if (selectedCategoryIds.isEmpty)
               Container(

@@ -25,6 +25,195 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     });
   }
 
+  void _showEditServiceDialog(BuildContext context, Map<String, dynamic> service) {
+    final formKey = GlobalKey<FormState>();
+    final titleC = TextEditingController(text: service['title']);
+    final descC = TextEditingController(text: service['desc'] ?? service['description']);
+    final priceC = TextEditingController(text: (service['price'] as String?)?.replaceAll('\$', '₹') ?? '₹');
+    final durationC = TextEditingController(text: service['duration'] ?? '45 Mins');
+    String? imageUrl = service['imageUrl'];
+    XFile? pickedImage;
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dContext) => StatefulBuilder(
+        builder: (sbContext, setStateSB) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text('Edit Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            content: SizedBox(
+               width: 400,
+               child: Form(
+                 key: formKey,
+                 child: SingleChildScrollView(
+                   child: Column(
+                     mainAxisSize: MainAxisSize.min,
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                        TextFormField(
+                          controller: titleC,
+                          enabled: !isSaving,
+                          decoration: InputDecoration(labelText: 'Service Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Service name is required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: descC,
+                          enabled: !isSaving,
+                          decoration: InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: priceC,
+                                enabled: !isSaving,
+                                decoration: InputDecoration(labelText: 'Price', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty || v.trim() == '\$' || v.trim() == '₹' || v.trim() == '₹ ') {
+                                    return 'Price is required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: durationC,
+                                enabled: !isSaving,
+                                decoration: InputDecoration(labelText: 'Duration', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Duration is required' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: isSaving ? null : () async {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              setStateSB(() => pickedImage = image);
+                            }
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: pickedImage != null
+                              ? kIsWeb 
+                                 ? Image.network(pickedImage!.path, fit: BoxFit.cover)
+                                 : Image.file(File(pickedImage!.path), fit: BoxFit.cover)
+                              : imageUrl != null
+                                ? Image.network(imageUrl!, fit: BoxFit.cover)
+                                : const Center(child: Text('Pick Image')),
+                          ),
+                        ),
+                     ],
+                   ),
+                 ),
+               ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dContext),
+                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: isSaving ? null : () async {
+                  final messenger = ScaffoldMessenger.of(dContext);
+                  final navigator = Navigator.of(dContext);
+                  if (!formKey.currentState!.validate()) return;
+                  
+                  try {
+                    setStateSB(() => isSaving = true);
+                    
+                    String? uploadedUrl;
+                    if (pickedImage != null) {
+                      if (kIsWeb) {
+                        uploadedUrl = await CloudinaryService.uploadImageBytes(
+                          bytes: await pickedImage!.readAsBytes(),
+                          fileName: pickedImage!.name,
+                          folder: 'sub_services',
+                        );
+                      } else {
+                        uploadedUrl = await CloudinaryService.uploadImage(
+                          filePath: pickedImage!.path,
+                          folder: 'sub_services',
+                        );
+                      }
+                      if (uploadedUrl == null) {
+                        throw Exception('Failed to upload image. Please try again.');
+                      }
+                    }
+
+                    // Search for the category doc containing this subservice ID
+                    final servicesQuery = await FirebaseFirestore.instance.collection('services').get();
+                    DocumentReference? targetDocRef;
+                    List<dynamic>? subServicesList;
+
+                    for (var doc in servicesQuery.docs) {
+                      final subSvcs = List.from(doc.data()['subServices'] ?? []);
+                      final match = subSvcs.any((ss) => ss['id'] == service['id']);
+                      if (match) {
+                        targetDocRef = doc.reference;
+                        subServicesList = subSvcs;
+                        break;
+                      }
+                    }
+
+                    if (targetDocRef != null && subServicesList != null) {
+                      final updatedList = subServicesList.map((ss) {
+                        if (ss['id'] == service['id']) {
+                          return {
+                            ...ss,
+                            'title': titleC.text.trim(),
+                            'desc': descC.text.trim(),
+                            'price': priceC.text.trim(),
+                            'duration': durationC.text.trim(),
+                            if (uploadedUrl != null) 'imageUrl': uploadedUrl,
+                          };
+                        }
+                        return ss;
+                      }).toList();
+
+                      await targetDocRef.update({'subServices': updatedList});
+                    }
+
+                    navigator.pop();
+                    messenger.showSnackBar(const SnackBar(content: Text('Service updated successfully')));
+                  } catch (e) {
+                    setStateSB(() => isSaving = false);
+                    messenger.showSnackBar(SnackBar(content: Text('Error saving: $e')));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A55ED),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: isSaving 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text('Save', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              )
+            ],
+          );
+        }
+      )
+    );
+  }
+
   void _showAddServiceSheet(BuildContext context, VendorProvider provider) {
     showModalBottomSheet(
       context: context,
@@ -217,6 +406,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                           tagColor: const Color(0xFFC4F1F9),
                           tagTextColor: const Color(0xFF007A99),
                           onDelete: () => vendorProvider.removeService(service['id']),
+                          onEdit: () => _showEditServiceDialog(context, service),
                         ),
                       );
                     }).toList(),
@@ -362,9 +552,115 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     );
   }
 
+  void _showAddSubServiceInput(BuildContext context, Function(Map<String, dynamic>) onAdded) {
+    final formKey = GlobalKey<FormState>();
+    final titleC = TextEditingController();
+    final descC = TextEditingController();
+    final priceC = TextEditingController(text: '₹');
+    final durationC = TextEditingController(text: '45 Mins');
+
+    showDialog(
+      context: context,
+      builder: (dContext2) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Add Sub-Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: SizedBox(
+          width: 320,
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleC,
+                  decoration: InputDecoration(
+                    labelText: 'Sub Service name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descC,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'description',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: priceC,
+                        decoration: InputDecoration(
+                          labelText: 'price',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty || v.trim() == '₹') {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: durationC,
+                        decoration: InputDecoration(
+                          labelText: 'Duration',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dContext2),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                onAdded({
+                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                  'title': titleC.text.trim(),
+                  'description': descC.text.trim(),
+                  'price': priceC.text.trim(),
+                  'duration': durationC.text.trim(),
+                  'imageUrl': null,
+                });
+                Navigator.pop(dContext2);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4A55ED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Add', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showRequestCategoryDialog(BuildContext context, VendorProvider provider) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
+    final List<Map<String, dynamic>> requestedSubServices = [];
     XFile? pickedImage;
     bool isSubmitting = false;
 
@@ -437,6 +733,82 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                             ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Sub-Services', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+                        TextButton.icon(
+                          onPressed: isSubmitting ? null : () {
+                            _showAddSubServiceInput(dContext, (subSvc) {
+                              setStateSB(() {
+                                requestedSubServices.add(subSvc);
+                              });
+                            });
+                          },
+                          icon: const Icon(Icons.add, size: 16, color: Color(0xFF4A55ED)),
+                          label: Text('Add Sub-Service', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF4A55ED), fontWeight: FontWeight.bold)),
+                        )
+                      ],
+                    ),
+                    if (requestedSubServices.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Text(
+                          'No sub-services requested yet.',
+                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: requestedSubServices.length,
+                        itemBuilder: (ctx, idx) {
+                          final ss = requestedSubServices[idx];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(ss['title'] ?? '', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      Text(ss['description'] ?? '', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(ss['price'] ?? '', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF4A55ED))),
+                                          Text(ss['duration'] ?? '', style: GoogleFonts.poppins(fontSize: 11, color: Colors.blueGrey)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                  onPressed: () {
+                                    setStateSB(() {
+                                      requestedSubServices.removeAt(idx);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -480,6 +852,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                       nameController.text.trim(),
                       descController.text.trim(),
                       categoryImageUrl: uploadedUrl,
+                      subServices: requestedSubServices,
                     );
 
                     navigator.pop();
@@ -520,6 +893,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     required Color tagColor,
     required Color tagTextColor,
     required VoidCallback onDelete,
+    required VoidCallback onEdit,
   }) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -551,7 +925,12 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
               ),
               Row(
                 children: [
-                  Icon(Icons.edit, color: Colors.grey[600], size: 18),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: Icon(Icons.edit, color: Colors.grey[600], size: 18),
+                    onPressed: onEdit,
+                  ),
                   const SizedBox(width: 16),
                   IconButton(
                     padding: EdgeInsets.zero,

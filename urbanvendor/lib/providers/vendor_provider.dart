@@ -114,7 +114,7 @@ class VendorProvider with ChangeNotifier {
     return FirebaseFirestore.instance.collection('services').snapshots();
   }
 
-  Future<void> requestNewCategory(String categoryName, String description, {String? categoryImageUrl}) async {
+  Future<void> requestNewCategory(String categoryName, String description, {String? categoryImageUrl, List<Map<String, dynamic>>? subServices}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -127,6 +127,7 @@ class VendorProvider with ChangeNotifier {
         'description': description,
         'categoryImageUrl': categoryImageUrl,
         'status': 'PENDING',
+        'subServices': subServices ?? [],
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {

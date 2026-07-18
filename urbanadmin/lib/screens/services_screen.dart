@@ -735,7 +735,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                      
                       if (!mounted) return;
                       if (docId == null) {
-                        data['subServices'] = [];
+                        data['subServices'] = existingData?['subServices'] ?? [];
                         final newDoc = await admin.addService(data);
                         if (requestVendorId != null && requestVendorId.isNotEmpty) {
                           final vendorQuery = await FirebaseFirestore.instance
@@ -1091,6 +1091,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                       'categoryName': data['categoryName'] ?? data['title'],
                                       'description': data['description'] ?? data['desc'],
                                       'categoryImageUrl': data['categoryImageUrl'] ?? data['imageUrl'],
+                                      'subServices': data['subServices'],
                                     },
                                   );
                                   adminProvider.updateCategoryRequestStatus(req.id, 'APPROVED');

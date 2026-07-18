@@ -93,7 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildWhatDoYouNeedHeader(),
               _buildCategoryGrid(),
               const SizedBox(height: 24),
-              _buildSectionHeader("New Services", ""),
+              _buildSectionHeader("New Services", "View All"),
               _buildNewServicesCarousel(),
               const SizedBox(height: 24),
               _buildSectionHeader("Service Stories", "View All"),
@@ -553,7 +553,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         
-        final docs = snapshot.data!.docs;
+        final docs = snapshot.data!.docs.take(10).toList();
         if (docs.isEmpty) {
           return const Center(child: Text("No new services available."));
         }

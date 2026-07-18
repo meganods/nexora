@@ -270,8 +270,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            begin: Alignment.leftCenter,
-                            end: Alignment.rightCenter,
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
                             colors: [
                               Colors.black.withValues(alpha: 0.55),
                               Colors.black.withValues(alpha: 0.15),

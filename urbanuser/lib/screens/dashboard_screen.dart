@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' show ImageFilter;
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urbanuser/widgets/custom_bottom_nav.dart';
@@ -30,11 +31,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final PageController _bannerController = PageController();
   int _currentBannerIndex = 0;
   String _userAddress = "4517 Washington Ave";
+  Timer? _bannerTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUserAddress();
+    _startBannerTimer();
+  }
+
+  void _startBannerTimer() {
+    _bannerTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_bannerController.hasClients) {
+        int nextPage = _bannerController.page!.round() + 1;
+        if (nextPage >= _banners.length) {
+          nextPage = 0;
+        }
+        _bannerController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _bannerTimer?.cancel();
+    _bannerController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserAddress() async {
@@ -207,116 +233,137 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBannerCarousel() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.zero,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF673AB7), // Premium violet
-            Color(0xFF512DA8), // Rich purple
-            Color(0xFF3F51B5), // Deep blue-indigo
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF673AB7).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -30,
-            top: -30,
-            child: CircleAvatar(
-              radius: 90,
-              backgroundColor: Colors.white.withValues(alpha: 0.06),
-            ),
-          ),
-          Positioned(
-            left: -10,
-            bottom: -30,
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.white.withValues(alpha: 0.06),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(20),
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _bannerController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
+            itemCount: _banners.length,
+            itemBuilder: (context, index) {
+              final banner = _banners[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: index == 0
+                        ? [const Color(0xFF673AB7), const Color(0xFF512DA8), const Color(0xFF3F51B5)]
+                        : index == 1
+                            ? [const Color(0xFF00796B), const Color(0xFF00897B), const Color(0xFF009688)]
+                            : [const Color(0xFF2E7D32), const Color(0xFF388E3C), const Color(0xFF4CAF50)],
                   ),
-                  child: Text(
-                    "LIMITED TIME OFFER",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  "40% OFF\nDeep Cleaning",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Get your home brand new again with our expert team.",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -30,
+                      top: -30,
+                      child: CircleAvatar(
+                        radius: 90,
+                        backgroundColor: Colors.white.withValues(alpha: 0.06),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF512DA8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    "Book Now",
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
+                    Positioned(
+                      left: -10,
+                      bottom: -30,
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.white.withValues(alpha: 0.06),
+                      ),
+                    ),
+                    Positioned(
+                      right: 10,
+                      bottom: 0,
+                      top: 0,
+                      child: Opacity(
+                        opacity: 0.25,
+                        child: banner.image.startsWith("http")
+                            ? Image.network(banner.image, width: 140, fit: BoxFit.contain)
+                            : Image.asset(banner.image, width: 140, fit: BoxFit.contain),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              banner.discount.toUpperCase(),
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            banner.title,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            banner.subtitle,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _banners.length,
+            (index) => Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _currentBannerIndex == index ? 16 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                color: _currentBannerIndex == index ? const Color(0xFF673AB7) : Colors.grey[300],
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

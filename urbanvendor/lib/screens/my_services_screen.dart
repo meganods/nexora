@@ -601,100 +601,177 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     final descC = TextEditingController(text: existingSvc['description']);
     final priceC = TextEditingController(text: existingSvc['price']);
     final durationC = TextEditingController(text: existingSvc['duration']);
+    String? imageUrl = existingSvc['imageUrl'];
+    XFile? pickedImage;
+    bool isSaving = false;
 
     showDialog(
       context: context,
-      builder: (dContext2) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Edit Sub-Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: SizedBox(
-          width: 320,
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: titleC,
-                  decoration: InputDecoration(
-                    labelText: 'Sub Service name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descC,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'description',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: priceC,
+      barrierDismissible: false,
+      builder: (dContext2) => StatefulBuilder(
+        builder: (sbContext, setStateSB) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Edit Sub-Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+            content: SizedBox(
+              width: 320,
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: titleC,
+                        enabled: !isSaving,
                         decoration: InputDecoration(
-                          labelText: 'price',
+                          labelText: 'Sub Service name',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty || v.trim() == '₹') {
-                            return 'Required';
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: descC,
+                        enabled: !isSaving,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'description',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: isSaving ? null : () async {
+                          final picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            setStateSB(() => pickedImage = image);
                           }
-                          return null;
                         },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: durationC,
-                        decoration: InputDecoration(
-                          labelText: 'Duration',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Container(
+                          width: double.infinity,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: pickedImage != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: kIsWeb 
+                                      ? Image.network(pickedImage!.path, fit: BoxFit.cover)
+                                      : Image.file(File(pickedImage!.path), fit: BoxFit.cover),
+                                )
+                              : imageUrl != null && imageUrl!.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(imageUrl!, fit: BoxFit.cover),
+                                    )
+                                  : const Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 28),
+                                          SizedBox(height: 4),
+                                          Text('Add Image', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                                        ],
+                                      ),
+                                    ),
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: priceC,
+                              enabled: !isSaving,
+                              decoration: InputDecoration(
+                                labelText: 'price',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty || v.trim() == '₹') {
+                                  return 'Required';
+                                  }
+                                  return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: durationC,
+                              enabled: !isSaving,
+                              decoration: InputDecoration(
+                                labelText: 'Duration',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isSaving) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(),
+                      ],
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dContext2),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                onEdited({
-                  ...existingSvc,
-                  'title': titleC.text.trim(),
-                  'description': descC.text.trim(),
-                  'price': priceC.text.trim(),
-                  'duration': durationC.text.trim(),
-                });
-                Navigator.pop(dContext2);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A55ED),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text('Save', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dContext2),
+                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: isSaving ? null : () async {
+                  if (formKey.currentState!.validate()) {
+                    setStateSB(() => isSaving = true);
+                    try {
+                      String? uploadedUrl = imageUrl;
+                      if (pickedImage != null) {
+                        final bytes = await pickedImage!.readAsBytes();
+                        uploadedUrl = await CloudinaryService.uploadImageBytes(
+                          bytes: bytes,
+                          fileName: pickedImage!.name,
+                        );
+                      }
+                      onEdited({
+                        ...existingSvc,
+                        'title': titleC.text.trim(),
+                        'description': descC.text.trim(),
+                        'price': priceC.text.trim(),
+                        'duration': durationC.text.trim(),
+                        'imageUrl': uploadedUrl,
+                      });
+                      Navigator.pop(dContext2);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Image upload failed: $e')),
+                      );
+                    } finally {
+                      setStateSB(() => isSaving = false);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A55ED),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text('Save', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

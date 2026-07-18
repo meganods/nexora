@@ -777,7 +777,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: image == "others"
-                      ? const Icon(Icons.more_horiz_rounded, size: 28, color: AppTheme.accentColor)
+                      ? Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEBEFFA),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.apps_rounded,
+                              size: 28,
+                              color: Color(0xFF673AB7),
+                            ),
+                          ),
+                        )
                       : Image.asset(
                           image,
                           fit: BoxFit.contain,

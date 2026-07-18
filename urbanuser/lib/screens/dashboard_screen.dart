@@ -13,6 +13,7 @@ import 'service_list_screen.dart';
 import '../data/rewards_data.dart';
 import 'refer_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'my_bookings_screen.dart';
 import 'wallet_screen.dart';
 import 'login_screen.dart';

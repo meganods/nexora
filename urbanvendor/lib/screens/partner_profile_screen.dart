@@ -17,9 +17,6 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<VendorProvider>(context, listen: false).fetchVendorData();
-    });
   }
 
   @override
@@ -29,10 +26,6 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
     
     const primaryBlue = Color(0xFF4A55ED);
     const bgColor = Color(0xFFFCFBFF);
-
-    if (vendorProvider.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
 
     return Scaffold(
       backgroundColor: bgColor,

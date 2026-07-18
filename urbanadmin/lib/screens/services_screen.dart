@@ -498,7 +498,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           Expanded(
             flex: 1,
             child: Text(
-              price,
+              price.replaceAll('\$', '₹'),
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -787,7 +787,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final formKey = GlobalKey<FormState>();
     final titleC = TextEditingController(text: existingSubService?['title']);
     final descC = TextEditingController(text: existingSubService?['desc']);
-    final priceC = TextEditingController(text: existingSubService?['price'] ?? '₹');
+    final priceC = TextEditingController(text: (existingSubService?['price'] as String?)?.replaceAll('\$', '₹') ?? '₹');
     final durationC = TextEditingController(text: existingSubService?['duration'] ?? '45 Mins');
     String status = existingSubService?['status'] ?? 'Enabled';
     String? imageUrl = existingSubService?['imageUrl'];

@@ -769,7 +769,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           child: Column(
             children: [
-              Expanded(
+              AspectRatio(
+                aspectRatio: 1.0,
                 child: Container(
                   padding: EdgeInsets.zero,
                   decoration: BoxDecoration(

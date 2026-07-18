@@ -13,8 +13,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     {
       'name': 'Luxe Garden Services',
       'category': 'Outdoor Maintenance',
-      'sales': '\$42,500.00',
-      'cut': '-\$6,375.00',
+      'sales': '₹42,500.00',
+      'cut': '-₹6,375.00',
       'status': 'PROCESSED',
       'statusColor': const Color(0xFF10B981),
       'avatarBg': const Color(0xFF1E293B),
@@ -22,8 +22,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     {
       'name': 'Elite Logistics Pro',
       'category': 'Premium Transport',
-      'sales': '\$38,120.50',
-      'cut': '-\$5,718.08',
+      'sales': '₹38,120.50',
+      'cut': '-₹5,718.08',
       'status': 'PENDING',
       'statusColor': const Color(0xFFEF4444),
       'avatarBg': const Color(0xFF0F172A),
@@ -31,8 +31,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     {
       'name': 'Prism Concierge Care',
       'category': 'Housekeeping',
-      'sales': '\$19,400.00',
-      'cut': '-\$2,910.00',
+      'sales': '₹19,400.00',
+      'cut': '-₹2,910.00',
       'status': 'PROCESSED',
       'statusColor': const Color(0xFF10B981),
       'avatarBg': const Color(0xFF334155),
@@ -40,8 +40,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     {
       'name': 'Gourmet Guild',
       'category': 'Private Dining',
-      'sales': '\$64,000.00',
-      'cut': '-\$9,600.00',
+      'sales': '₹64,000.00',
+      'cut': '-₹9,600.00',
       'status': 'PROCESSED',
       'statusColor': const Color(0xFF10B981),
       'avatarBg': const Color(0xFFF1F5F9),
@@ -186,7 +186,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           const SizedBox(width: 24),
           _buildStatCard(
             'COMMISSION EARNED',
-            '\$192,675.36',
+            '₹192,675.36',
             'Avg. 15% per service',
             Icons.account_balance_wallet_rounded,
             const Color(0xFF6D28D9),
@@ -194,7 +194,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           const SizedBox(width: 24),
           _buildStatCard(
             'VENDOR PAYOUTS',
-            '\$1,091,827.04',
+            '₹1,091,827.04',
             'Scheduled for Friday',
             Icons.payments_rounded,
             const Color(0xFF0D9488),
@@ -203,7 +203,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           const SizedBox(width: 24),
           _buildStatCard(
             'NET PROFIT',
-            '\$124,500.00',
+            '₹124,500.00',
             'Post-tax estimation',
             Icons.trending_up_rounded,
             const Color(0xFF10B981),
@@ -310,7 +310,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '\$1,284,502.40',
+                  '₹1,284,502.40',
                   style: GoogleFonts.poppins(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -567,7 +567,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    _buildFeeRow('Transaction Fee', '\$0.30 + 2.9%'),
+                    _buildFeeRow('Transaction Fee', '₹0.30 + 2.9%'),
                     const SizedBox(height: 16),
                     _buildFeeRow('Marketing Fee', 'Included', isGreen: true),
                     const SizedBox(height: 36),

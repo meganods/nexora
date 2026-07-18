@@ -561,7 +561,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               const SizedBox(width: 20),
               _buildStatCard(
                 'Revenue',
-                '\$248.5k',
+                '₹248.5k',
                 Icons.payments_rounded,
                 const Color(0xFF6366F1),
                 'Monthly',
@@ -725,7 +725,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     getTooltipColor: (group) => Colors.blueGrey[800]!,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
-                        '\$${rod.toY.toInt()}k',
+                        '₹${rod.toY.toInt()}k',
                         const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       );
                     },
@@ -758,7 +758,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       getTitlesWidget: (value, meta) {
                         if (value == 0) return const SizedBox.shrink();
                         return Text(
-                          '\$${value.toInt()}k',
+                          '₹${value.toInt()}k',
                           style: const TextStyle(color: Colors.blueGrey, fontSize: 10),
                         );
                       },
@@ -1008,7 +1008,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 'BT',
                 'Bespoke Travels',
                 'Oct 24, 2023',
-                '\$1,240.00',
+                '₹1,240.00',
                 'CONFIRMED',
                 const Color(0xFF10B981),
               ),
@@ -1017,7 +1017,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 'UA',
                 'Urban Architects',
                 'Oct 24, 2023',
-                '\$3,500.00',
+                '₹3,500.00',
                 'CONFIRMED',
                 const Color(0xFF10B981),
               ),
@@ -1026,7 +1026,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 'GS',
                 'Gourmet Studio',
                 'Oct 23, 2023',
-                '\$890.00',
+                '₹890.00',
                 'PROCESSING',
                 const Color(0xFF6366F1),
               ),

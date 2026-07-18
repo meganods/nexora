@@ -120,7 +120,6 @@ class AdminProvider with ChangeNotifier {
   Stream<QuerySnapshot> get categoryRequestsStream {
     return _firestore
         .collection('category_requests')
-        .orderBy('createdAt', descending: true)
         .snapshots();
   }
 

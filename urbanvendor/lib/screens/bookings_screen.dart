@@ -70,7 +70,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('vendorId', isEqualTo: user.uid)
-          .where('status', isEqualTo: status)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -81,7 +80,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        final allDocs = snapshot.data?.docs ?? [];
+        final docs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return (data['status'] ?? 'UPCOMING') == status;
+        }).toList();
+
         if (docs.isEmpty) {
           return _buildEmptyState(status);
         }

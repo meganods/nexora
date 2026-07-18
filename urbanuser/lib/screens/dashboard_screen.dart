@@ -739,9 +739,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.85,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -771,26 +771,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F5F9), // Light grey/blue premium tint
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: image == "others"
-                      ? Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFEBEFFA),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.apps_rounded,
-                              size: 28,
-                              color: Color(0xFF673AB7),
-                            ),
-                          ),
-                        )
+                      ? const Icon(Icons.more_horiz_rounded, size: 36, color: AppTheme.accentColor)
                       : Image.asset(
                           image,
                           fit: BoxFit.contain,
@@ -799,7 +786,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 title,
                 maxLines: 1,

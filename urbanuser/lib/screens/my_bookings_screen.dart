@@ -160,17 +160,31 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     children: [
                        ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: Image.network(
-                          _getServiceImageUrl(shopName, data['imageUrl'] ?? data['image']),
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 60,
-                            height: 60,
-                            color: const Color(0xFFEEF2F6),
-                            child: const Icon(Icons.design_services_rounded, color: Color(0xFF4F46E5), size: 28),
-                          ),
+                        child: FutureBuilder<DocumentSnapshot>(
+                          future: (data['vendorId'] != null)
+                              ? FirebaseFirestore.instance.collection('vendors').doc(data['vendorId']).get()
+                              : Future.value(null),
+                          builder: (context, vendorSnap) {
+                            String? url;
+                            if (vendorSnap.hasData && vendorSnap.data != null && vendorSnap.data!.exists) {
+                              final vData = vendorSnap.data!.data() as Map<String, dynamic>;
+                              url = vData['categoryImageUrl'] ?? vData['imageUrl'] ?? vData['image'];
+                            }
+                            url ??= data['imageUrl'] ?? data['image'];
+                            
+                            return Image.network(
+                              url ?? _getServiceImageUrl(shopName, null),
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                width: 60,
+                                height: 60,
+                                color: const Color(0xFFEEF2F6),
+                                child: const Icon(Icons.design_services_rounded, color: Color(0xFF4F46E5), size: 28),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 15),

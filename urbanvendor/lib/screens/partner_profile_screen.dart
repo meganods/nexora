@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -265,15 +266,15 @@ class _PartnerProfileScreenState extends State<PartnerProfileScreen> {
                   await FirebaseAuth.instance.currentUser?.updatePassword(passwordController.text);
                   if (context.mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated successfully')));
+                    AppSnackbar.show(context, 'Password updated successfully');
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+                    AppSnackbar.show(context, 'Error: ${e.toString()}', isError: true);
                   }
                 }
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 6 characters')));
+                AppSnackbar.show(context, 'Password must be at least 6 characters');
               }
             },
             child: const Text('Update'),

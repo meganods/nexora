@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanvendor/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -104,7 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             activeThumbColor: accentColor,
             onChanged: (val) {
               setState(() => _isOnline = val);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(val ? 'You are now online' : 'You are now offline')));
+              AppSnackbar.show(context, val ? 'You are now online' : 'You are now offline');
             },
           ),
         ],
@@ -288,7 +289,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: TextButton(
                               onPressed: () {
                                 setState(() => _newRequests.removeAt(index));
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request Rejected')));
+                                AppSnackbar.show(context, 'Request Rejected');
                               },
                               style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), foregroundColor: Colors.redAccent),
                               child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -299,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: TextButton(
                               onPressed: () {
                                 setState(() => _newRequests.removeAt(index));
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request Accepted!'), backgroundColor: accentColor));
+                                AppSnackbar.show(context, 'Request Accepted!');
                               },
                               style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), foregroundColor: accentColor),
                               child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),

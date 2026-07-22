@@ -1368,164 +1368,219 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBestInYourCityVerticalList() {
-    final List<Map<String, dynamic>> items = [
-      {
-        "title": "Classic Bathroom Cleaning",
-        "rating": "4.8 (1.2k reviews)",
-        "price": "₹249",
-        "image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=720&auto=format&fit=crop",
-        "tag": "POPULAR",
-      },
-      {
-        "title": "Salon for Women",
-        "rating": "4.7 (850 reviews)",
-        "price": "₹399",
-        "image": "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=720&auto=format&fit=crop",
-        "tag": "RECOMMENDED",
-      },
-      {
-        "title": "AC Service & Repair",
-        "rating": "4.9 (1.5k reviews)",
-        "price": "₹599",
-        "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=720&auto=format&fit=crop",
-        "tag": "TOP RATED",
-      }
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('services').snapshots(),
+      builder: (context, servicesSnapshot) {
+        if (servicesSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!servicesSnapshot.hasData || servicesSnapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No services available."));
+        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CategoryDetailScreen(categoryName: "Cleaning"),
-              ),
-            );
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      child: Image.network(
-                        item["image"],
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+        final serviceDocs = servicesSnapshot.data!.docs;
+
+        return FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance.collection('reviews').get(),
+          builder: (context, reviewsSnapshot) {
+            final List<Map<String, dynamic>> servicesWithRatings = [];
+            final reviewsDocs = reviewsSnapshot.data?.docs ?? [];
+
+            for (var doc in serviceDocs) {
+              final serviceData = doc.data() as Map<String, dynamic>;
+              final String serviceId = serviceData['id'] ?? doc.id;
+              final String serviceTitle = serviceData['title'] ?? serviceData['categoryName'] ?? 'Service';
+              final String vendorId = serviceData['vendorId'] ?? '';
+
+              // Find matching reviews
+              final matchingReviews = reviewsDocs.where((r) {
+                final rData = r.data() as Map<String, dynamic>;
+                return rData['serviceId'] == serviceId || 
+                       rData['serviceTitle'] == serviceTitle ||
+                       rData['title'] == serviceTitle ||
+                       (vendorId.isNotEmpty && rData['vendorId'] == vendorId);
+              }).toList();
+
+              double computedRating = 4.5;
+              int reviewsCount = 0;
+              if (matchingReviews.isNotEmpty) {
+                double total = 0.0;
+                for (var r in matchingReviews) {
+                  final rData = r.data() as Map<String, dynamic>;
+                  total += ((rData['rating'] ?? 5.0) as num).toDouble();
+                }
+                computedRating = total / matchingReviews.length;
+                reviewsCount = matchingReviews.length;
+              } else {
+                computedRating = ((serviceData['rating'] ?? 4.5) as num).toDouble();
+                reviewsCount = serviceData['totalReviews'] ?? 12;
+              }
+
+              servicesWithRatings.add({
+                'id': serviceId,
+                'title': serviceTitle,
+                'rating': "${computedRating.toStringAsFixed(1)} ($reviewsCount reviews)",
+                'price': "₹${serviceData['price'] ?? '299'}",
+                'image': serviceData['imageUrl'] ?? serviceData['categoryImageUrl'] ?? "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=720&auto=format&fit=crop",
+                'tag': computedRating >= 4.8 ? "TOP RATED" : (computedRating >= 4.6 ? "RECOMMENDED" : "POPULAR"),
+                'ratingVal': computedRating,
+              });
+            }
+
+            // Sort by rating desc
+            servicesWithRatings.sort((a, b) => (b['ratingVal'] as double).compareTo(a['ratingVal'] as double));
+
+            final displayItems = servicesWithRatings.take(3).toList();
+
+            if (displayItems.isEmpty) {
+              return const Center(child: Text("No top services found."));
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayItems.length,
+              itemBuilder: (context, index) {
+                final item = displayItems[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CategoryDetailScreen(categoryName: item['title']),
                       ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
                     ),
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          item["tag"],
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item["title"],
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentColor,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.orange, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            item["rating"],
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              color: Colors.grey[700],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                              child: item['image'].toString().startsWith('http')
+                                ? Image.network(
+                                    item["image"],
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    item["image"],
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.green, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Verified Partner Assured",
-                            style: GoogleFonts.outfit(
-                              fontSize: 11,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            item["price"],
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.accentColor,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              "Book",
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                            Positioned(
+                              top: 12,
+                              left: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  item["tag"],
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item["title"],
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.accentColor,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star, color: Colors.orange, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    item["rating"],
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "Verified Partner Assured",
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    item["price"],
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.accentColor,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      "Book",
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                );
+              },
+            );
+          },
         );
       },
     );
@@ -2073,16 +2128,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildVideoStories() {
-    final List<Map<String, dynamic>> stories = DummyData.getBySection("Service Stories").map((s) => {
-        'title': s.title,
-        'rating': s.rating.toString(),
-        'videoUrl': null, // Fallback to asset
-        'imageUrl': s.image,
-    }).take(5).toList();
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('services').where('isServiceStory', isEqualTo: true).snapshots(),
+      builder: (context, snapshot) {
+        List<Map<String, dynamic>> stories = [];
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          stories = snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return {
+              'title': data['title'] ?? data['categoryName'] ?? 'Service Story',
+              'rating': (data['rating'] ?? 4.8).toString(),
+              'videoUrl': data['videoUrl'],
+              'imageUrl': data['imageUrl'] ?? data['categoryImageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
+            };
+          }).toList();
+        } else {
+          stories = DummyData.getBySection("Service Stories").map((s) => {
+              'title': s.title,
+              'rating': s.rating.toString(),
+              'videoUrl': null,
+              'imageUrl': s.image,
+          }).take(5).toList();
+        }
 
-    return SizedBox(
-      height: 220,
-      child: ListView.builder(
+        return SizedBox(
+          height: 220,
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 20),
             itemCount: stories.length,
@@ -2093,7 +2164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ServiceListScreen(sectionTitle: story['title']),
+                      builder: (context) => CategoryDetailScreen(categoryName: story['title']),
                     ),
                   );
                 },
@@ -2108,6 +2179,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         );
+      },
+    );
   }
 
   Widget _buildOffersCarousel() {

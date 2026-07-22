@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -218,7 +219,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                     width: 100,
                     child: ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to Cart'), backgroundColor: accentColor));
+                        AppSnackbar.show(context, 'Added to Cart');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,

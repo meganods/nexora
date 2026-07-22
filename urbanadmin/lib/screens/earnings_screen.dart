@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -124,9 +125,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           children: [
             OutlinedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Exporting financial report...')),
-                );
+                AppSnackbar.show(context, 'Exporting financial report...');
               },
               icon: const Icon(Icons.file_download_rounded, size: 16),
               label: Text(
@@ -148,9 +147,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             const SizedBox(width: 16),
             ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening transaction portal...')),
-                );
+                AppSnackbar.show(context, 'Opening transaction portal...');
               },
               icon: const Icon(Icons.add_rounded, size: 16),
               label: Text(
@@ -575,9 +572,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Take rate updated to ${_platformTakeRate.toStringAsFixed(1)}%')),
-                          );
+                          AppSnackbar.show(context, 'Take rate updated to ${_platformTakeRate.toStringAsFixed(1)}%');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF4C1D95),

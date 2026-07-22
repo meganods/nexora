@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -180,12 +181,7 @@ class ReferScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Referral code copied"),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                AppSnackbar.show(context, "Referral code copied");
               },
               icon: const Icon(Icons.copy, size: 18),
               label: Text("Copy Code", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),

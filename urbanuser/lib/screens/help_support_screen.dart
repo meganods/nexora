@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -88,15 +89,15 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               child: Row(
                 children: [
                   _buildContactCard(Icons.chat_bubble_outline, 'Chat', Colors.blue, () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Chat Support...')));
+                    AppSnackbar.show(context, 'Opening Chat Support...');
                   }),
                   const SizedBox(width: 16),
                   _buildContactCard(Icons.phone_outlined, 'Call', Colors.green, () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Calling Support...')));
+                    AppSnackbar.show(context, 'Calling Support...');
                   }),
                   const SizedBox(width: 16),
                   _buildContactCard(Icons.email_outlined, 'Email', Colors.orange, () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Email Client...')));
+                    AppSnackbar.show(context, 'Opening Email Client...');
                   }),
                 ],
               ),
@@ -119,7 +120,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         ElevatedButton(
                           onPressed: () {
                             Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support ticket raised successfully!'), backgroundColor: accentColor));
+                            AppSnackbar.show(context, 'Support ticket raised successfully!');
                           },
                           style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
                           child: const Text('Confirm', style: TextStyle(color: Colors.white)),

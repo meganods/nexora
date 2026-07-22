@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanadmin/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _UsersScreenState extends State<UsersScreen> {
               onPressed: () {
                 setState(() => user['status'] = 'Banned');
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${user['name']} has been banned'), backgroundColor: Colors.redAccent));
+                AppSnackbar.show(context, '${user['name']} has been banned', isError: true);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
               child: const Text('Ban User', style: TextStyle(color: Colors.white)),
@@ -57,7 +58,7 @@ class _UsersScreenState extends State<UsersScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Action "$action" on ${user['name']} initiated')));
+      AppSnackbar.show(context, 'Action "$action" on ${user['name']} initiated');
     }
   }
 

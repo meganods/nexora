@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -120,9 +121,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         setState(() {
           _selectedStatus = label;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Viewing $label applications')),
-        );
+        AppSnackbar.show(context, 'Viewing $label applications');
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
@@ -180,9 +179,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
   Widget _buildFilterItem(String label, String value, IconData icon) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Filtering applications by $label...')),
-        );
+        AppSnackbar.show(context, 'Filtering applications by $label...');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -259,9 +256,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
         children: [
           IconButton(
             onPressed: () {
-               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening advanced filters...')),
-              );
+               AppSnackbar.show(context, 'Opening advanced filters...');
             },
             icon: const Icon(
               LucideIcons.listFilter,
@@ -281,9 +276,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
           const Spacer(),
           TextButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All filters reset')),
-              );
+              AppSnackbar.show(context, 'All filters reset');
             },
             child: Text(
               'RESET ALL',
@@ -575,12 +568,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                                     onTap: () async {
                                       final success = await Provider.of<AdminProvider>(context, listen: false).approveVendor(docId);
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(success ? 'Vendor Approved Successfully' : 'Failed to Approve Vendor'),
-                                          backgroundColor: success ? Colors.teal : Colors.redAccent,
-                                        ),
-                                      );
+                                      AppSnackbar.show(context, success ? 'Vendor Approved Successfully' : 'Failed to Approve Vendor', isError: true);
                                     },
                                   borderRadius: BorderRadius.circular(20),
                                   child: Container(
@@ -616,12 +604,7 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
                                   onTap: () async {
                                     final success = await Provider.of<AdminProvider>(context, listen: false).rejectVendor(docId);
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(success ? 'Vendor Rejected' : 'Failed to Reject Vendor'),
-                                        backgroundColor: success ? Colors.red : Colors.redAccent,
-                                      ),
-                                    );
+                                    AppSnackbar.show(context, success ? 'Vendor Rejected' : 'Failed to Reject Vendor', isError: true);
                                   },
                                   borderRadius: BorderRadius.circular(20),
                                   child: Container(

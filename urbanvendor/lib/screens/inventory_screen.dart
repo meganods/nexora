@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanvendor/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class InventoryScreen extends StatefulWidget {
@@ -137,9 +138,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       activeThumbColor: accentColor,
                       onChanged: (val) {
                         setState(() => item['inStock'] = val);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(val ? '${item['title']} is now in stock' : '${item['title']} is out of stock'),
-                        ));
+                        AppSnackbar.show(context, val ? '${item['title']} is now in stock' : '${item['title']} is out of stock');
                       },
                     ),
                     Text(inStock ? 'Available' : 'Out of Stock', style: TextStyle(color: inStock ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 13)),
@@ -147,7 +146,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Edit Service...')));
+                    AppSnackbar.show(context, 'Opening Edit Service...');
                   },
                   icon: const Icon(Icons.edit, size: 16, color: primaryColor),
                   label: const Text('Edit', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),

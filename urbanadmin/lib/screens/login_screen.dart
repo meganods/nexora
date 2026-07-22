@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,9 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
-      );
+      AppSnackbar.show(context, 'Please enter email and password');
       return;
     }
 
@@ -54,23 +53,17 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         } catch (innerE) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Auto-registration failed: $innerE')),
-            );
+            AppSnackbar.show(context, 'Auto-registration failed: $innerE');
           }
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? 'Authentication failed')),
-          );
+          AppSnackbar.show(context, e.message ?? 'Authentication failed');
         }
       }
     } catch (e) {
        if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
-        );
+        AppSnackbar.show(context, 'An error occurred: $e', isError: true);
       }
     } finally {
       if (mounted) {

@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -48,7 +49,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
             onPressed: () {
               setState(() => _wishlist.removeWhere((item) => item['id'] == id));
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Removed from wishlist'), backgroundColor: accentColor));
+              AppSnackbar.show(context, 'Removed from wishlist');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             child: const Text('Remove', style: TextStyle(color: Colors.white)),

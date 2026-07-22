@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -42,10 +43,10 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
           final updates = isBanner ? {'bannerUrl': url} : {'brandLogo': url};
           if (!mounted) return;
           await Provider.of<VendorProvider>(context, listen: false).updateVendorProfile(updates);
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image updated successfully!')));
+          if (mounted) AppSnackbar.show(context, 'Image updated successfully!');
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+        if (mounted) AppSnackbar.show(context, 'Upload failed: $e');
       } finally {
         if (mounted) setState(() => _isUploadingImage = false);
       }
@@ -244,7 +245,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
       ),
       actions: [
         IconButton(onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No new notifications')));
+          AppSnackbar.show(context, 'No new notifications');
         }, icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20)),
       ],
     );

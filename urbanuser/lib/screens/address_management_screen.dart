@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class AddressManagementScreen extends StatefulWidget {
@@ -48,9 +49,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                 addresses.removeWhere((a) => a['id'] == id);
               });
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Address deleted successfully'), backgroundColor: accentColor, behavior: SnackBarBehavior.floating),
-              );
+              AppSnackbar.show(context, 'Address deleted successfully');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -66,9 +65,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
         a['isDefault'] = a['id'] == id;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Default address updated'), backgroundColor: accentColor, behavior: SnackBarBehavior.floating),
-    );
+    AppSnackbar.show(context, 'Default address updated');
   }
 
   void _showAddEditAddressBottomSheet([Map<String, dynamic>? address]) {
@@ -137,9 +134,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                       }
                     });
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(isEditing ? 'Address updated' : 'Address added'), backgroundColor: accentColor, behavior: SnackBarBehavior.floating),
-                    );
+                    AppSnackbar.show(context, isEditing ? 'Address updated' : 'Address added');
                   }
                 },
                 style: ElevatedButton.styleFrom(

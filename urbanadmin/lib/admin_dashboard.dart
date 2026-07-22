@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -403,9 +404,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: TextField(
                       controller: _searchController,
                       onSubmitted: (value) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Searching for: $value')),
-                        );
+                        AppSnackbar.show(context, 'Searching for: $value');
                       },
                       decoration: const InputDecoration(
                         hintText: 'Search...',
@@ -472,9 +471,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildHeaderIcon(IconData icon, String label) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Opening $label...')),
-        );
+        AppSnackbar.show(context, 'Opening $label...');
       },
       borderRadius: BorderRadius.circular(30),
       child: Container(
@@ -968,9 +965,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening transaction filters...')),
-                      );
+                      AppSnackbar.show(context, 'Opening transaction filters...');
                     },
                     icon: Icon(
                       Icons.tune_rounded,
@@ -981,9 +976,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const SizedBox(width: 16),
                   IconButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Exporting transaction history...')),
-                      );
+                      AppSnackbar.show(context, 'Exporting transaction history...');
                     },
                     icon: Icon(Icons.file_download_rounded, color: Colors.grey[400], size: 20),
                   ),

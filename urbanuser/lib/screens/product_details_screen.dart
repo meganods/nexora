@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -41,9 +42,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
                 onPressed: () {
                   setState(() => _isFavorite = !_isFavorite);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(_isFavorite ? 'Added to Wishlist' : 'Removed from Wishlist'), backgroundColor: accentColor),
-                  );
+                  AppSnackbar.show(context, _isFavorite ? 'Added to Wishlist' : 'Removed from Wishlist');
                 },
               ),
               IconButton(
@@ -241,7 +240,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to Cart'), backgroundColor: primaryColor));
+                    AppSnackbar.show(context, 'Added to Cart');
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: primaryColor),

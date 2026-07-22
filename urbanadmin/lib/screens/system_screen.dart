@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -381,11 +382,11 @@ class _SystemScreenState extends State<SystemScreen> {
       }
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Portfolio wiped successfully.')));
+      AppSnackbar.show(context, 'Portfolio wiped successfully.');
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Wipe failed: $e')));
+      AppSnackbar.show(context, 'Wipe failed: $e');
     }
   }
 
@@ -520,15 +521,11 @@ class _SystemScreenState extends State<SystemScreen> {
 
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Catalog seeded successfully!')),
-      );
+      AppSnackbar.show(context, 'Catalog seeded successfully!');
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Seeding failed: $e')),
-      );
+      AppSnackbar.show(context, 'Seeding failed: $e');
     }
   }
 

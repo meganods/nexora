@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -47,7 +48,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               height: 55,
               child: ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
+                  AppSnackbar.show(context, 'Profile updated successfully');
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
@@ -75,10 +76,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final url = await CloudinaryService.uploadImageBytes(bytes: bytes, fileName: pickedFile.name);
         if (url != null) {
           setState(() => _profileImageUrl = url);
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile image updated!')));
+          if (mounted) AppSnackbar.show(context, 'Profile image updated!');
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+        if (mounted) AppSnackbar.show(context, 'Upload failed: $e');
       } finally {
         if (mounted) setState(() => _isUploadingImage = false);
       }

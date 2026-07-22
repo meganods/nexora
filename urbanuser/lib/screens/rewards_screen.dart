@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -166,14 +167,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       RewardsData.availableRewards.removeAt(index);
                     });
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("${reward["title"]} claimed successfully!"),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.green,
-                        duration: const Duration(milliseconds: 1500),
-                      ),
-                    );
+                    AppSnackbar.show(context, "${reward["title"]} claimed successfully!");
                   },
                   child: _rewardCard(
                     reward["color"] as Color,

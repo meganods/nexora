@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -40,9 +41,7 @@ class _ReviewDetailsScreenState extends State<ReviewDetailsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission failed: ${e.toString()}')),
-        );
+        AppSnackbar.show(context, 'Submission failed: ${e.toString()}');
       }
     } finally {
       if (mounted) {

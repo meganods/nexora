@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -63,9 +64,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         n['isRead'] = true;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('All notifications marked as read'), backgroundColor: primaryColor),
-    );
+    AppSnackbar.show(context, 'All notifications marked as read');
   }
 
   @override

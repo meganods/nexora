@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -496,9 +497,7 @@ class _SelectServicesScreenState extends State<SelectServicesScreen> {
               
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Service request submitted!')),
-                );
+                AppSnackbar.show(context, 'Service request submitted!');
               }
             },
             style: ElevatedButton.styleFrom(

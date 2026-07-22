@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -194,7 +195,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     } catch (e) {
       debugPrint("Nominatim Geocoding error: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not fetch address. Please enter manually.')));
+        AppSnackbar.show(context, 'Could not fetch address. Please enter manually.');
       }
     }
   }
@@ -219,12 +220,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         _cityError != null ||
         _stateError != null ||
         _pincodeError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppSnackbar.show(context, 'Please fill all required fields', isError: true);
       return;
     }
     
@@ -275,7 +271,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     }
     
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address Saved Successfully!'), backgroundColor: Colors.green));
+      AppSnackbar.show(context, 'Address Saved Successfully!');
       Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
     }
   }

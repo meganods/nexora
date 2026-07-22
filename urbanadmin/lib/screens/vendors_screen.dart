@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -233,9 +234,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
             const SizedBox(width: 24),
             TextButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Filters cleared')),
-                );
+                AppSnackbar.show(context, 'Filters cleared', isError: true);
               },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -257,9 +256,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
   Widget _buildDropdownBtn(String label, IconData icon) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Filtering by $label...')),
-        );
+        AppSnackbar.show(context, 'Filtering by $label...');
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(

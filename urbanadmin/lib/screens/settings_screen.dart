@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -240,9 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(width: 16),
         ElevatedButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Settings saved successfully!')),
-            );
+            AppSnackbar.show(context, 'Settings saved successfully!');
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF6366F1),

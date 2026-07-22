@@ -1,5 +1,7 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddProductScreen extends StatefulWidget {
   static const routeName = '/add_product';
@@ -21,6 +23,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _durationController = TextEditingController();
   String? _selectedCategory;
   bool _isLoading = false;
+  bool _isServiceStory = false;
 
   final List<String> _categories = ['Cleaning', 'Appliance Repair', 'Plumbing', 'Electrical', 'Carpentry', 'Salon'];
 
@@ -35,20 +38,49 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _submit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category'), backgroundColor: Colors.redAccent));
+        AppSnackbar.show(context, 'Please select a category', isError: true);
         return;
       }
 
       setState(() => _isLoading = true);
       
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final newServiceRef = FirebaseFirestore.instance.collection('services').doc();
+        await newServiceRef.set({
+          'id': newServiceRef.id,
+          'categoryName': _selectedCategory,
+          'title': _nameController.text.trim(),
+          'description': 'Professional service in $_selectedCategory.',
+          'desc': 'Professional service in $_selectedCategory.',
+          'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
+          'duration': _durationController.text.trim(),
+          'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
+          'categoryImageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
+          'subServices': [
+            {
+              'name': _nameController.text.trim(),
+              'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
+              'duration': _durationController.text.trim(),
+            }
+          ],
+          'isServiceStory': _isServiceStory,
+          'rating': 5.0,
+          'totalReviews': 0,
+        });
 
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Service added successfully!'), backgroundColor: accentColor));
-      Navigator.pop(context);
+        if (mounted) {
+          AppSnackbar.show(context, 'Service added successfully!');
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          AppSnackbar.show(context, 'Error: $e', isError: true);
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -72,7 +104,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               // Image Upload Widget
               GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening gallery...')));
+                  AppSnackbar.show(context, 'Opening gallery...');
                 },
                 child: Container(
                   height: 160,
@@ -145,6 +177,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                 ],
               ).animate().fadeIn(delay: 300.ms),
+
+              const SizedBox(height: 20),
+              SwitchListTile(
+                title: const Text('Add to Service Stories', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+                subtitle: const Text('Check to show this service under Service Stories on user homepage'),
+                value: _isServiceStory,
+                activeColor: accentColor,
+                onChanged: (val) => setState(() => _isServiceStory = val),
+              ).animate().fadeIn(delay: 350.ms),
 
               const SizedBox(height: 40),
 

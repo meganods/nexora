@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -82,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.payment_outlined,
               title: 'Payment Methods',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Navigating to Payment Methods')));
+                AppSnackbar.show(context, 'Navigating to Payment Methods');
               },
             ),
 
@@ -105,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Language',
               subtitle: 'English',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Navigating to Language Selection')));
+                AppSnackbar.show(context, 'Navigating to Language Selection');
               },
             ),
 
@@ -115,14 +116,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.security_outlined,
               title: 'Security',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Navigating to Security Settings')));
+                AppSnackbar.show(context, 'Navigating to Security Settings');
               },
             ),
             _buildListTile(
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy Policy',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Privacy Policy')));
+                AppSnackbar.show(context, 'Opening Privacy Policy');
               },
             ),
 

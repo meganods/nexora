@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/service_model.dart';
@@ -81,13 +82,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 onPressed: () {
                   isFavorite.value = !isFavorite.value;
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isFavorite.value ? "Added to Wishlist" : "Removed from Wishlist"),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(milliseconds: 800),
-                    ),
-                  );
+                  AppSnackbar.show(context, isFavorite.value ? "Added to Wishlist" : "Removed from Wishlist");
                 },
               ),
             );

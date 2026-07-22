@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -676,11 +677,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                            setState(() => _selectedCategoryId = null);
                         }
                         navigator.pop();
-                        messenger.showSnackBar(const SnackBar(content: Text('Category deleted successfully')));
+                        AppSnackbar.show(context, 'Category deleted successfully');
                       } catch (e) {
                          setStateSB(() => isSaving = false);
                          if (mounted) {
-                           messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+                           AppSnackbar.show(context, 'Error: $e', isError: true);
                          }
                       }
                     },
@@ -696,7 +697,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                    final navigator = Navigator.of(dContext);
                    final admin = Provider.of<AdminProvider>(dContext, listen: false);
                    if (titleController.text.trim().isEmpty) {
-                      messenger.showSnackBar(const SnackBar(content: Text('Please enter a title')));
+                      AppSnackbar.show(context, 'Please enter a title');
                       return;
                    }
                    
@@ -759,11 +760,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                      
                       if (!mounted) return;
                       navigator.pop();
-                      messenger.showSnackBar(const SnackBar(content: Text('Saved successfully')));
+                      AppSnackbar.show(context, 'Saved successfully');
                     } catch (e) {
                       setStateSB(() => isSaving = false);
                       if (mounted) {
-                        messenger.showSnackBar(SnackBar(content: Text('Error saving category: $e')));
+                        AppSnackbar.show(context, 'Error saving category: $e', isError: true);
                       }
                     }
                  },
@@ -952,7 +953,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       await admin.updateService(categoryId, {'subServices': updatedList});
                      if (!mounted) return;
                      navigator.pop();
-                     messenger.showSnackBar(const SnackBar(content: Text('Sub-service saved')));
+                     AppSnackbar.show(context, 'Sub-service saved');
                    } catch (e) {
                      setStateSB(() => isSaving = false);
                    }
@@ -979,10 +980,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
       updatedList.removeWhere((s) => s['id'] == subIdToDelete);
       await Provider.of<AdminProvider>(context, listen: false).updateService(categoryId, {'subServices': updatedList});
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sub-service deleted')));
+      AppSnackbar.show(context, 'Sub-service deleted');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting: $e')));
+      AppSnackbar.show(context, 'Error deleting: $e', isError: true);
     }
   }
 

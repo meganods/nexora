@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -40,13 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     
     if (!_acceptedTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the Terms and Conditions to continue.'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackbar.show(context, 'Please accept the Terms and Conditions to continue.', isError: true);
       return;
     }
 
@@ -58,13 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Account created successfully! Please login.'),
-        backgroundColor: accentColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackbar.show(context, 'Account created successfully! Please login.');
 
     // Navigate to Login
     Navigator.pushReplacementNamed(context, '/login');
@@ -345,9 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildSocialButton(IconData icon, Color color) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Social login simulated'), behavior: SnackBarBehavior.floating),
-        );
+        AppSnackbar.show(context, 'Social login simulated');
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(

@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -77,36 +78,28 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             if (mounted) {
               Navigator.pop(context); // Hide loading indicator
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e.message ?? "Invalid credentials"), backgroundColor: Colors.redAccent),
-              );
+              AppSnackbar.show(context, e.message ?? "Invalid credentials", isError: true);
             }
             return;
           }
         } catch (innerErr) {
           if (mounted) {
             Navigator.pop(context); // Hide loading indicator
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Login failed: $innerErr"), backgroundColor: Colors.redAccent),
-            );
+            AppSnackbar.show(context, "Login failed: $innerErr", isError: true);
           }
           return;
         }
       } else {
         if (mounted) {
           Navigator.pop(context); // Hide loading indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? "Authentication failed"), backgroundColor: Colors.redAccent),
-          );
+          AppSnackbar.show(context, e.message ?? "Authentication failed", isError: true);
         }
         return;
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Hide loading indicator
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
-        );
+        AppSnackbar.show(context, "Error: $e", isError: true);
       }
       return;
     }
@@ -229,12 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final savedAddress = prefs.getString('userAddress');
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome, ${user.displayName ?? 'User'}!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppSnackbar.show(context, 'Welcome, ${user.displayName ?? 'User'}!');
         if (savedAddress != null && savedAddress.trim().isNotEmpty) {
           Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
         } else {
@@ -244,12 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       // Fallback to Mock Google Login if standard Sign-In fails in dev/unconfigured environment
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In error ($e). Launching Mock Account Picker...'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        AppSnackbar.show(context, 'Google Sign-In error ($e). Launching Mock Account Picker...', isError: true);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const MockGoogleLoginScreen()),
@@ -510,9 +493,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 52,
                       child: OutlinedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Apple Login is simulated. Please use Google Login.')),
-                          );
+                          AppSnackbar.show(context, 'Apple Login is simulated. Please use Google Login.');
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: borderGrey),

@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -234,10 +235,10 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                     });
 
                     navigator.pop();
-                    messenger.showSnackBar(const SnackBar(content: Text('Service updated successfully')));
+                    AppSnackbar.show(context, 'Service updated successfully');
                   } catch (e) {
                     setStateSB(() => isSaving = false);
-                    messenger.showSnackBar(SnackBar(content: Text('Error saving: $e')));
+                    AppSnackbar.show(context, 'Error saving: $e', isError: true);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -754,9 +755,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                       });
                       Navigator.pop(dContext2);
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Image upload failed: $e')),
-                      );
+                      AppSnackbar.show(context, 'Image upload failed: $e');
                     } finally {
                       setStateSB(() => isSaving = false);
                     }
@@ -1047,7 +1046,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                   final messenger = ScaffoldMessenger.of(context);
                   final navigator = Navigator.of(context);
                   if (nameController.text.trim().isEmpty) {
-                    messenger.showSnackBar(const SnackBar(content: Text('Please enter a service name')));
+                    AppSnackbar.show(context, 'Please enter a service name');
                     return;
                   }
 
@@ -1080,10 +1079,10 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                     );
 
                     navigator.pop();
-                    messenger.showSnackBar(const SnackBar(content: Text('Request submitted successfully!')));
+                    AppSnackbar.show(context, 'Request submitted successfully!');
                   } catch (e) {
                     setStateSB(() => isSubmitting = false);
-                    messenger.showSnackBar(SnackBar(content: Text('Error submitting request: $e')));
+                    AppSnackbar.show(context, 'Error submitting request: $e', isError: true);
                   }
                 },
                 style: ElevatedButton.styleFrom(

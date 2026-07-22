@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,13 +8,148 @@ import '../theme/app_theme.dart';
 import 'service_detail_screen.dart';
 import 'category_detail_screen.dart';
 
-class ServiceListScreen extends StatelessWidget {
+class ServiceListScreen extends StatefulWidget {
   final String sectionTitle;
   const ServiceListScreen({super.key, required this.sectionTitle});
 
   @override
+  State<ServiceListScreen> createState() => _ServiceListScreenState();
+}
+
+class _ServiceListScreenState extends State<ServiceListScreen> {
+  String _currentSort = 'rating'; // 'rating', 'price_asc', 'price_desc'
+
+  double _parsePrice(String priceStr) {
+    // Remove ₹ and non-numeric chars
+    final cleaned = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+
+  void _sortServices(List<ServiceModel> services) {
+    if (_currentSort == 'rating') {
+      services.sort((a, b) => b.rating.compareTo(a.rating));
+    } else if (_currentSort == 'price_asc') {
+      services.sort((a, b) => _parsePrice(a.price).compareTo(_parsePrice(b.price)));
+    } else if (_currentSort == 'price_desc') {
+      services.sort((a, b) => _parsePrice(b.price).compareTo(_parsePrice(a.price)));
+    }
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Sort & Filter Services",
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentColor),
+                  ),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    leading: const Icon(Icons.star, color: Colors.orange),
+                    title: const Text("Rating: High to Low"),
+                    trailing: _currentSort == 'rating' ? const Icon(Icons.check, color: AppTheme.primaryColor) : null,
+                    onTap: () {
+                      setState(() => _currentSort = 'rating');
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.trending_down, color: Colors.green),
+                    title: const Text("Price: Low to High"),
+                    trailing: _currentSort == 'price_asc' ? const Icon(Icons.check, color: AppTheme.primaryColor) : null,
+                    onTap: () {
+                      setState(() => _currentSort = 'price_asc');
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.trending_up, color: Colors.red),
+                    title: const Text("Price: High to Low"),
+                    trailing: _currentSort == 'price_desc' ? const Icon(Icons.check, color: AppTheme.primaryColor) : null,
+                    onTap: () {
+                      setState(() => _currentSort = 'price_desc');
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  ServiceModel _mapDocToService(DocumentSnapshot doc, List<DocumentSnapshot> reviewsDocs) {
+    final data = doc.data() as Map<String, dynamic>;
+    final String serviceId = data['id'] ?? doc.id;
+    final String serviceTitle = data['title'] ?? data['categoryName'] ?? 'Service';
+    final String vendorId = data['vendorId'] ?? '';
+
+    // Find matching reviews
+    final matchingReviews = reviewsDocs.where((r) {
+      final rData = r.data() as Map<String, dynamic>;
+      return rData['serviceId'] == serviceId || 
+             rData['serviceTitle'] == serviceTitle ||
+             rData['title'] == serviceTitle ||
+             (vendorId.isNotEmpty && rData['vendorId'] == vendorId);
+    }).toList();
+
+    double computedRating = 4.5;
+    int reviewsCount = 0;
+    if (matchingReviews.isNotEmpty) {
+      double total = 0.0;
+      for (var r in matchingReviews) {
+        final rData = r.data() as Map<String, dynamic>;
+        total += ((rData['rating'] ?? 5.0) as num).toDouble();
+      }
+      computedRating = total / matchingReviews.length;
+      reviewsCount = matchingReviews.length;
+    } else {
+      computedRating = ((data['rating'] ?? 4.5) as num).toDouble();
+      reviewsCount = data['totalReviews'] ?? 12;
+    }
+
+    var rawPrice = data['price'] ?? 299;
+    String priceStr = rawPrice.toString().startsWith('₹') ? rawPrice.toString() : '₹$rawPrice';
+
+    final String imageVal = data['imageUrl'] ?? data['categoryImageUrl'] ?? 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=720&auto=format&fit=crop';
+
+    return ServiceModel(
+      id: serviceId,
+      title: serviceTitle,
+      category: data['categoryName'] ?? 'Cleaning',
+      subCategory: data['categoryName'] ?? 'Cleaning',
+      price: priceStr,
+      rating: computedRating,
+      totalReviews: reviewsCount,
+      image: imageVal,
+      discountPercent: data['discountPercent'] ?? 0,
+      vendorName: data['vendorName'] ?? 'Verified Partner',
+      images: List<String>.from(data['images'] ?? [imageVal]),
+      shortDescription: data['shortDescription'] ?? data['description'] ?? 'Professional services at your doorstep.',
+      description: data['description'] ?? 'Professional services at your doorstep.',
+      longDescription: data['longDescription'] ?? data['description'] ?? 'Professional services at your doorstep.',
+      duration: data['duration'] ?? '1.5 hrs',
+      isAvailable: data['isAvailable'] ?? true,
+      location: data['location'] ?? 'Indirapuram',
+      tags: List<String>.from(data['tags'] ?? ['Popular']),
+      vendorId: vendorId,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (sectionTitle == "New Services") {
+    if (widget.sectionTitle == "New Services") {
       return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -24,7 +160,7 @@ class ServiceListScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            sectionTitle,
+            widget.sectionTitle,
             style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
           ),
         ),
@@ -125,7 +261,73 @@ class ServiceListScreen extends StatelessWidget {
       );
     }
 
-    final List<ServiceModel> services = DummyData.getBySection(sectionTitle);
+    if (widget.sectionTitle == "Best in Your City") {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppTheme.accentColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            widget.sectionTitle,
+            style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.tune, color: AppTheme.accentColor),
+              onPressed: _showFilterBottomSheet,
+            ),
+          ],
+        ),
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('services').snapshots(),
+          builder: (context, servicesSnapshot) {
+            if (servicesSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!servicesSnapshot.hasData || servicesSnapshot.data!.docs.isEmpty) {
+              return _buildEmptyState();
+            }
+
+            final serviceDocs = servicesSnapshot.data!.docs;
+
+            return FutureBuilder<QuerySnapshot>(
+              future: FirebaseFirestore.instance.collection('reviews').get(),
+              builder: (context, reviewsSnapshot) {
+                if (reviewsSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final reviewsDocs = reviewsSnapshot.data?.docs ?? [];
+                final List<ServiceModel> services = [];
+
+                for (var doc in serviceDocs) {
+                  services.add(_mapDocToService(doc, reviewsDocs));
+                }
+
+                _sortServices(services);
+
+                if (services.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: services.length,
+                  itemBuilder: (context, index) => _buildServiceListItem(context, services[index]),
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+
+    final List<ServiceModel> services = DummyData.getBySection(widget.sectionTitle);
+    _sortServices(services);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -137,15 +339,13 @@ class ServiceListScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          sectionTitle,
+          widget.sectionTitle,
           style: GoogleFonts.outfit(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune, color: AppTheme.accentColor),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter feature coming soon')));
-            },
+            onPressed: _showFilterBottomSheet,
           ),
         ],
       ),
@@ -206,19 +406,33 @@ class ServiceListScreen extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: Image.network(
-                        service.image,
-                        width: 110,
-                        height: 110,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: 110,
-                          height: 110,
-                          color: AppTheme.lightGray,
-                          child: const Icon(Icons.broken_image_outlined,
-                              color: Colors.grey),
-                        ),
-                      ),
+                      child: service.image.startsWith('http')
+                        ? Image.network(
+                            service.image,
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 110,
+                              height: 110,
+                              color: AppTheme.lightGray,
+                              child: const Icon(Icons.broken_image_outlined,
+                                  color: Colors.grey),
+                            ),
+                          )
+                        : Image.asset(
+                            service.image,
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 110,
+                              height: 110,
+                              color: AppTheme.lightGray,
+                              child: const Icon(Icons.broken_image_outlined,
+                                  color: Colors.grey),
+                            ),
+                          ),
                     ),
                     if (service.discountPercent > 0)
                       Positioned(

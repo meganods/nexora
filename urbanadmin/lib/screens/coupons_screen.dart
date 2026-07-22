@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -580,18 +581,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Coupon status ${!currentStatus ? 'activated' : 'deactivated'} successfully"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppSnackbar.show(context, "Coupon status ${!currentStatus ? 'activated' : 'deactivated'} successfully");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
-        );
+        AppSnackbar.show(context, "Error: $e", isError: true);
       }
     }
   }
@@ -613,15 +607,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
               try {
                 await _firestore.collection('coupons').doc(docId).delete();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Coupon deleted successfully"), backgroundColor: Colors.green),
-                  );
+                  AppSnackbar.show(context, "Coupon deleted successfully");
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
-                  );
+                  AppSnackbar.show(context, "Error: $e", isError: true);
                 }
               }
             },
@@ -910,7 +900,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     if (codeController.text.trim().isEmpty || titleController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Code and Title are required"), backgroundColor: Colors.redAccent));
+                      AppSnackbar.show(context, "Code and Title are required", isError: true);
                       return;
                     }
 

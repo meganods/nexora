@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
@@ -67,7 +68,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                     const Divider(height: 32),
                     TextButton.icon(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Downloading Invoice...')));
+                        AppSnackbar.show(context, 'Downloading Invoice...');
                       },
                       icon: const Icon(Icons.download, color: accentColor),
                       label: const Text('Download Invoice', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),

@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -168,12 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (e.code == 'user-not-found') msg = 'No user found with this email';
                         if (e.code == 'wrong-password') msg = 'Incorrect password';
                         
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                        AppSnackbar.show(context, msg);
                       }
                     } catch (e) {
                       if (context.mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+                        AppSnackbar.show(context, 'Error: ${e.toString()}', isError: true);
                       }
                     }
                   },
@@ -347,15 +348,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
                   if (context.mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Password reset link sent to your email.')),
-                    );
+                    AppSnackbar.show(context, 'Password reset link sent to your email.');
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${e.toString()}')),
-                    );
+                    AppSnackbar.show(context, 'Error: ${e.toString()}', isError: true);
                   }
                 }
               },

@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -321,7 +322,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document replacement requires admin approval first.')));
+                    AppSnackbar.show(context, 'Document replacement requires admin approval first.');
                   },
                   child: Text(
                     'Replace',

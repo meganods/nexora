@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -28,7 +29,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking Cancelled Successfully'), backgroundColor: Colors.redAccent));
+              AppSnackbar.show(context, 'Booking Cancelled Successfully', isError: true);
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
@@ -71,7 +72,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Calling Professional...')));
+                    AppSnackbar.show(context, 'Calling Professional...');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
@@ -192,7 +193,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     decoration: BoxDecoration(color: accentColor.withValues(alpha: 0.1), shape: BoxShape.circle),
                     child: IconButton(
                       icon: const Icon(Icons.chat_bubble_outline, color: accentColor),
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Chat...'))),
+                      onPressed: () => AppSnackbar.show(context, 'Opening Chat...'),
                     ),
                   ),
                 ],
@@ -225,7 +226,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Downloading Invoice...'), backgroundColor: primaryColor)),
+                      onPressed: () => AppSnackbar.show(context, 'Downloading Invoice...'),
                       icon: const Icon(Icons.download, color: primaryColor),
                       label: const Text('Download Invoice', style: TextStyle(color: primaryColor)),
                       style: OutlinedButton.styleFrom(

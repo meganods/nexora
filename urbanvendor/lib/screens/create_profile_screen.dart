@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -134,17 +135,13 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       } else {
         setState(() => _isUploadingImage = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image upload failed. Please try again.')),
-          );
+          AppSnackbar.show(context, 'Image upload failed. Please try again.');
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isUploadingImage = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to open gallery. Restart app if this persists.')),
-        );
+        AppSnackbar.show(context, 'Failed to open gallery. Restart app if this persists.');
       }
     }
   }
@@ -218,9 +215,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
             onPressed: () async {
               // 1. Form Validation
               // if (!_formKey.currentState!.validate()) {
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     const SnackBar(content: Text('Please correct errors in the form')),
-              //   );
+              //   AppSnackbar.show(context, 'Please correct errors in the form', isError: true);
               //   return;
               // }
 
@@ -280,12 +275,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                   if (e.code == 'email-already-in-use') msg = 'This email is already registered';
                   if (e.code == 'weak-password') msg = 'Password is too weak';
                   
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                  AppSnackbar.show(context, msg);
                 }
               } catch (e) {
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+                  AppSnackbar.show(context, 'Error: ${e.toString()}', isError: true);
                 }
               }
             },

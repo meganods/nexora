@@ -1,3 +1,4 @@
+import 'package:urbanadmin/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -127,10 +128,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
         final url = await CloudinaryService.uploadImageBytes(bytes: bytes, fileName: pickedFile.name);
         if (url != null) {
           setState(() => _adminAvatarUrl = url);
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin avatar updated!')));
+          if (mounted) AppSnackbar.show(context, 'Admin avatar updated!');
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+        if (mounted) AppSnackbar.show(context, 'Upload failed: $e');
       } finally {
         if (mounted) setState(() => _isUploadingImage = false);
       }

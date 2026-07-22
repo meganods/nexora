@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -392,13 +393,7 @@ class _CartScreenState extends State<CartScreen> {
                 });
               });
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Extra service removed successfully."),
-                  behavior: SnackBarBehavior.floating,
-                  duration: Duration(milliseconds: 800),
-                ),
-              );
+              AppSnackbar.show(context, "Extra service removed successfully.");
             },
             child: Text(
               "Remove",
@@ -470,13 +465,7 @@ class _CartScreenState extends State<CartScreen> {
                                   _addons.remove(a);
                                 });
                                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("${a["name"]} added to cart"),
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(milliseconds: 800),
-                                  ),
-                                );
+                                AppSnackbar.show(context, "${a["name"]} added to cart");
                               },
                               child: Container(
                                 width: 70,
@@ -842,9 +831,7 @@ class _CartScreenState extends State<CartScreen> {
   void _showCouponBottomSheet() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please login to view coupons"), backgroundColor: Colors.redAccent),
-      );
+      AppSnackbar.show(context, "Please login to view coupons", isError: true);
       return;
     }
 
@@ -1025,12 +1012,7 @@ class _CartScreenState extends State<CartScreen> {
     final double minOrder = ((coupon['minimumOrder'] ?? 0.0) as num).toDouble();
     if (_currentTotal < minOrder) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Minimum booking amount of ₹${minOrder.toStringAsFixed(0)} required to apply this coupon."),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      AppSnackbar.show(context, "Minimum booking amount of ₹${minOrder.toStringAsFixed(0)} required to apply this coupon.", isError: true);
       return;
     }
 
@@ -1046,12 +1028,7 @@ class _CartScreenState extends State<CartScreen> {
       if (usageQuery.docs.length >= perUserLimit) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("You have already reached the usage limit for this coupon."),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          AppSnackbar.show(context, "You have already reached the usage limit for this coupon.", isError: true);
         }
         return;
       }
@@ -1068,12 +1045,7 @@ class _CartScreenState extends State<CartScreen> {
       if (!matches) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("This coupon is not applicable to the selected service category."),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          AppSnackbar.show(context, "This coupon is not applicable to the selected service category.", isError: true);
         }
         return;
       }
@@ -1084,12 +1056,7 @@ class _CartScreenState extends State<CartScreen> {
       if (!matches) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("This coupon is not applicable to the selected service."),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          AppSnackbar.show(context, "This coupon is not applicable to the selected service.", isError: true);
         }
         return;
       }
@@ -1107,12 +1074,7 @@ class _CartScreenState extends State<CartScreen> {
         if (completedBookings.docs.isNotEmpty) {
           if (mounted) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("This coupon is only valid for your first service booking."),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
+            AppSnackbar.show(context, "This coupon is only valid for your first service booking.", isError: true);
           }
           return;
         }
@@ -1127,12 +1089,7 @@ class _CartScreenState extends State<CartScreen> {
         _appliedCoupon = coupon;
       });
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Coupon applied successfully!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      AppSnackbar.show(context, "Coupon applied successfully!");
     }
   }
 

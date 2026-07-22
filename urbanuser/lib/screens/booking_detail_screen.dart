@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -56,10 +57,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 }
               }
               if (mounted) {
-                final messenger = ScaffoldMessenger.of(context);
+                AppSnackbar.show(context, "Booking Cancelled Successfully", isError: true);
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Close detail screen
-                messenger.showSnackBar(const SnackBar(content: Text("Booking Cancelled Successfully"), backgroundColor: Colors.red));
               }
             },
             child: Text("YES, CANCEL", style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
@@ -83,7 +83,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 title: Text('Contact Support', style: GoogleFonts.outfit()),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support feature coming soon')));
+                  AppSnackbar.show(context, 'Support feature coming soon');
                 },
               ),
               ListTile(
@@ -91,7 +91,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 title: Text('Report Issue', style: GoogleFonts.outfit()),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report issue feature coming soon')));
+                  AppSnackbar.show(context, 'Report issue feature coming soon');
                 },
               ),
             ],

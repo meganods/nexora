@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -114,9 +115,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 });
                 if (context.mounted) {
                   Navigator.pop(dContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Reschedule proposal sent to customer')),
-                  );
+                  AppSnackbar.show(context, 'Reschedule proposal sent to customer');
                 }
               }
             },

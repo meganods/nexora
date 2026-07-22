@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -90,7 +91,7 @@ class _WalletScreenState extends State<WalletScreen> {
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.black),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No new notifications')));
+              AppSnackbar.show(context, 'No new notifications');
             },
           ),
         ],
@@ -200,7 +201,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add Money feature coming soon')));
+                      AppSnackbar.show(context, 'Add Money feature coming soon');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -215,7 +216,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transfer feature coming soon')));
+                      AppSnackbar.show(context, 'Transfer feature coming soon');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.2),

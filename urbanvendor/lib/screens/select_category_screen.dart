@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -147,7 +148,7 @@ class _SelectCategoryScreenState extends State<SelectCategoryScreen> {
               registration.selectedCategoryIds = _selectedIds.toList();
               
               // if (registration.selectedCategoryIds.isEmpty) {
-              //    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least one category')));
+              //    AppSnackbar.show(context, 'Please select at least one category');
               //    return;
               // }
 
@@ -495,9 +496,7 @@ class _SelectCategoryScreenState extends State<SelectCategoryScreen> {
               
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Request submitted successfully!')),
-                );
+                AppSnackbar.show(context, 'Request submitted successfully!');
               }
             },
             style: ElevatedButton.styleFrom(

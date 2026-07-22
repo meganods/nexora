@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -32,7 +33,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   void _processPayment() async {
     if (_selectedTimeIndex == -1) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a time slot'), backgroundColor: Colors.redAccent));
+      AppSnackbar.show(context, 'Please select a time slot', isError: true);
       return;
     }
 

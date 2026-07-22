@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -117,9 +118,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen> with SingleTickerPr
     await Provider.of<VendorProvider>(context, listen: false).updateVendorProfile(updates);
     setState(() => _isSaving = false);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Store details updated successfully!'), backgroundColor: Colors.green),
-      );
+      AppSnackbar.show(context, 'Store details updated successfully!');
     }
   }
 

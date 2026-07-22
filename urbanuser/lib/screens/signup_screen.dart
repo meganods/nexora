@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,9 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to Terms & Conditions'), backgroundColor: Colors.red),
-      );
+      AppSnackbar.show(context, 'Please agree to Terms & Conditions', isError: true);
       return;
     }
     if (_passwordController.text != _confirmController.text) {
@@ -88,17 +87,13 @@ class _SignupScreenState extends State<SignupScreen> {
         String message = e.message ?? "Registration failed";
         if (e.code == 'weak-password') message = "The password provided is too weak.";
         if (e.code == 'email-already-in-use') message = "An account already exists for that email.";
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
-        );
+        AppSnackbar.show(context, message, isError: true);
       }
       return;
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Hide loading indicator
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
-        );
+        AppSnackbar.show(context, "Error: $e", isError: true);
       }
       return;
     }
@@ -124,9 +119,7 @@ class _SignupScreenState extends State<SignupScreen> {
     
     if (mounted) {
       Navigator.pop(context); // Hide loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account Created Successfully!'), backgroundColor: Colors.green),
-      );
+      AppSnackbar.show(context, 'Account Created Successfully!');
       Navigator.pop(context); // Go back to login
     }
   }

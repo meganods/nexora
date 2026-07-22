@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:urbanuser/widgets/app_snackbar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -47,13 +48,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _otpSent = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OTP sent to your email!'),
-        backgroundColor: accentColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackbar.show(context, 'OTP sent to your email!');
   }
 
   void _resetPassword() async {
@@ -65,13 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password reset successfully! Please login.'),
-        backgroundColor: accentColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppSnackbar.show(context, 'Password reset successfully! Please login.');
 
     Navigator.pushReplacementNamed(context, '/login');
   }

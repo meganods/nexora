@@ -1,3 +1,4 @@
+import 'package:urbanvendor/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -132,7 +133,7 @@ class VendorStorePage extends StatelessWidget {
               title: 'Reviews & Feedback',
               icon: Icons.forum_rounded,
               onEdit: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reviews cannot be edited.')));
+                AppSnackbar.show(context, 'Reviews cannot be edited.');
               }, 
               child: StreamBuilder<QuerySnapshot>(
                 stream: Provider.of<VendorProvider>(context, listen: false).streamVendorReviews(),

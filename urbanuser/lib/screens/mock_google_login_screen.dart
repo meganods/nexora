@@ -1,3 +1,4 @@
+import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,9 +66,7 @@ class MockGoogleLoginScreen extends StatelessWidget {
     
     if (context.mounted) {
       Navigator.pop(context); // hide loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome, $name!'), backgroundColor: Colors.green),
-      );
+      AppSnackbar.show(context, 'Welcome, $name!');
       if (savedAddress != null && savedAddress.trim().isNotEmpty) {
         Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
       } else {
@@ -132,9 +131,7 @@ class MockGoogleLoginScreen extends StatelessWidget {
                 ),
                 title: Text("Use another account", style: GoogleFonts.outfit(fontWeight: FontWeight.w500)),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Adding another account is not supported in this mock.')),
-                  );
+                  AppSnackbar.show(context, 'Adding another account is not supported in this mock.');
                 },
               ),
               

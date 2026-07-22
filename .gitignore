@@ -3,6 +3,10 @@
 
 # Flutter/Dart/Android/iOS/Web
 **/build/
+!**/urbanuser/
+!**/urbanuser/build/
+!**/urbanuser/build/web/
+!**/urbanuser/build/web/**
 **/.dart_tool/
 **/.pub-cache/
 **/.pub/

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -9,16 +11,80 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  AnimationController? _logoController;
+  AnimationController? _fadeController;
+  AnimationController? _shimmerController;
+
+  Animation<double>? _logoScale;
+  Animation<double>? _logoGlow;
+  Animation<double>? _shimmerProgress;
+
   @override
   void initState() {
     super.initState();
+    _initAnimations();
     _checkLoginStatus();
   }
 
+  void _initAnimations() {
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+
+    _logoScale = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _logoController!,
+        curve: const Cubic(0.34, 1.56, 0.64, 1.0),
+      ),
+    );
+
+    _logoGlow = Tween<double>(begin: 0.4, end: 0.8).animate(
+      CurvedAnimation(
+        parent: _logoController!,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _shimmerProgress = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(
+        parent: _shimmerController!,
+        curve: Curves.linear,
+      ),
+    );
+
+    _logoController!.forward();
+    
+    // Start text fade-in after a short delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted && _fadeController != null) {
+        _fadeController!.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _logoController?.dispose();
+    _fadeController?.dispose();
+    _shimmerController?.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkLoginStatus() async {
-    // Show splash for at least 2 seconds
-    await Future.delayed(const Duration(seconds: 2));
+    // Show splash for 3.5 seconds to showcase animations
+    await Future.delayed(const Duration(milliseconds: 3500));
     
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -67,32 +133,171 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_logoController == null || _fadeController == null || _shimmerController == null) {
+      return const Scaffold(backgroundColor: Color(0xFFF8FAFC));
+    }
+
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.shortestSide > 600;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              "assets/images/logo.png",
-              height: 200,
-              width: 200,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "NEXORA",
-              style: TextStyle(
-                color: Color(0xFF0C1A30),
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Soft Gradient Background with subtle vignette
+          Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
+                colors: [
+                  Color(0xFFEEF6FF), // Soft sky blue center
+                  Color(0xFFF8FAFC), // Off-white edges
+                ],
               ),
             ),
-            const SizedBox(height: 40),
-            const CircularProgressIndicator(color: Color(0xFF3B82F6)),
-          ],
-        ),
+          ),
+          
+          // 2. Animated Glow Sphere in the center
+          Center(
+            child: AnimatedBuilder(
+              animation: _logoController!,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _logoGlow?.value ?? 0.6,
+                  child: Container(
+                    width: isTablet ? 400 : 300,
+                    height: isTablet ? 400 : 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          const Color(0xFF2563EB).withValues(alpha: 0.15),
+                          const Color(0xFF38BDF8).withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 3. Main Content
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Glowing Scaled Logo
+                ScaleTransition(
+                  scale: _logoScale!,
+                  child: Container(
+                    width: isTablet ? 180 : 130,
+                    height: isTablet ? 180 : 130,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                          blurRadius: 30,
+                          spreadRadius: 10,
+                        )
+                      ],
+                    ),
+                    child: Image.asset(
+                      "assets/images/logo.png",
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                SizedBox(height: isTablet ? 40 : 30),
+
+                // Fade-in App Name & Tagline
+                FadeTransition(
+                  opacity: _fadeController!,
+                  child: Column(
+                    children: [
+                      Text(
+                        "NEXORA",
+                        style: GoogleFonts.inter(
+                          fontSize: isTablet ? 40 : 32,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.8,
+                          color: const Color(0xFF131B2E),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Professional Home Services",
+                        style: GoogleFonts.inter(
+                          fontSize: isTablet ? 18 : 15,
+                          color: const Color(0xFF434655),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: isTablet ? 60 : 45),
+
+                // Animated Custom Shimmer Progress Indicator
+                FadeTransition(
+                  opacity: _fadeController!,
+                  child: Container(
+                    width: isTablet ? 240 : 180,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF004AC6).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: AnimatedBuilder(
+                      animation: _shimmerController!,
+                      builder: (context, child) {
+                        return FractionalTranslation(
+                          translation: Offset(_shimmerProgress?.value ?? 0.0, 0.0),
+                          child: Container(
+                            width: 90,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  const Color(0xFF2563EB).withValues(alpha: 0.8),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 4. Staggered Minimal Footer
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: FadeTransition(
+              opacity: _fadeController!,
+              child: Center(
+                child: Text(
+                  "POWERED BY NEXORA",
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.5,
+                    color: const Color(0xFF737686),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

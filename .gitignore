@@ -7,6 +7,10 @@
 !**/urbanuser/build/
 !**/urbanuser/build/web/
 !**/urbanuser/build/web/**
+!**/urbanvendor/
+!**/urbanvendor/build/
+!**/urbanvendor/build/web/
+!**/urbanvendor/build/web/**
 **/.dart_tool/
 **/.pub-cache/
 **/.pub/

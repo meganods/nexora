@@ -15,17 +15,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _onboardingData = [
     OnboardingData(
-      image: "assets/images/onboarding_1_handyman_illustration_1774853199914.png",
+      image: "assets/images/image.png",
       title: "Trusted Professionals",
       description: "Book verified professionals in minutes.",
     ),
     OnboardingData(
-      image: "assets/images/onboarding_2_home_cleaning_illustration_retry_1774853265369.png",
+      image: "assets/images/image copy.png",
       title: "Track Every Service",
       description: "Know exactly when your professional will arrive with real-time map updates and smart notifications.",
     ),
     OnboardingData(
-      image: "assets/images/onboarding_3_convenient_service_illustration_1774853244833.png",
+      image: "assets/images/image_wallet.png",
       title: "Fast & Secure Payments",
       description: "Pay securely with multiple payment options.",
     ),

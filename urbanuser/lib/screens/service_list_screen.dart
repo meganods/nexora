@@ -294,8 +294,8 @@ class _ServiceListScreenState extends State<ServiceListScreen> {
 
             final serviceDocs = servicesSnapshot.data!.docs;
 
-            return FutureBuilder<QuerySnapshot>(
-              future: FirebaseFirestore.instance.collection('reviews').get(),
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('reviews').snapshots(),
               builder: (context, reviewsSnapshot) {
                 if (reviewsSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

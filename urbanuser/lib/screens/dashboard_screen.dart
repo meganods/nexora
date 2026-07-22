@@ -1380,8 +1380,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final serviceDocs = servicesSnapshot.data!.docs;
 
-        return FutureBuilder<QuerySnapshot>(
-          future: FirebaseFirestore.instance.collection('reviews').get(),
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('reviews').snapshots(),
           builder: (context, reviewsSnapshot) {
             final List<Map<String, dynamic>> servicesWithRatings = [];
             final reviewsDocs = reviewsSnapshot.data?.docs ?? [];

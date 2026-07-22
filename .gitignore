@@ -11,6 +11,10 @@
 !**/urbanvendor/build/
 !**/urbanvendor/build/web/
 !**/urbanvendor/build/web/**
+!**/urbanadmin/
+!**/urbanadmin/build/
+!**/urbanadmin/build/web/
+!**/urbanadmin/build/web/**
 **/.dart_tool/
 **/.pub-cache/
 **/.pub/

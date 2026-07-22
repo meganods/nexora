@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urbanuser/widgets/custom_bottom_nav.dart';
+import '../widgets/category_card.dart';
 import 'category_detail_screen.dart';
 import '../theme/app_theme.dart';
 import 'categories_screen.dart';
@@ -117,62 +118,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && (_bannerTimer == null || !_bannerTimer!.isActive)) {
-        _startBannerTimer();
-      }
-    });
-
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       drawer: _buildDrawer(),
       bottomNavigationBar: const CustomBottomNav(selectedIndex: 0),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/search');
+          },
+          backgroundColor: const Color(0xFF2563EB),
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(
+            Icons.auto_awesome,
+            color: Colors.white,
+            size: 26,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              _buildBannerCarousel(),
-              const SizedBox(height: 24),
-              _buildWhatDoYouNeedHeader(),
+              _buildStitchHeader(),
+              _buildStitchSearchBar(),
+              const SizedBox(height: 12),
+              _buildQuickCategoryPills(),
+              _buildStitchBanner(),
+              
+              _buildSectionHeader("Our Services", "See All"),
               _buildCategoryGrid(),
               const SizedBox(height: 24),
-              _buildSectionHeader("New Services", "View All"),
-              _buildNewServicesCarousel(),
+              
+              _buildSectionHeader("Popular Services", "See All"),
+              _buildPopularServicesHorizontal(),
               const SizedBox(height: 24),
-              _buildSectionHeader("Service Stories", "View All"),
-              _buildVideoStories(),
+              
+              _buildSectionHeader("Top-Rated Pros Nearby", "See All"),
+              _buildTopRatedProsHorizontal(),
               const SizedBox(height: 24),
-              _buildSectionHeader("Best in Your City", "View All"),
-              _buildBestInYourCityVerticalList(),
+              
+              _buildRecommendedForYouSection(),
               const SizedBox(height: 24),
-              _buildHealthSafetyBanner(),
+              
+              _buildFlashOffersSection(),
               const SizedBox(height: 24),
-              _buildSectionHeader("Special Deals", ""),
-              _buildSpecialOffers(),
+              
+              _buildBookItAgainSection(),
               const SizedBox(height: 24),
-              _buildSectionHeader("Trending Services", ""),
-              _buildTrendingServices(),
-              const SizedBox(height: 24),
-              _buildSectionHeader("Recommended for You", ""),
-              _buildRecommendedList(),
-              const SizedBox(height: 24),
-              _buildSectionHeader("Offers that will make you smile", ""),
-              _buildSmileOffersCarousel(),
-              const SizedBox(height: 24),
-              _buildSectionHeader("Top Rated Vendors", "View All"),
-              _buildVendorCarousel(),
-              const SizedBox(height: 24),
-              _buildSectionHeader("What our customers say", ""),
-              _buildCustomerReviews(),
-              const SizedBox(height: 24),
-              _buildHowItWorks(),
-              const SizedBox(height: 24),
-              _buildCommonQuestions(),
-              const SizedBox(height: 120),
+              
+              _buildReferAndEarnStitch(),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -180,75 +181,894 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildStitchHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: AppTheme.lightGray,
-            child: IconButton(
-              icon: const Icon(
-                Icons.grid_view_sharp,
-                color: Colors.black,
-                size: 20,
-              ),
-              onPressed: () => _showTopCategoryMenu(),
+          const CircleAvatar(
+            radius: 20,
+            backgroundImage: NetworkImage(
+              "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/address_setup');
-              },
-              child: Column(
-                children: [
-                  Text(
-                    "Address",
-                    style: GoogleFonts.outfit(
-                      color: Colors.grey,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "Good Morning, Vishal",
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E293B),
+                      ),
                     ),
+                    const SizedBox(width: 4),
+                    const Text("👋", style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _userAddress,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Color(0xFF1E293B),
+              size: 24,
+            ),
+            onPressed: () {
+              Navigator.pushNamed(context, '/notifications');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStitchSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: TextField(
+          readOnly: true,
+          onTap: () {
+            Navigator.pushNamed(context, '/search');
+          },
+          decoration: InputDecoration(
+             hintText: "What service do you need today",
+             hintStyle: GoogleFonts.inter(
+               fontSize: 14,
+               color: const Color(0xFF94A3B8),
+               fontWeight: FontWeight.w500,
+             ),
+             prefixIcon: const Icon(
+               Icons.search_rounded,
+               color: Color(0xFF64748B),
+             ),
+             suffixIcon: const Icon(
+               Icons.mic_none_rounded,
+               color: Color(0xFF2563EB),
+             ),
+             border: InputBorder.none,
+             contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickCategoryPills() {
+    final pills = ["AC Repair", "Cleaning", "Electrician"];
+    return SizedBox(
+      height: 38,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        scrollDirection: Axis.horizontal,
+        itemCount: pills.length,
+        itemBuilder: (context, index) {
+          final isSelected = index == 0;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ChoiceChip(
+              label: Text(
+                pills[index],
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                ),
+              ),
+              selected: isSelected,
+              selectedColor: const Color(0xFF2563EB),
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              onSelected: (_) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryDetailScreen(categoryName: pills[index]),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStitchBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          image: const DecorationImage(
+            image: NetworkImage(
+              "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&auto=format&fit=crop&q=60",
+            ),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Colors.black.withValues(alpha: 0.8),
+                Colors.black.withValues(alpha: 0.2),
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF004AC6),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  "LIMITED OFFER",
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+               ),
+               const SizedBox(height: 8),
+               Text(
+                 "Flat 30% OFF\nBook your first\nservice",
+                 style: GoogleFonts.inter(
+                   fontSize: 22,
+                   fontWeight: FontWeight.w800,
+                   color: Colors.white,
+                   height: 1.1,
+                 ),
+               ),
+               const SizedBox(height: 12),
+               ElevatedButton(
+                 onPressed: () {
+                   Navigator.pushNamed(context, '/categories');
+                 },
+                 style: ElevatedButton.styleFrom(
+                   backgroundColor: const Color(0xFF2563EB),
+                   foregroundColor: Colors.white,
+                   shape: RoundedRectangleBorder(
+                     borderRadius: BorderRadius.circular(12),
+                   ),
+                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                   elevation: 0,
+                 ),
+                 child: Text(
+                   "Book Now",
+                   style: GoogleFonts.inter(
+                     fontSize: 13,
+                     fontWeight: FontWeight.bold,
+                   ),
+                 ),
+               ),
+             ],
+           ),
+         ),
+       ),
+     );
+  }
+
+  Widget _buildPopularServicesHorizontal() {
+    final popular = [
+      {
+        "title": "Full Home Deep Clean",
+        "price": "₹1,899",
+        "oldPrice": "₹2,499",
+        "rating": "4.8",
+        "image": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500"
+      },
+      {
+        "title": "Premium AC Service",
+        "price": "₹399",
+        "oldPrice": "₹599",
+        "rating": "4.7",
+        "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500"
+      }
+    ];
+
+    return SizedBox(
+      height: 220,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        scrollDirection: Axis.horizontal,
+        itemCount: popular.length,
+        itemBuilder: (context, index) {
+          final s = popular[index];
+          return Container(
+            width: 200,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: Stack(
                     children: [
-                      Flexible(
-                        child: Text(
-                          _userAddress,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.accentColor,
+                      Image.network(
+                        s["image"]!,
+                        height: 110,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star, color: Color(0xFFF59E0B), size: 12),
+                              const SizedBox(width: 2),
+                              Text(
+                                s["rating"]!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.grey,
-                        size: 18,
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s["title"]!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s["oldPrice"]!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF94A3B8),
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              Text(
+                                s["price"]!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF2563EB),
+                                ),
+                              ),
+                            ],
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CategoryDetailScreen(categoryName: "Cleaning"),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEAEDFF),
+                              foregroundColor: const Color(0xFF2563EB),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            ),
+                            child: Text(
+                              "Add",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTopRatedProsHorizontal() {
+    final pros = [
+      {
+        "name": "David Wilson",
+        "role": "Expert Electrician",
+        "rating": "4.9",
+        "jobs": "500+ Jobs",
+        "image": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120"
+      }
+    ];
+
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        scrollDirection: Axis.horizontal,
+        itemCount: pros.length,
+        itemBuilder: (context, index) {
+          final p = pros[index];
+          return Container(
+            width: 280,
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    p["image"]!,
+                    height: 56,
+                    width: 56,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        p["name"]!,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      Text(
+                        p["role"]!,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Color(0xFFF59E0B), size: 12),
+                          const SizedBox(width: 2),
+                          Text(
+                            p["rating"]!,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            p["jobs"]!,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 36,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAEDFF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.chevron_right_rounded, color: Color(0xFF2563EB)),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecommendedForYouSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Color(0xFF2563EB), size: 18),
+              const SizedBox(width: 6),
+              Text(
+                "Recommended for You",
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5EEFF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.home_outlined, color: Color(0xFF2563EB), size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Monsoon Plumbing Check",
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Based on your recent search for 'leakage', we suggest a professional audit before the heavy rains.",
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF475569),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoryDetailScreen(categoryName: "Plumbing"),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      ),
+                      child: Text(
+                        "Book Audit",
+                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        "Remind Me",
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF2563EB),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlashOffersSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Flash Offers",
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.access_time_filled_rounded, color: Color(0xFFEF4444), size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Ends in 02:14:00",
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFEF4444),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildOfferClaimCard(
+                  title: "SALON",
+                  discount: "₹500 OFF",
+                  sub: "On Men's Grooming",
+                  color: const Color(0xFF1D4ED8),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildOfferClaimCard(
+                  title: "CLEANING",
+                  discount: "40% OFF",
+                  sub: "Sofa Shampooing",
+                  color: const Color(0xFF0891B2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferClaimCard({required String title, required String discount, required String sub, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            discount,
+            style: GoogleFonts.inter(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            sub,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: color,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              "CLAIM",
+              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookItAgainSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Book it again",
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.construction_rounded, color: Color(0xFF475569)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Standard AC Service",
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Last booked 12 May",
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEAEDFF),
+                    foregroundColor: const Color(0xFF2563EB),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Text(
+                    "Repeat",
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReferAndEarnStitch() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE5EEFF),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Refer & Earn ₹500",
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Get credits for every friend who books",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ReferScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    child: Text(
+                      "Invite Now",
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriesScreen(autoFocusSearch: true)));
-            },
-            child: CircleAvatar(
-              backgroundColor: AppTheme.lightGray,
-              child: const Icon(Icons.search, color: Colors.black, size: 20),
+            const SizedBox(width: 16),
+            const Icon(
+              Icons.card_giftcard_rounded,
+              color: Color(0xFF2563EB),
+              size: 56,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -723,14 +1543,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildCategoryGrid() {
     final List<Map<String, dynamic>> items = [
-      {"title": "Cleaning", "image": "assets/images/categories/cleaner_icon_1774853550305.png"},
-      {"title": "Plumbing", "image": "assets/images/categories/plumber_icon_1774853426358.png"},
-      {"title": "Electrician", "image": "assets/images/categories/electrician_icon_1774853479339.png"},
-      {"title": "Carpenter", "image": "assets/images/categories/carpenter_icon_1774853442272.png"},
-      {"title": "Painter", "image": "assets/images/categories/painter_icon_1774853496361.png"},
-      {"title": "Pest Control", "image": "assets/images/categories/pest_control.png"},
-      {"title": "Appliance", "image": "assets/images/categories/ac_repair.png"},
-      {"title": "Others", "image": "others"},
+      {
+        "title": "Cleaning",
+        "price": "From ₹199",
+        "icon": Icons.cleaning_services_rounded,
+        "gradient": [const Color(0xFFE0F2FE), const Color(0xFFBAE6FD)],
+        "iconColor": const Color(0xFF0284C7),
+      },
+      {
+        "title": "Plumbing",
+        "price": "From ₹209",
+        "icon": Icons.plumbing_rounded,
+        "gradient": [const Color(0xFFECFEFF), const Color(0xFFCFFAFE)],
+        "iconColor": const Color(0xFF0891B2),
+      },
+      {
+        "title": "Electrician",
+        "price": "From ₹149",
+        "icon": Icons.bolt_rounded,
+        "gradient": [const Color(0xFFFEF9C3), const Color(0xFFFEF08A)],
+        "iconColor": const Color(0xFFD97706),
+      },
+      {
+        "title": "Carpenter",
+        "price": "From ₹299",
+        "icon": Icons.carpenter_rounded,
+        "gradient": [const Color(0xFFFFEDD5), const Color(0xFFFED7AA)],
+        "iconColor": const Color(0xFFEA580C),
+      },
+      {
+        "title": "Painter",
+        "price": "From ₹999",
+        "icon": Icons.format_paint_rounded,
+        "gradient": [const Color(0xFFF3E8FF), const Color(0xFFE9D5FF)],
+        "iconColor": const Color(0xFF9333EA),
+      },
+      {
+        "title": "Pest Control",
+        "price": "From ₹399",
+        "icon": Icons.bug_report_rounded,
+        "gradient": [const Color(0xFFFFE4E6), const Color(0xFFFECDD3)],
+        "iconColor": const Color(0xFFE11D48),
+      },
+      {
+        "title": "Appliance",
+        "price": "From ₹249",
+        "icon": Icons.kitchen_rounded,
+        "gradient": [const Color(0xFFEEF2F6), const Color(0xFFE2E8F0)],
+        "iconColor": const Color(0xFF475569),
+      },
+      {
+        "title": "Others",
+        "price": "15+ More",
+        "icon": Icons.widgets_rounded,
+        "gradient": [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)],
+        "iconColor": const Color(0xFF64748B),
+      },
     ];
 
     return GridView.builder(
@@ -739,17 +1607,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.72,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.74,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        final String title = item["title"]!;
-        final String image = item["image"]!;
+        final String title = item["title"] as String;
+        final String price = item["price"] as String;
+        final IconData icon = item["icon"] as IconData;
+        final List<Color> gradient = item["gradient"] as List<Color>;
+        final Color iconColor = item["iconColor"] as Color;
 
-        return GestureDetector(
+        return CategoryCard(
+          title: title,
+          price: price,
+          icon: icon,
+          gradientColors: gradient,
+          iconColor: iconColor,
           onTap: () {
             if (title == "Others") {
               Navigator.push(
@@ -767,43 +1643,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             }
           },
-          child: Column(
-            children: [
-              AspectRatio(
-                aspectRatio: 1.0,
-                child: Container(
-                  padding: EdgeInsets.zero,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F5F9), // Light grey/blue premium tint
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: image == "others"
-                        ? const Icon(Icons.more_horiz_rounded, size: 36, color: AppTheme.accentColor)
-                        : Image.asset(
-                            image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.category_outlined, color: Colors.grey),
-                          ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.accentColor,
-                ),
-              ),
-            ],
-          ),
         );
       },
     );

@@ -15,17 +15,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _onboardingData = [
     OnboardingData(
-      image: "assets/images/image.png",
+      image: "assets/images/image copy 3.png",
       title: "Trusted Professionals",
       description: "Book verified professionals in minutes.",
     ),
     OnboardingData(
-      image: "assets/images/image copy.png",
+      image: "assets/images/image copy 4.png",
       title: "Track Every Service",
       description: "Know exactly when your professional will arrive with real-time map updates and smart notifications.",
     ),
     OnboardingData(
-      image: "assets/images/image_wallet.png",
+      image: "assets/images/image copy 5.png",
       title: "Fast & Secure Payments",
       description: "Pay securely with multiple payment options.",
     ),
@@ -143,10 +143,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               borderRadius: BorderRadius.circular(24),
                               child: Container(
                                 color: const Color(0xFFE5EEFF),
-                                padding: const EdgeInsets.all(20),
+                                padding: EdgeInsets.zero,
                                 child: Image.asset(
                                   item.image,
-                                  fit: BoxFit.contain,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),

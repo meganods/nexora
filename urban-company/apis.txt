@@ -1,0 +1,7 @@
+apiKey: "AIzaSyBth6ntFL3OUDm-R7Fxq97fGpEa-PS97eg",
+  authDomain: "urbancompany-9bd38.firebaseapp.com",
+  projectId: "urbancompany-9bd38",
+  storageBucket: "urbancompany-9bd38.firebasestorage.app",
+  messagingSenderId: "92612493189",
+  appId: "1:92612493189:web:1c58553c714bbb0f428eec",
+  measurementId: "G-GNP1GCLJV5"  

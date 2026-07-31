@@ -1,0 +1,12 @@
+# Ignored files and folders
+node_modules/
+.dart_tool/
+build/
+.gradle/
+*.log
+.idea/
+.env
+local.properties
+.DS_Store
+*.apk
+*.dill

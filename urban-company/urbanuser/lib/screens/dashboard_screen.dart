@@ -527,7 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  service.price,
+                                  service.price.toString(),
                                   style: GoogleFonts.outfit(
                                     color: AppTheme.primaryColor,
                                     fontWeight: FontWeight.bold,

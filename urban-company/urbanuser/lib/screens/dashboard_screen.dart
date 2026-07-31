@@ -648,7 +648,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               final data = doc.data() as Map<String, dynamic>;
               final title = data['categoryName'] ?? data['title'] ?? 'Service';
               final subSvcs = List.from(data['subServices'] ?? []);
-              final imageUrl = data['categoryImageUrl'] ?? data['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800';
+              final String imageUrl = (data['categoryImageUrl'] ?? data['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800').toString();
 
               return GestureDetector(
                 onTap: () {

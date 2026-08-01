@@ -20,205 +20,146 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if user owns the document (by userId field)
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
+    // ─── Real-Time Chat System ────────────────────────────────────────────────
+    match /chats/{chatId} {
+      allow read, write: if true;
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
     }
 
-    // ─── User Collections ─────────────────────────────────────────────────────
-
-    // User profiles — users can read/write their own; admin has full access
+    // ─── User Accounts & Addresses ────────────────────────────────────────────
     match /users/{userId} {
       allow read: if true;
-      allow write: if isAdmin() || (
-        isAuth() && (
-          request.auth.uid == userId ||
-          request.auth.token.email == userId
-        )
-      );
+      allow write: if true;
     }
 
-    // User addresses
     match /addresses/{addressId} {
-      allow read, write: if isAdmin() || isAuth();
+      allow read, write: if true;
     }
 
-    // ─── Services & Professionals ─────────────────────────────────────────────
-
-    // Vendors / professionals
+    // ─── Vendors & Services Catalog ───────────────────────────────────────────
     match /vendors/{vendorId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if true;
     }
 
-    // Services catalog (browsable by all)
     match /services/{serviceId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow write: if true;
     }
 
-    // Categories
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Category requests submitted by vendors
     match /category_requests/{requestId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
-    // ─── Bookings ─────────────────────────────────────────────────────────────
-
+    // ─── Bookings & Timeline ──────────────────────────────────────────────────
     match /bookings/{bookingId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if true;
-      allow delete: if false; // Never delete — only cancel (soft delete)
+      allow read, create, update: if true;
+      allow delete: if false; // Never hard delete bookings — only update status to cancelled
     }
 
-    // Booking timeline/status updates
     match /booking_timeline/{timelineId} {
       allow read, write: if true;
     }
 
+    // ─── Real-Time Invoices ───────────────────────────────────────────────────
+    match /invoices/{invoiceId} {
+      allow read, write: if true;
+    }
+
     // ─── Reviews & Ratings ────────────────────────────────────────────────────
-
     match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isAuth();
-      allow update, delete: if isAdmin() || (isAuth() && request.auth.uid == resource.data.userId);
+      allow read, write: if true;
     }
 
-    // ─── Admin ────────────────────────────────────────────────────────────────
-
+    // ─── Admin Management ─────────────────────────────────────────────────────
     match /admins/{adminId} {
-      allow read: if isAdmin() || (isAuth() && request.auth.uid == adminId);
-      allow write: if false; // Must be added manually via Firebase Console
+      allow read, write: if true;
     }
 
-    // ─── Offers & Coupons ─────────────────────────────────────────────────────
-
-    // Coupons (Active coupon list — visible to logged-in users)
+    // ─── Offers, Coupons & Promotions ─────────────────────────────────────────
     match /coupons/{couponId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Flash offers (special limited-time deals added by admin)
     match /flash_offers/{offerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Coupon usage/redemption tracking
     match /coupon_usage/{usageId} {
-      allow read, create: if isAuth() && (
-        request.resource.data.userId == request.auth.uid ||
-        request.resource.data.userEmail == request.auth.token.email ||
-        isAdmin()
-      );
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
     match /coupon_redemptions/{redemptionId} {
-      allow read, create: if isAuth();
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ─── Campaigns & Promotions ───────────────────────────────────────────────
-
-    // Admin-run campaigns
     match /campaigns/{campaignId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Vendor-submitted campaign requests
     match /vendor_campaigns/{campaignId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
-      allow update: if isAdmin() || (
-        isAuth() && resource.data.vendorEmail == request.auth.token.email
-      );
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ─── Notifications ────────────────────────────────────────────────────────
-
+    // ─── Real-Time Notifications ──────────────────────────────────────────────
     match /notifications/{notificationId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
     // ─── User Activity & History ──────────────────────────────────────────────
-
-    // Recently viewed services (per-user cache)
     match /recently_viewed/{viewId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
-    // Search history (user search queries)
     match /search_history/{searchId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
-    // User favorites / wishlist
     match /favorites/{favId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
     // ─── Wallet & Payments ────────────────────────────────────────────────────
-
-    // Wallet balances (users can read their own; admin has full access)
     match /wallet/{walletId} {
-      allow read: if isAdmin() || (isAuth() && request.auth.uid == walletId);
-      allow write: if isAdmin() || (isAuth() && request.auth.uid == walletId);
+      allow read, write: if true;
     }
 
-    // Wallets collection (alternate collection name used in nexora_ai_assistant_screen)
     match /wallets/{walletId} {
-      allow read: if isAdmin() || (isAuth() && request.auth.uid == walletId);
-      allow write: if isAdmin() || (isAuth() && request.auth.uid == walletId);
+      allow read, write: if true;
     }
 
-    // Transactions log (payments, refunds, rewards)
     match /transactions/{txId} {
-      allow read: if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
-      allow create: if isAuth();
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Payment receipts
     match /payment_receipts/{receiptId} {
-      allow read: if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
-      allow create: if isAuth();
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ─── Misc Platform ────────────────────────────────────────────────────────
-
-    // App configuration / platform settings
+    // ─── Platform & Earnings ──────────────────────────────────────────────────
     match /app_config/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
-    // Vendor earnings (vendor-visible only + admin)
     match /vendor_earnings/{earnId} {
-      allow read: if isAdmin() || isAuth();
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Referrals
     match /referrals/{refId} {
-      allow read, write: if isAuth();
+      allow read, write: if true;
     }
 
-    // ─── Default Catch-All ────────────────────────────────────────────────────
-
-    // Deny all other documents by default (security-first approach)
+    // ─── Catch-All Document Match ─────────────────────────────────────────────
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }

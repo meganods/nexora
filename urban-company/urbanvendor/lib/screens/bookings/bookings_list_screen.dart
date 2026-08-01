@@ -1275,7 +1275,7 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
         children: [
           _buildArchiveRow("Dominic West", "#BK-88291 • Residential HVAC", "Oct 24, 2023", "\$450.00", "Completed", const Color(0xFF16A34A)),
           const Divider(),
-          _buildArchiveRow("Sarah Jenkins", "#BK-88285 • Emergency Plumbing", "Oct 22, 2023", "\$25.00 Penalty", "Cancelled", const Color(0xFFDC2626)),
+          _buildArchiveRow("Sarah Jenkins", "#BK-88285 • Leakage Plumbing", "Oct 22, 2023", "\$25.00 Penalty", "Cancelled", const Color(0xFFDC2626)),
           const Divider(),
           _buildArchiveRow("Arthur Miller", "#BK-88274 • Electrical Audit", "Oct 20, 2023", "\$1,280.00", "Completed", const Color(0xFF16A34A)),
         ],

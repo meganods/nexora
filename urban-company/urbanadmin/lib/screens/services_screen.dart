@@ -211,6 +211,79 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569), height: 1.4),
                           ),
+                          const SizedBox(height: 12),
+                          // Live Placement Toggle Controls for Admin
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilterChip(
+                                label: Text(
+                                  data['isRecommended'] == true ? '⭐ Recommended ON' : '⭐ Recommended OFF',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: data['isRecommended'] == true ? const Color(0xFF1E40AF) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                selected: data['isRecommended'] == true,
+                                selectedColor: const Color(0xFFDBEAFE),
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                onSelected: (val) async {
+                                  await FirebaseFirestore.instance.collection('services').doc(serviceId).update({
+                                    'isRecommended': val,
+                                    'isRecommendedForYou': val,
+                                  });
+                                  if (mounted) {
+                                    AppSnackbar.show(context, val ? 'Service marked as Recommended!' : 'Service removed from Recommended.');
+                                  }
+                                },
+                              ),
+                              FilterChip(
+                                label: Text(
+                                  data['isNewService'] == true ? '✨ New Service ON' : '✨ New Service OFF',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: data['isNewService'] == true ? const Color(0xFF065F46) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                selected: data['isNewService'] == true,
+                                selectedColor: const Color(0xFFD1FAE5),
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                onSelected: (val) async {
+                                  await FirebaseFirestore.instance.collection('services').doc(serviceId).update({
+                                    'isNewService': val,
+                                    'isNew': val,
+                                  });
+                                  if (mounted) {
+                                    AppSnackbar.show(context, val ? 'Service marked as New Service!' : 'Service removed from New Services.');
+                                  }
+                                },
+                              ),
+                              FilterChip(
+                                label: Text(
+                                  data['featured'] == true ? '🔥 Featured ON' : '🔥 Featured OFF',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: data['featured'] == true ? const Color(0xFF991B1B) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                selected: data['featured'] == true,
+                                selectedColor: const Color(0xFFFEE2E2),
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                onSelected: (val) async {
+                                  await FirebaseFirestore.instance.collection('services').doc(serviceId).update({
+                                    'featured': val,
+                                  });
+                                  if (mounted) {
+                                    AppSnackbar.show(context, val ? 'Service marked as Featured!' : 'Service removed from Featured.');
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                           if (data['rejectionReason'] != null && data['rejectionReason'].toString().isNotEmpty) ...[
                             const SizedBox(height: 12),
                             Container(

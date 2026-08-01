@@ -1,10 +1,8 @@
-import 'package:urbanuser/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'notifications/offer_details_screen.dart';
 import '../theme/app_theme.dart';
-import '../data/rewards_data.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -54,7 +52,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
           ),
           ),
         ),
-      bottomNavigationBar: const CustomBottomNav(selectedIndex: 2),
+      bottomNavigationBar: const CustomBottomNav(selectedIndex: 3),
     );
   }
 

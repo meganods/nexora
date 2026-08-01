@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service_model.dart';
 import '../data/dummy_data.dart';
 import 'service_detail_screen.dart';
-import '../widgets/custom_bottom_nav.dart';
 import '../widgets/app_snackbar.dart';
+import '../widgets/custom_bottom_nav.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryName;
@@ -48,7 +48,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   final List<String> _filterChips = [
     "All",
     "Popular",
-    "Emergency",
     "Installation",
     "Repair",
     "Maintenance",
@@ -159,7 +158,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return dummyServices.map((s) => {
       "id": s.id,
       "title": s.title,
-      "startingPrice": s.price,
+      "startingPrice": "₹${s.price.toInt()}",
       "duration": s.duration,
       "rating": s.rating.toString(),
       "jobs": "${s.totalReviews * 4} Jobs",
@@ -274,7 +273,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Container(
-                height: 180,
+                constraints: const BoxConstraints(minHeight: 200),
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
@@ -287,7 +286,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
                     gradient: LinearGradient(
@@ -299,6 +298,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -311,17 +311,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                           style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         "Professional ${widget.categoryName} Services",
-                        style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Starting ₹199 • 100% Satisfaction Guarantee",
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.9)),
+                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.9)),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -522,55 +522,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ),
 
-            // ─── EMERGENCY SERVICE CARD ──────────────────────────────────
-            if (widget.categoryName.toLowerCase().contains("plumb"))
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(color: const Color(0xFFEF4444).withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6)),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.white24,
-                        child: Icon(Icons.campaign_rounded, color: Colors.white, size: 30),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("🚨 Emergency Plumbing", style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                            const SizedBox(height: 4),
-                            Text("Available within 30 Minutes • 24x7 Support", style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withValues(alpha: 0.95))),
-                            const SizedBox(height: 14),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFFEF4444),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              onPressed: () => AppSnackbar.show(context, "Connecting with nearest emergency plumber..."),
-                              child: Text("Book Emergency Service", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+
 
             const SizedBox(height: 12),
 
@@ -679,6 +631,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         ),
       ),
 
+      bottomNavigationBar: const CustomBottomNav(selectedIndex: 1),
     );
   }
 
@@ -713,7 +666,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Image.asset(
-                            "assets/images/categories/plumber.png",
+                            "assets/images/categories/handyman.png",
                             height: 140,
                             width: double.infinity,
                             fit: BoxFit.cover,
@@ -733,30 +686,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   child: Text(
                     "Verified Expert",
                     style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (isWishlisted) {
-                        _wishlistedIds.remove(s["id"]);
-                      } else {
-                        _wishlistedIds.add(s["id"]);
-                      }
-                    });
-                  },
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      size: 16,
-                      color: isWishlisted ? Colors.red : const Color(0xFF64748B),
-                    ),
                   ),
                 ),
               ),

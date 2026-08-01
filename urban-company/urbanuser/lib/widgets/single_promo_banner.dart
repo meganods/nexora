@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 /// Live promo banner — reads approved vendor campaigns targeting 'promo_banner'
 /// and approved admin campaigns from Firestore. Falls back to static design.

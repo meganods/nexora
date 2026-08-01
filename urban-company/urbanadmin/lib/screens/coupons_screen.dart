@@ -761,6 +761,24 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (d['imageUrl'] != null && d['imageUrl'].toString().isNotEmpty)
+                            Container(
+                              height: 90,
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              clipBehavior: Clip.antiAlias,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Image.network(
+                                d['imageUrl'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => Container(
+                                  color: const Color(0xFFF1F5F9),
+                                  child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+                                ),
+                              ),
+                            ),
                           Row(
                             children: [
                               Container(
@@ -841,6 +859,7 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
     final isEdit = existing != null;
     final nameCtrl = TextEditingController(text: isEdit ? existing['name'] : '');
     final descCtrl = TextEditingController(text: isEdit ? existing['description'] : '');
+    final imageUrlCtrl = TextEditingController(text: isEdit ? (existing['imageUrl'] ?? '') : '');
     String type = isEdit ? (existing['type'] ?? 'Festival') : 'Festival';
     bool active = isEdit ? (existing['active'] ?? true) : true;
     DateTime start = isEdit && existing['startDate'] != null ? (existing['startDate'] as Timestamp).toDate() : DateTime.now();
@@ -857,6 +876,8 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
               child: Column(
                 children: [
                   TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Campaign Name', border: OutlineInputBorder())),
+                  const SizedBox(height: 12),
+                  TextField(controller: imageUrlCtrl, decoration: const InputDecoration(labelText: 'Banner Image URL', border: OutlineInputBorder(), hintText: 'https://images.unsplash.com/...')),
                   const SizedBox(height: 12),
                   TextField(controller: descCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder())),
                   const SizedBox(height: 12),
@@ -914,6 +935,7 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
                   'description': descCtrl.text.trim(),
                   'type': type,
                   'active': active,
+                  'imageUrl': imageUrlCtrl.text.trim().isEmpty ? null : imageUrlCtrl.text.trim(),
                   'startDate': Timestamp.fromDate(start),
                   'endDate': Timestamp.fromDate(end),
                   'updatedAt': FieldValue.serverTimestamp(),
@@ -1928,6 +1950,7 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
     String applicableType = isEdit ? editCoupon['applicableType'] : 'All';
     bool firstBookingOnly = isEdit ? editCoupon['firstBookingOnly'] == true : false;
     bool autoApply = isEdit ? editCoupon['autoApply'] == true : false;
+    bool isFlashOffer = isEdit ? editCoupon['isFlashOffer'] == true : true;
     bool status = isEdit ? editCoupon['status'] == true : true;
 
     DateTime startDate = isEdit && editCoupon['startDateObj'] != null ? editCoupon['startDateObj'] : DateTime.now();
@@ -2110,6 +2133,13 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
                         onChanged: (val) => setModalState(() => autoApply = val),
                       ),
                       SwitchListTile(
+                        title: const Text("Show in Flash Offers (User App)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        subtitle: const Text("Displays card under Book It Again on User Home Page"),
+                        value: isFlashOffer,
+                        activeColor: const Color(0xFF6366F1),
+                        onChanged: (val) => setModalState(() => isFlashOffer = val),
+                      ),
+                      SwitchListTile(
                         title: const Text("Active Status", style: TextStyle(fontSize: 13)),
                         value: status,
                         onChanged: (val) => setModalState(() => status = val),
@@ -2143,6 +2173,7 @@ class _CouponsScreenState extends State<CouponsScreen> with SingleTickerProvider
                       'perUserLimit': int.tryParse(perUserLimitController.text) ?? 1,
                       'firstBookingOnly': firstBookingOnly,
                       'autoApply': autoApply,
+                      'isFlashOffer': isFlashOffer,
                       'applicableType': applicableType,
                       'cityIds': cities,
                       'startDate': Timestamp.fromDate(startDate),

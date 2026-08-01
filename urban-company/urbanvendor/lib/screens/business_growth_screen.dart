@@ -69,7 +69,7 @@ class _BusinessGrowthScreenState extends State<BusinessGrowthScreen> {
       "customerName": "Suresh Raina",
       "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
       "rating": 5.0,
-      "serviceName": "Emergency Plumbing",
+      "serviceName": "Leakage Plumbing",
       "bookingId": "BK_9070",
       "comment": "Super quick response for the water leakage. Highly recommended!",
       "date": "3 days ago",
@@ -99,7 +99,7 @@ class _BusinessGrowthScreenState extends State<BusinessGrowthScreen> {
 
   // Dummy Notifications List
   final List<Map<String, dynamic>> _notifications = [
-    {"type": "booking", "title": "New Booking Request", "body": "Emergency plumbing needed at Worli, Mumbai", "time": "5m ago", "isUnread": true},
+    {"type": "booking", "title": "New Booking Request", "body": "Urgent plumbing needed at Worli, Mumbai", "time": "5m ago", "isUnread": true},
     {"type": "payment", "title": "Payout Settlement Confirmed", "body": "₹15,240 settled to HDFC Bank", "time": "2h ago", "isUnread": false},
     {"type": "alert", "title": "System Security Alert", "body": "Update your linked GST credentials immediately", "time": "1d ago", "isUnread": false},
     {"type": "achievement", "title": "Top Rated Badge Unlocked", "body": "Awarded for completing 50+ 5-star jobs YTD", "time": "2d ago", "isUnread": true}

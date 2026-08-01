@@ -10,7 +10,6 @@ class OffersScreen extends StatelessWidget {
   const OffersScreen({super.key});
 
   static const _primary = Color(0xFF2563EB);
-  static const _accent = Color(0xFF10B981);
 
   @override
   Widget build(BuildContext context) {
@@ -391,14 +390,12 @@ class OffersScreen extends StatelessWidget {
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(6)),
                 child: Text((d['type'] ?? 'PROMO').toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
               ),
-              if (isAdmin) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                  child: const Text('NEXORA', style: TextStyle(color: Colors.white70, fontSize: 7, fontWeight: FontWeight.bold)),
-                ),
-              ],
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                child: Text(isAdmin ? '🏢 NEXORA OFFER' : '👨‍🔧 VENDOR OFFER', style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold)),
+              ),
             ],
           ),
           Column(

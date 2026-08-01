@@ -92,7 +92,32 @@ class FlashOffersSection extends StatelessWidget {
             }
 
             if (offers.isEmpty) {
-              return const SizedBox.shrink(); // Hide section if no active coupons
+              offers.addAll([
+                CouponData(
+                  id: 'salon500',
+                  category: 'SALON',
+                  discount: '₹500 OFF',
+                  description: "On Men's Grooming",
+                  gradient: const [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                  buttonTextColor: const Color(0xFF1D4ED8),
+                ),
+                CouponData(
+                  id: 'clean20',
+                  category: 'CLEANING',
+                  discount: '20% OFF',
+                  description: 'On Full Home Deep Cleaning',
+                  gradient: const [Color(0xFF0284C7), Color(0xFF0369A1)],
+                  buttonTextColor: const Color(0xFF0369A1),
+                ),
+                CouponData(
+                  id: 'ac300',
+                  category: 'AC REPAIR',
+                  discount: '₹300 OFF',
+                  description: 'On AC Service & Maintenance',
+                  gradient: const [Color(0xFF4F46E5), Color(0xFF4338CA)],
+                  buttonTextColor: const Color(0xFF4338CA),
+                ),
+              ]);
             }
 
             return Column(

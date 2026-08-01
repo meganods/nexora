@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/invoice_service.dart';
+import '../widgets/app_toast.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -20,6 +22,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final _reviewController = TextEditingController();
   bool _hasSubmittedReview = false;
   bool _isCheckingReview = true;
+  bool _isDownloadingInvoice = false;
 
   @override
   void initState() {
@@ -57,6 +60,56 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       setState(() {
         _address = savedAddress;
       });
+    }
+  }
+
+  /// Downloads a real-time PDF invoice for this booking
+  Future<void> _downloadInvoice() async {
+    if (_isDownloadingInvoice) return;
+    setState(() => _isDownloadingInvoice = true);
+
+    // Merge saved address into booking data for the invoice
+    final bookingData = Map<String, dynamic>.from(widget.booking);
+    bookingData['userAddress'] = _address;
+
+    // Try to get fresh data from Firestore
+    final String bookingId = widget.booking['id'] ?? '';
+    if (bookingId.isNotEmpty) {
+      try {
+        final snap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
+        if (snap.exists && snap.data() != null) {
+          bookingData.addAll(snap.data()!);
+        }
+      } catch (_) {}
+    }
+
+    try {
+      await InvoiceService.downloadInvoice(
+        context: context,
+        booking: bookingData,
+      );
+      if (mounted) {
+        AppToast.show(
+          context,
+          title: '✅ Invoice Downloaded',
+          message: 'Invoice for ${bookingData['shopName'] ?? 'your booking'} saved successfully!',
+          icon: Icons.picture_as_pdf_rounded,
+          iconColor: const Color(0xFF2563EB),
+          iconBgColor: const Color(0xFFEFF6FF),
+          duration: const Duration(seconds: 4),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(
+          context,
+          title: '❌ Download Failed',
+          message: 'Could not generate invoice. Please try again.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloadingInvoice = false);
     }
   }
 
@@ -178,7 +231,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     _buildDateTimeInfo(),
                     _buildLocationInfo(),
                     _buildPricingSection(),
-                    const SizedBox(height: 40),
+                    _buildDownloadInvoiceButton(),
+                    const SizedBox(height: 20),
                     if (!_isCancelled) _buildCancelButton(),
                     const SizedBox(height: 40),
                   ],
@@ -387,6 +441,72 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
           Text(value, style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadInvoiceButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+      child: GestureDetector(
+        onTap: _isDownloadingInvoice ? null : _downloadInvoice,
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: _isDownloadingInvoice
+                ? null
+                : const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            color: _isDownloadingInvoice ? const Color(0xFFCBD5E1) : null,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _isDownloadingInvoice
+                ? []
+                : [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: _isDownloadingInvoice
+              ? const Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      ),
+                      SizedBox(width: 12),
+                      Text('Generating Invoice...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Download Invoice (PDF)',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.download_rounded, color: Colors.white70, size: 16),
+                  ],
+                ),
+        ),
       ),
     );
   }

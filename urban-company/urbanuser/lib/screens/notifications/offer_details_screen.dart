@@ -89,7 +89,7 @@ class OfferDetailsScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "COUPON OFFER ACTIVE",
+                        title.toUpperCase(),
                         style: GoogleFonts.inter(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
                       ),
                       const SizedBox(height: 4),

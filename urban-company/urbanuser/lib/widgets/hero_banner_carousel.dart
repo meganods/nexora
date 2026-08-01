@@ -34,19 +34,19 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image.png",
+      image: "assets/hero section img/image.png",
     ),
     BannerData(
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image copy.png",
+      image: "assets/hero section img/image copy.png",
     ),
     BannerData(
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image copy 2.png",
+      image: "assets/hero section img/image copy 2.png",
     ),
   ];
 

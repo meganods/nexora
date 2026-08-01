@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urbanuser/widgets/app_snackbar.dart';
 import '../models/service_model.dart';
-import '../widgets/step_progress_indicator.dart';
 import 'address_setup_screen.dart';
 import 'payment_screen.dart';
 
@@ -29,7 +28,7 @@ class ScheduleBookingScreen extends StatefulWidget {
 class _ScheduleBookingScreenState extends State<ScheduleBookingScreen> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1)); // Default tomorrow
   String _selectedTimeSlot = "10:00 AM";
-  String _selectedAddress = "Home";
+  
   
   String _userRealAddress = '';
   String _userAddressType = 'Home';
@@ -738,7 +737,7 @@ class _ScheduleBookingScreenState extends State<ScheduleBookingScreen> {
               ),
               Switch(
                 value: _useWallet,
-                activeColor: const Color(0xFF3B82F6),
+                activeTrackColor: const Color(0xFF3B82F6),
                 onChanged: (val) {
                   setState(() {
                     _useWallet = val;
@@ -1143,7 +1142,7 @@ class _ScheduleBookingScreenState extends State<ScheduleBookingScreen> {
                       date: dateStr,
                       time: _selectedTimeSlot,
                       selectedItems: widget.selectedItems,
-                      vendorId: widget.service.vendorId ?? "v_101",
+                      vendorId: widget.service.vendorId.isNotEmpty ? widget.service.vendorId : "v_101",
                       imageUrl: widget.service.image,
                     ),
                   ),

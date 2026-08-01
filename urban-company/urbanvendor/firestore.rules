@@ -104,6 +104,22 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Explicit rules for coupon redemptions logs
+    match /coupon_redemptions/{redemptionId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // Explicit rules for recently viewed services logs
+    match /recently_viewed/{viewId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Explicit rules for notifications center
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+
     // Default rule for all other documents
     match /{document=**} {
       allow read, write: if false;

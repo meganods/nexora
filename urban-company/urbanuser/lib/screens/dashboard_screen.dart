@@ -23,6 +23,7 @@ import 'categories_screen.dart';
 import '../data/dummy_data.dart';
 import '../models/service_model.dart';
 import 'search_screen.dart';
+import 'trending_services_screen.dart';
 import 'service_detail_screen.dart';
 import 'service_list_screen.dart';
 import '../data/rewards_data.dart';
@@ -32,6 +33,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'my_bookings_screen.dart';
 import 'wallet_screen.dart';
 import 'login_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -44,12 +47,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _newServicesController = PageController(viewportFraction: 0.45, initialPage: 300);
   String _userAddress = "4517 Washington Ave";
+  String _userName = "User";
   Timer? _newServicesTimer;
+  StreamSubscription<DocumentSnapshot>? _userDocSub;
 
   @override
   void initState() {
     super.initState();
     _loadUserAddress();
+    _setupLiveUserListener();
+    _requestLocationPermissionOnLoad();
+  }
+
+  void _setupLiveUserListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userDocSub?.cancel();
+      _userDocSub = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((doc) {
+        if (doc.exists && doc.data() != null && mounted) {
+          final data = doc.data() as Map<String, dynamic>;
+          final addr = data['userAddress'] ?? data['address'] ?? '';
+          final name = data['fullName'] ?? data['name'] ?? '';
+
+          if (name.toString().trim().isNotEmpty) {
+            _userName = name.toString().split(' ').first;
+          }
+
+          if (addr.toString().trim().isNotEmpty) {
+            final parts = addr.toString().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            setState(() {
+              if (parts.length >= 2) {
+                _userAddress = "${parts[0]}, ${parts[1]}";
+              } else {
+                _userAddress = parts.join(', ');
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
+  Future<void> _requestLocationPermissionOnLoad() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        Position position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        );
+        List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final String resolvedAddress = [
+            place.name,
+            place.subLocality,
+            place.locality,
+            place.postalCode
+          ].where((e) => e != null && e.isNotEmpty).join(', ');
+          
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userAddress', resolvedAddress);
+          
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+              'userAddress': resolvedAddress,
+            }, SetOptions(merge: true));
+          }
+
+          setState(() {
+            _userAddress = resolvedAddress;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error requesting location: $e");
+    }
   }
 
   void _startNewServicesTimer(int docsLength) {
@@ -69,6 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _userDocSub?.cancel();
     _newServicesTimer?.cancel();
     _newServicesController.dispose();
     super.dispose();
@@ -76,6 +161,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadUserAddress() async {
     final prefs = await SharedPreferences.getInstance();
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
+      _userName = user.displayName!.split(' ').first;
+    }
+
     final savedAddress = prefs.getString('userAddress');
     if (savedAddress != null && savedAddress.trim().isNotEmpty) {
       final parts = savedAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
@@ -87,6 +178,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       });
     }
+
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          final addr = data['userAddress'] ?? data['address'] ?? '';
+          final name = data['fullName'] ?? data['name'] ?? '';
+          if (name.toString().trim().isNotEmpty) {
+            _userName = name.toString().split(' ').first;
+          }
+          if (addr.toString().trim().isNotEmpty) {
+            final parts = addr.toString().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            setState(() {
+              if (parts.length >= 2) {
+                _userAddress = "${parts[0]}, ${parts[1]}";
+              } else {
+                _userAddress = parts.join(', ');
+              }
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint("Error fetching user info in dashboard: $e");
+      }
+    }
   }
 
   final List<BannerData> _banners = [
@@ -94,19 +211,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image.png",
+      image: "assets/hero section img/image.png",
     ),
     BannerData(
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image copy.png",
+      image: "assets/hero section img/image copy.png",
     ),
     BannerData(
       title: "",
       subtitle: "",
       discount: "",
-      image: "assets/images/banner_img/image copy 2.png",
+      image: "assets/hero section img/image copy 2.png",
     ),
   ];
 
@@ -128,29 +245,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(),
+                  const SizedBox(height: 12),
                   _buildSearchBar(),
                   const SizedBox(height: 16),
-                  const HeroBannerCarousel(),
-                  const SizedBox(height: 36),
-                  _buildWhatDoYouNeedHeader(),
                   _buildCategoryGrid(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 16),
+                  const HeroBannerCarousel(),
+                  const SizedBox(height: 24),
                   const PopularServicesSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const TopRatedProfessionalsSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const RecommendedSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const NewServicesSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const SinglePromoBanner(),
-                  const SizedBox(height: 36),
-                  const FlashOffersSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   const BookAgainSection(),
-                  const SizedBox(height: 36),
-                  const CustomerReviewsSection(),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
+                  const FlashOffersSection(),
+                  const SizedBox(height: 24),
                   const ReferEarnSection(),
                   const SizedBox(height: 40),
                 ],
@@ -164,6 +279,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildHeader() {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 12.0),
       child: Row(
@@ -188,8 +305,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // Center: Address information
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/address_setup');
+              onTap: () async {
+                await Navigator.pushNamed(context, '/address_setup');
+                _loadUserAddress();
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     children: [
                       Text(
-                        "Good Morning, Vishal",
+                        "Good Morning, $_userName",
                         style: GoogleFonts.inter(
                           color: const Color(0xFF64748B),
                           fontSize: 13,
@@ -224,7 +342,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          _userAddress,
+                          _userAddress.isNotEmpty ? _userAddress : "Tap to add address",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
@@ -247,8 +365,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           // Right: Bell Notification Icon
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const NotificationScreen()),
               );
@@ -260,11 +378,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 shape: BoxShape.circle,
                 color: Color(0xFFF1F5F9),
               ),
-              child: StreamBuilder<List<NotificationModel>>(
-                stream: notificationStreamController.stream,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: user != null
+                    ? FirebaseFirestore.instance
+                        .collection('notifications')
+                        .where('userId', isEqualTo: user.uid)
+                        .snapshots()
+                    : null,
                 builder: (context, snapshot) {
-                  final list = snapshot.data ?? [];
-                  final unreadCount = list.where((x) => !x.isRead).length;
+                  int unreadCount = 0;
+                  if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                    unreadCount = snapshot.data!.docs.where((d) {
+                      final data = d.data() as Map<String, dynamic>;
+                      return data['read'] != true && data['isRead'] != true;
+                    }).length;
+                  }
 
                   return Stack(
                     alignment: Alignment.center,
@@ -2288,6 +2416,485 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  Widget _buildTrendingServicesHome() {
+    const brandBlue = Color(0xFF2563EB);
+    const lightBlue = Color(0xFFEFF6FF);
+    const textPrimary = Color(0xFF0F172A);
+    const textSecondary = Color(0xFF64748B);
+    const borderGray = Color(0xFFE2E8F0);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('services').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final allDocs = snapshot.data!.docs;
+
+        final trendingDocs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final rating = ((data['rating'] ?? 0.0) as num).toDouble();
+          return rating >= 4.7;
+        }).take(6).toList();
+
+        if (trendingDocs.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '🔥 Trending Services',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TrendingServicesScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'See All',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: brandBlue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 250,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: trendingDocs.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, index) {
+                  final doc = trendingDocs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+
+                  final service = ServiceModel(
+                    id: doc.id,
+                    title: data['title'] ?? 'Special Service',
+                    category: data['categoryName'] ?? 'General',
+                    subCategory: 'Popular',
+                    price: ((data['price'] ?? 299.0) as num).toDouble(),
+                    discountPercent: 0,
+                    rating: ((data['rating'] ?? 4.8) as num).toDouble(),
+                    totalReviews: (data['totalReviews'] ?? 100) as int,
+                    vendorName: 'NEXORA Certified Partner',
+                    image: data['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300&auto=format&fit=crop',
+                    images: [data['imageUrl'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300&auto=format&fit=crop'],
+                    shortDescription: data['description'] ?? '',
+                    description: data['description'] ?? '',
+                    longDescription: data['description'] ?? '',
+                    duration: data['duration'] ?? '45 mins',
+                    isAvailable: true,
+                    location: 'Verified Expert',
+                    tags: const [],
+                  );
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ServiceDetailScreen(service: service)),
+                      );
+                    },
+                    child: Container(
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: borderGray),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                child: Image.network(
+                                  service.image,
+                                  height: 120,
+                                  width: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    height: 120,
+                                    color: const Color(0xFFF1F5F9),
+                                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        '${service.rating}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  service.category.toUpperCase(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: brandBlue,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  service.title,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '₹${service.price.toInt()}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: brandBlue,
+                                      ),
+                                    ),
+                                    Text(
+                                      service.duration,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        color: textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentlyViewedHome() {
+    const brandBlue = Color(0xFF2563EB);
+    const lightBlue = Color(0xFFEFF6FF);
+    const textPrimary = Color(0xFF0F172A);
+    const textSecondary = Color(0xFF64748B);
+    const borderGray = Color(0xFFE2E8F0);
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('recently_viewed')
+          .where('userId', isEqualTo: user.uid)
+          .orderBy('viewedAt', descending: true)
+          .limit(10)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                'Recently Viewed',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 250,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: docs.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final d = doc.data() as Map<String, dynamic>;
+
+                  final service = ServiceModel(
+                    id: d['serviceId'] ?? '',
+                    title: d['title'] ?? 'Special Service',
+                    category: d['category'] ?? 'General',
+                    subCategory: 'Popular',
+                    price: ((d['price'] ?? 299.0) as num).toDouble(),
+                    discountPercent: 0,
+                    rating: ((d['rating'] ?? 4.8) as num).toDouble(),
+                    totalReviews: (d['totalReviews'] ?? 100) as int,
+                    vendorName: 'NEXORA Certified Partner',
+                    image: d['image'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300&auto=format&fit=crop',
+                    images: [d['image'] ?? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300&auto=format&fit=crop'],
+                    shortDescription: '',
+                    description: '',
+                    longDescription: '',
+                    duration: '45 mins',
+                    isAvailable: true,
+                    location: 'Verified Expert',
+                    tags: const [],
+                  );
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ServiceDetailScreen(service: service)),
+                      );
+                    },
+                    child: Container(
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: borderGray),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                child: Image.network(
+                                  service.image,
+                                  height: 120,
+                                  width: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    height: 120,
+                                    color: const Color(0xFFF1F5F9),
+                                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        '${service.rating}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  service.category.toUpperCase(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: brandBlue,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  service.title,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '₹${service.price.toInt()}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: brandBlue,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPopularNearYouHome() {
+    const textPrimary = Color(0xFF0F172A);
+    const textSecondary = Color(0xFF64748B);
+
+    final List<Map<String, dynamic>> items = [
+      {
+        'name': 'Rahul & Team',
+        'rating': 4.8,
+        'distance': '1.6 km',
+        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        'name': 'Amit Sharma',
+        'rating': 4.7,
+        'distance': '3.2 km',
+        'image': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        'name': 'Neha Services',
+        'rating': 4.9,
+        'distance': '2.1 km',
+        'image': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+      }
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Text(
+            'Popular Near You',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final pro = items[index];
+              return Column(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: NetworkImage(pro['image']!),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pro['name']!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '⭐ ${pro['rating']} • ${pro['distance']}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _VideoStoryCard extends StatelessWidget {
@@ -2370,4 +2977,3 @@ class _VideoStoryCard extends StatelessWidget {
     );
   }
 }
-

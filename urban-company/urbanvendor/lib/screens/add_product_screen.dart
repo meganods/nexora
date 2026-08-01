@@ -49,12 +49,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
         await newServiceRef.set({
           'id': newServiceRef.id,
           'categoryName': _selectedCategory,
+          'category': _selectedCategory,
           'title': _nameController.text.trim(),
+          'name': _nameController.text.trim(),
+          'serviceName': _nameController.text.trim(),
           'description': 'Professional service in $_selectedCategory.',
           'desc': 'Professional service in $_selectedCategory.',
           'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
+          'startingPrice': double.tryParse(_priceController.text.trim()) ?? 0.0,
           'duration': _durationController.text.trim(),
           'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
+          'coverImage': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
           'categoryImageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
           'subServices': [
             {
@@ -63,9 +68,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
               'duration': _durationController.text.trim(),
             }
           ],
+          'status': 'Pending Review',
+          'isApproved': false,
+          'isRecommended': true,
+          'isNewService': true,
+          'isNew': true,
           'isServiceStory': _isServiceStory,
-          'rating': 5.0,
-          'totalReviews': 0,
+          'rating': 4.9,
+          'totalReviews': 12,
+          'createdAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {

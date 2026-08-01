@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'app_toast.dart';
 
 class AppSnackbar {
   static void show(
@@ -7,20 +7,14 @@ class AppSnackbar {
     String message, {
     bool isError = false,
   }) {
-    final snackBar = SnackBar(
-      backgroundColor: isError ? const Color(0xFFEF4444) : const Color(0xFF1E293B),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.all(16),
-      content: Text(
-        message,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    AppToast.show(
+      context,
+      title: isError ? 'Attention' : 'Notification',
+      message: message,
+      isError: isError,
+      icon: isError ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
+      iconColor: isError ? Colors.red : const Color(0xFF10B981),
+      iconBgColor: isError ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5),
     );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

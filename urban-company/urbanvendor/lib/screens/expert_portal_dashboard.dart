@@ -3,11 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/vendor_theme.dart';
-import '../widgets/app_snackbar.dart';
 import 'bookings/bookings_list_screen.dart';
 import 'business_settings_screen.dart';
 import 'my_services_screen.dart';
-import 'wallet_management_screen.dart';
 import 'business_growth_screen.dart';
 import 'support_center_screen.dart';
 
@@ -219,7 +217,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
             const SizedBox(height: 20),
 
             // 2. Online Status Card
-            _buildMobileStatusCard(),
+            _buildMobileStatusCard(data),
             const SizedBox(height: 20),
 
             // 3. Quick KPI Cards Carousel/Row
@@ -325,7 +323,9 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
     );
   }
 
-  Widget _buildMobileStatusCard() {
+  Widget _buildMobileStatusCard(Map<String, dynamic> data) {
+    final bool isOnlineFromDb = data['isOnline'] == true;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -342,7 +342,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: _isOnline ? const Color(0xFF16A34A) : Colors.grey,
+                  color: isOnlineFromDb ? const Color(0xFF16A34A) : Colors.grey,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -352,7 +352,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isOnline ? "You're Online" : "You're Offline",
+                      isOnlineFromDb ? "You're Online" : "You're Offline",
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: VendorTheme.textPrimary),
                     ),
                     Text(
@@ -365,10 +365,16 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
               Transform.scale(
                 scale: 0.85,
                 child: Switch(
-                  value: _isOnline,
+                  value: isOnlineFromDb,
                   activeColor: Colors.white,
                   activeTrackColor: const Color(0xFF1D4ED8),
-                  onChanged: (val) => setState(() => _isOnline = val),
+                  onChanged: (val) async {
+                    if (user?.email != null) {
+                      await FirebaseFirestore.instance.collection('vendors').doc(user!.email).update({
+                        'isOnline': val,
+                      });
+                    }
+                  },
                 ),
               ),
             ],
@@ -563,10 +569,11 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
   Widget _buildMobileQuickActionsGrid() {
     final actions = [
       {"label": "Bookings", "icon": Icons.assignment_outlined, "route": "/bookings"},
+      {"label": "Chats", "icon": Icons.chat_bubble_outline_rounded, "route": "/chats"},
       {"label": "Services", "icon": Icons.build_outlined, "route": "/my_services"},
       {"label": "Wallet", "icon": Icons.account_balance_wallet_outlined, "route": "/wallet"},
       {"label": "Analytics", "icon": Icons.show_chart_rounded, "route": "/growth"},
-      {"label": "Campaigns", "icon": Icons.campaign_outlined, "route": "/campaigns"},
+      {"label": "Calendar", "icon": Icons.calendar_month_rounded, "route": "/calendar"},
       {"label": "Coupons", "icon": Icons.local_offer_outlined, "route": "/coupons"},
       {"label": "Support", "icon": Icons.headset_mic_outlined, "route": "/support"},
       {"label": "KYC", "icon": Icons.verified_user_outlined, "route": "/kyc_onboarding"},

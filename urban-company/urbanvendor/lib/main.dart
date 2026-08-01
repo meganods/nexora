@@ -61,13 +61,14 @@ import 'screens/coupons_screen.dart';
 import 'screens/vendor_campaigns_screen.dart';
 import 'screens/withdrawals_screen.dart';
 import 'screens/reports_screen.dart';
-import 'screens/settings_screen.dart';
 import 'screens/help_center_screen.dart';
 import 'screens/not_found_screen.dart';
 import 'screens/kyc/kyc_onboarding_flow_screen.dart';
 import 'screens/kyc/kyc_status_screen.dart';
 import 'screens/admin/admin_requests_screen.dart';
 import 'screens/admin/admin_detail_screen.dart';
+import 'screens/calendar_leave_screen.dart';
+import 'screens/chat_list_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -170,6 +171,8 @@ class NexoraVendorApp extends StatelessWidget {
         '/kyc_status': (context) => const KycStatusScreen(),
         '/admin_requests': (context) => const AdminRequestsScreen(),
         '/admin_detail': (context) => const AdminDetailScreen(),
+        '/calendar': (context) => const CalendarLeaveScreen(),
+        '/chats': (context) => const ChatListScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/login') {

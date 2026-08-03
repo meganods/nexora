@@ -297,8 +297,8 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
           ),
         );
 
-        // Redirect to Login page as requested
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        // Redirect to Dashboard page
+        Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
       }
     } catch (e) {
       if (mounted) {

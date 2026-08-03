@@ -86,8 +86,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // Save user profile to Firestore (upsert so existing users aren't overwritten)
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.email ?? user.uid);
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final docSnap = await userDoc.get();
+      
+      bool hasAddress = false;
+      String existingAddress = '';
+      String existingAddressType = 'Home';
+
       if (!docSnap.exists) {
         await userDoc.set({
           'name': user.displayName ?? '',
@@ -97,8 +102,15 @@ class _LoginScreenState extends State<LoginScreen> {
           'uid': user.uid,
           'createdAt': FieldValue.serverTimestamp(),
           'loginMethod': 'google',
+          'hasCompletedAddressSetup': false,
         });
       } else {
+        final data = docSnap.data()!;
+        hasAddress = data['hasCompletedAddressSetup'] == true || 
+            (data['userAddress'] != null && (data['userAddress'] as String).isNotEmpty);
+        existingAddress = data['userAddress'] ?? '';
+        existingAddressType = data['userAddressType'] ?? 'Home';
+
         // Update photo/name in case they changed in Google
         await userDoc.update({
           'name': user.displayName ?? docSnap['name'] ?? '',
@@ -114,9 +126,18 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('userPhotoUrl', user.photoURL ?? '');
       await prefs.setString('userMobile', user.phoneNumber ?? '');
       await prefs.setBool('isLoggedIn', true);
+      
+      if (hasAddress && existingAddress.isNotEmpty) {
+        await prefs.setString('userAddress', existingAddress);
+        await prefs.setString('userAddressType', existingAddressType);
+      }
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        if (hasAddress) {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/address_setup');
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Google Sign-In failed. Please try again.';

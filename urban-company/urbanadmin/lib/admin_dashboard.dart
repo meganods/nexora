@@ -485,7 +485,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildHeaderIcon(IconData icon, String label) {
     return InkWell(
       onTap: () {
-        AppSnackbar.show(context, 'Opening $label...');
+        if (label == 'Notifications') {
+          _showAdminNotifications();
+        } else {
+          AppSnackbar.show(context, 'Opening $label...');
+        }
       },
       borderRadius: BorderRadius.circular(30),
       child: Container(
@@ -496,6 +500,108 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         child: Icon(icon, color: Colors.blueGrey[600], size: 18),
       ),
+    );
+  }
+
+  void _showAdminNotifications() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: 450,
+            height: 550,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Admin Alerts & Notifications',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('notifications')
+                        .where('recipientId', isEqualTo: 'admin')
+                        .snapshots(),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final docs = snap.data?.docs ?? [];
+                      if (docs.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No new admin alerts',
+                                style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: docs.length,
+                        itemBuilder: (context, idx) {
+                          final data = docs[idx].data() as Map<String, dynamic>;
+                          final title = data['title'] ?? 'System Alert';
+                          final body = data['body'] ?? '';
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            child: ListTile(
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFFEFF6FF),
+                                child: Icon(Icons.campaign_rounded, color: Color(0xFF2563EB)),
+                              ),
+                              title: Text(
+                                title,
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              subtitle: Text(
+                                body,
+                                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

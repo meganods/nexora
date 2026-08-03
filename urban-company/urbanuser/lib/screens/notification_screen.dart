@@ -45,97 +45,10 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<Map<String, dynamic>> _fallbackNotifications = [
-    {
-      'id': 'n1',
-      'title': 'Booking Confirmed!',
-      'body': 'Your Deep Home Cleaning booking (NEX-849201) is confirmed for Tomorrow at 10:00 AM.',
-      'type': 'booking',
-      'bookingId': 'NEX-849201',
-      'isRead': false,
-      'time': '10 mins ago',
-    },
-    {
-      'id': 'n2',
-      'title': 'Exclusive Weekend Offer 🎉',
-      'body': 'Get 20% OFF on all AC Repairs & Home Services! Use code WEEKEND20 at checkout.',
-      'type': 'offer',
-      'isRead': false,
-      'time': '2 hours ago',
-    },
-    {
-      'id': 'n3',
-      'title': 'Vendor Assigned',
-      'body': 'Rahul Sharma (⭐ 4.9) has been assigned to your service request.',
-      'type': 'booking',
-      'bookingId': 'NEX-849201',
-      'isRead': true,
-      'time': '1 day ago',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _seedInitialNotificationsIfEmpty();
-  }
-
-  Future<void> _seedInitialNotificationsIfEmpty() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('notifications')
-          .where('userId', isEqualTo: user.uid)
-          .get();
-
-      if (snap.docs.isEmpty) {
-        final batch = FirebaseFirestore.instance.batch();
-
-        final doc1 = FirebaseFirestore.instance.collection('notifications').doc();
-        batch.set(doc1, {
-          'userId': user.uid,
-          'userEmail': user.email ?? '',
-          'title': 'Welcome to NEXORA! 🎉',
-          'body': 'Thank you for registering. Explore top-rated home services & enjoy ₹100 cashback on your first booking!',
-          'type': 'reward',
-          'read': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'time': 'Just now',
-        });
-
-        final doc2 = FirebaseFirestore.instance.collection('notifications').doc();
-        batch.set(doc2, {
-          'userId': user.uid,
-          'userEmail': user.email ?? '',
-          'title': 'Weekend Service Discount ⚡',
-          'body': 'Get 20% OFF on all AC Repairs & Deep Home Cleaning packages. Use code WEEKEND20 at checkout.',
-          'type': 'offer',
-          'read': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'time': '2 hours ago',
-        });
-
-        final doc3 = FirebaseFirestore.instance.collection('notifications').doc();
-        batch.set(doc3, {
-          'userId': user.uid,
-          'userEmail': user.email ?? '',
-          'title': 'Booking Confirmed!',
-          'body': 'Your Deep Home Cleaning booking (NEX-849201) is confirmed for Tomorrow at 10:00 AM.',
-          'type': 'booking',
-          'bookingId': 'NEX-849201',
-          'read': true,
-          'createdAt': FieldValue.serverTimestamp(),
-          'time': '1 day ago',
-        });
-
-        await batch.commit();
-      }
-    } catch (e) {
-      debugPrint("Error seeding initial notifications: $e");
-    }
   }
 
   @override
@@ -146,13 +59,6 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
 
   Future<void> _markAllAsRead() async {
     final user = FirebaseAuth.instance.currentUser;
-
-    setState(() {
-      for (var item in _fallbackNotifications) {
-        item['read'] = true;
-        item['isRead'] = true;
-      }
-    });
 
     if (user != null) {
       try {
@@ -224,6 +130,7 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
         stream: FirebaseFirestore.instance
             .collection('notifications')
             .where('userId', isEqualTo: user?.uid ?? 'guest_user')
+            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snap) {
           List<Map<String, dynamic>> items = [];
@@ -232,8 +139,6 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
               final data = d.data() as Map<String, dynamic>;
               return {'id': d.id, ...data};
             }).toList();
-          } else {
-            items = _fallbackNotifications;
           }
 
           final bookingItems = items.where((i) => (i['type'] ?? '') == 'booking').toList();
@@ -346,13 +251,13 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
                 } catch (_) {}
               }
 
+              if (!context.mounted) return;
+
               if (bId != null && bId.isNotEmpty) {
-                if (mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => LiveTrackingScreen(bookingId: bId)),
-                  );
-                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => LiveTrackingScreen(bookingId: bId)),
+                );
               }
             },
             child: AnimatedContainer(

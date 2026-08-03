@@ -171,18 +171,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary, letterSpacing: 1.0),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _selectedBusinessType,
-            dropdownColor: VendorTheme.surfaceColor,
-            style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.business_center_outlined, color: VendorTheme.textSecondary),
-            ),
-            items: const [
-              DropdownMenuItem(value: "Individual", child: Text("Individual Professional")),
-              DropdownMenuItem(value: "Agency", child: Text("Agency / Service Company")),
+          Row(
+            children: [
+              Expanded(
+                child: ChoiceChip(
+                  label: const Center(child: Text("Individual")),
+                  selected: _selectedBusinessType == "Individual",
+                  selectedColor: VendorTheme.primaryColor.withValues(alpha: 0.2),
+                  checkmarkColor: VendorTheme.primaryColor,
+                  labelStyle: TextStyle(
+                    color: _selectedBusinessType == "Individual" ? VendorTheme.primaryColor : VendorTheme.textPrimary,
+                    fontWeight: _selectedBusinessType == "Individual" ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                  onSelected: (selected) {
+                    if (selected) setState(() => _selectedBusinessType = "Individual");
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ChoiceChip(
+                  label: const Center(child: Text("Agency / Company")),
+                  selected: _selectedBusinessType == "Agency",
+                  selectedColor: VendorTheme.primaryColor.withValues(alpha: 0.2),
+                  checkmarkColor: VendorTheme.primaryColor,
+                  labelStyle: TextStyle(
+                    color: _selectedBusinessType == "Agency" ? VendorTheme.primaryColor : VendorTheme.textPrimary,
+                    fontWeight: _selectedBusinessType == "Agency" ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                  onSelected: (selected) {
+                    if (selected) setState(() => _selectedBusinessType = "Agency");
+                  },
+                ),
+              ),
             ],
-            onChanged: (val) => setState(() => _selectedBusinessType = val ?? "Individual"),
           ),
           const SizedBox(height: 20),
 

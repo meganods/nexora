@@ -420,14 +420,26 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
                 children: [
                   Text("EXPERIENCE LEVEL", style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _experience,
-                    items: const [
-                      DropdownMenuItem(value: "1 Year", child: Text("1 Year")),
-                      DropdownMenuItem(value: "2 Years", child: Text("2 Years")),
-                      DropdownMenuItem(value: "5+ Years", child: Text("5+ Years")),
-                    ],
-                    onChanged: (val) => setState(() => _experience = val ?? "2 Years"),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ["1 Year", "2 Years", "5+ Years"].map((exp) {
+                      final isSel = _experience == exp;
+                      return ChoiceChip(
+                        label: Text(exp),
+                        selected: isSel,
+                        selectedColor: VendorTheme.primaryColor.withValues(alpha: 0.2),
+                        checkmarkColor: VendorTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: isSel ? VendorTheme.primaryColor : VendorTheme.textPrimary,
+                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) setState(() => _experience = exp);
+                        },
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
@@ -506,8 +518,54 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
     );
   }
 
-  // STEP 3: Service setup
   Widget _buildStep3() {
+    final bool isDesktop = MediaQuery.of(context).size.width >= 1024;
+    final listWidget = _customServices.isEmpty
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cleaning_services_rounded, size: 48, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                Text("No services listed yet.", style: GoogleFonts.inter(color: VendorTheme.textSecondary)),
+              ],
+            ),
+          )
+        : ListView.builder(
+            shrinkWrap: !isDesktop,
+            physics: isDesktop ? null : const NeverScrollableScrollPhysics(),
+            itemCount: _customServices.length,
+            itemBuilder: (context, index) {
+              final item = _customServices[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                color: Colors.white,
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEFF6FF),
+                    child: Icon(Icons.home_repair_service_rounded, color: VendorTheme.primaryColor),
+                  ),
+                  title: Text(item["name"]!, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
+                  subtitle: Text("${item["duration"]} • ${item["desc"]}", maxLines: 1, overflow: TextOverflow.ellipsis),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "₹${item["price"]}",
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: VendorTheme.primaryColor, fontSize: 16),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: VendorTheme.errorColor),
+                        onPressed: () => setState(() => _customServices.removeAt(index)),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -526,51 +584,8 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         const SizedBox(height: 8),
         Text("Build your active service pricing menu. Add options with custom flat fees or discounts.", style: GoogleFonts.inter(color: VendorTheme.textSecondary)),
         const SizedBox(height: 24),
-        Expanded(
-          child: _customServices.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cleaning_services_rounded, size: 48, color: Colors.grey[300]),
-                      const SizedBox(height: 16),
-                      Text("No services listed yet.", style: GoogleFonts.inter(color: VendorTheme.textSecondary)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _customServices.length,
-                  itemBuilder: (context, index) {
-                    final item = _customServices[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      color: Colors.white,
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFEFF6FF),
-                          child: Icon(Icons.home_repair_service_rounded, color: VendorTheme.primaryColor),
-                        ),
-                        title: Text(item["name"]!, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
-                        subtitle: Text("${item["duration"]} • ${item["desc"]}", maxLines: 1, overflow: TextOverflow.ellipsis),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "₹${item["price"]}",
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: VendorTheme.primaryColor, fontSize: 16),
-                            ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: VendorTheme.errorColor),
-                              onPressed: () => setState(() => _customServices.removeAt(index)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
+        isDesktop ? Expanded(child: listWidget) : listWidget,
+        const SizedBox(height: 20),
         _buildBottomActionBar(),
       ],
     );
@@ -692,15 +707,31 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         const SizedBox(height: 24),
         Text("TRAVELING / WORK RADIUS", style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _serviceRadius,
-          items: const [
-            DropdownMenuItem(value: "5km", child: Text("5 km (Locality only)")),
-            DropdownMenuItem(value: "10km", child: Text("10 km (Standard coverage)")),
-            DropdownMenuItem(value: "25km", child: Text("25 km (Regional coverage)")),
-            DropdownMenuItem(value: "50km", child: Text("50 km (Wider geofence)")),
-          ],
-          onChanged: (val) => setState(() => _serviceRadius = val ?? "10km"),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            {"val": "5km", "label": "5 km (Locality)"},
+            {"val": "10km", "label": "10 km (Standard)"},
+            {"val": "25km", "label": "25 km (Regional)"},
+            {"val": "50km", "label": "50 km (Wide)"},
+          ].map((item) {
+            final isSel = _serviceRadius == item["val"];
+            return ChoiceChip(
+              label: Text(item["label"]!),
+              selected: isSel,
+              selectedColor: VendorTheme.primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: VendorTheme.primaryColor,
+              labelStyle: TextStyle(
+                color: isSel ? VendorTheme.primaryColor : VendorTheme.textPrimary,
+                fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+              onSelected: (selected) {
+                if (selected) setState(() => _serviceRadius = item["val"]!);
+              },
+            );
+          }).toList(),
         ),
         const SizedBox(height: 40),
         _buildBottomActionBar(),
@@ -710,6 +741,22 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
 
   // STEP 5: Schedule
   Widget _buildStep5() {
+    final bool isDesktop = MediaQuery.of(context).size.width >= 1024;
+    final listWidget = ListView(
+      shrinkWrap: !isDesktop,
+      physics: isDesktop ? null : const NeverScrollableScrollPhysics(),
+      children: _schedule.keys.map((day) {
+        final active = _schedule[day]!["active"] as bool;
+        return SwitchListTile(
+          title: Text(day, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
+          subtitle: Text(active ? "Hours: ${_schedule[day]!["start"]} - ${_schedule[day]!["end"]}" : "Off-duty"),
+          value: active,
+          activeColor: VendorTheme.primaryColor,
+          onChanged: (val) => setState(() => _schedule[day]!["active"] = val),
+        );
+      }).toList(),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -740,20 +787,8 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        Expanded(
-          child: ListView(
-            children: _schedule.keys.map((day) {
-              final active = _schedule[day]!["active"] as bool;
-              return SwitchListTile(
-                title: Text(day, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
-                subtitle: Text(active ? "Hours: ${_schedule[day]!["start"]} - ${_schedule[day]!["end"]}" : "Off-duty"),
-                value: active,
-                activeColor: VendorTheme.primaryColor,
-                onChanged: (val) => setState(() => _schedule[day]!["active"] = val),
-              );
-            }).toList(),
-          ),
-        ),
+        isDesktop ? Expanded(child: listWidget) : listWidget,
+        const SizedBox(height: 20),
         _buildBottomActionBar(),
       ],
     );
@@ -813,6 +848,55 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
 
   // STEP 7: Document Uploads
   Widget _buildStep7() {
+    final bool isDesktop = MediaQuery.of(context).size.width >= 1024;
+    final listWidget = ListView(
+      shrinkWrap: !isDesktop,
+      physics: isDesktop ? null : const NeverScrollableScrollPhysics(),
+      children: _uploadedDocs.keys.map((docType) {
+        final isUploaded = _uploadedDocs[docType]!.isNotEmpty;
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VendorTheme.borderColor),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(docType, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
+                  const SizedBox(height: 4),
+                  Text(
+                    isUploaded ? "Uploaded: ${_uploadedDocs[docType]}" : "Upload missing",
+                    style: GoogleFonts.inter(fontSize: 12, color: isUploaded ? VendorTheme.accentColor : VendorTheme.errorColor),
+                  ),
+                ],
+              ),
+              isUploaded
+                  ? Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: VendorTheme.accentColor),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: VendorTheme.errorColor),
+                          onPressed: () => setState(() => _uploadedDocs[docType] = ""),
+                        ),
+                      ],
+                    )
+                  : TextButton.icon(
+                      onPressed: () => setState(() => _uploadedDocs[docType] = "${docType.toLowerCase().replaceAll(' ', '_')}_attached.pdf"),
+                      icon: const Icon(Icons.upload_file_rounded),
+                      label: const Text("Upload"),
+                    ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -820,53 +904,8 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         const SizedBox(height: 8),
         Text("Upload required verification credentials for official admin approval checks.", style: GoogleFonts.inter(color: VendorTheme.textSecondary)),
         const SizedBox(height: 24),
-        Expanded(
-          child: ListView(
-            children: _uploadedDocs.keys.map((docType) {
-              final isUploaded = _uploadedDocs[docType]!.isNotEmpty;
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: VendorTheme.borderColor),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(docType, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
-                        const SizedBox(height: 4),
-                        Text(
-                          isUploaded ? "Uploaded: ${_uploadedDocs[docType]}" : "Upload missing",
-                          style: GoogleFonts.inter(fontSize: 12, color: isUploaded ? VendorTheme.accentColor : VendorTheme.errorColor),
-                        ),
-                      ],
-                    ),
-                    isUploaded
-                        ? Row(
-                            children: [
-                              const Icon(Icons.check_circle_rounded, color: VendorTheme.accentColor),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: VendorTheme.errorColor),
-                                onPressed: () => setState(() => _uploadedDocs[docType] = ""),
-                              ),
-                            ],
-                          )
-                        : TextButton.icon(
-                            onPressed: () => setState(() => _uploadedDocs[docType] = "${docType.toLowerCase().replaceAll(' ', '_')}_attached.pdf"),
-                            icon: const Icon(Icons.upload_file_rounded),
-                            label: const Text("Upload"),
-                          ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
+        isDesktop ? Expanded(child: listWidget) : listWidget,
+        const SizedBox(height: 20),
         _buildBottomActionBar(),
       ],
     );
@@ -874,6 +913,39 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
 
   // STEP 8: Review
   Widget _buildStep8() {
+    final bool isDesktop = MediaQuery.of(context).size.width >= 1024;
+    final listWidget = ListView(
+      shrinkWrap: !isDesktop,
+      physics: isDesktop ? null : const NeverScrollableScrollPhysics(),
+      children: [
+        ListTile(
+          title: const Text("Owner & Business Name"),
+          subtitle: Text("${_ownerNameController.text} • ${_businessNameController.text}"),
+          leading: const Icon(Icons.person_outline_rounded),
+        ),
+        ListTile(
+          title: const Text("Sector Category"),
+          subtitle: Text(_selectedCategory),
+          leading: const Icon(Icons.category_outlined),
+        ),
+        ListTile(
+          title: const Text("Active Pricing Options"),
+          subtitle: Text("${_customServices.length} options defined in menu catalog"),
+          leading: const Icon(Icons.menu_book_rounded),
+        ),
+        ListTile(
+          title: const Text("Base Office Coordinates"),
+          subtitle: Text("${_addressController.text}, ${_cityController.text} (Radius: $_serviceRadius)"),
+          leading: const Icon(Icons.map_outlined),
+        ),
+        ListTile(
+          title: const Text("Settlement Bank Account"),
+          subtitle: Text("${_holderController.text} • ${_bankNameController.text} (${_accNoController.text})"),
+          leading: const Icon(Icons.account_balance_outlined),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -881,37 +953,7 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         const SizedBox(height: 8),
         Text("Review all verification fields details before submitting to Firestore checks.", style: GoogleFonts.inter(color: VendorTheme.textSecondary)),
         const SizedBox(height: 24),
-        Expanded(
-          child: ListView(
-            children: [
-              ListTile(
-                title: const Text("Owner & Business Name"),
-                subtitle: Text("${_ownerNameController.text} • ${_businessNameController.text}"),
-                leading: const Icon(Icons.person_outline_rounded),
-              ),
-              ListTile(
-                title: const Text("Sector Category"),
-                subtitle: Text(_selectedCategory),
-                leading: const Icon(Icons.category_outlined),
-              ),
-              ListTile(
-                title: const Text("Active Pricing Options"),
-                subtitle: Text("${_customServices.length} options defined in menu catalog"),
-                leading: const Icon(Icons.menu_book_rounded),
-              ),
-              ListTile(
-                title: const Text("Base Office Coordinates"),
-                subtitle: Text("${_addressController.text}, ${_cityController.text} (Radius: $_serviceRadius)"),
-                leading: const Icon(Icons.map_outlined),
-              ),
-              ListTile(
-                title: const Text("Settlement Bank Account"),
-                subtitle: Text("${_holderController.text} • ${_bankNameController.text} (${_accNoController.text})"),
-                leading: const Icon(Icons.account_balance_outlined),
-              ),
-            ],
-          ),
-        ),
+        isDesktop ? Expanded(child: listWidget) : listWidget,
         const Divider(),
         CheckboxListTile(
           title: Text("I accept the Platform terms of service rules", style: GoogleFonts.inter(fontSize: 12)),

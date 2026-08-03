@@ -148,16 +148,16 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  "Verify Phone Number",
-                  style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: VendorTheme.textPrimary),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "We have sent a 6-digit confirmation code to your phone number.",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 14, color: VendorTheme.textSecondary, height: 1.5),
-                ),
+                 Text(
+                   "Verify Email Address",
+                   style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: VendorTheme.textPrimary),
+                 ),
+                 const SizedBox(height: 8),
+                 Text(
+                   "We have sent a 6-digit confirmation code to your registered email address.",
+                   textAlign: TextAlign.center,
+                   style: GoogleFonts.inter(fontSize: 14, color: VendorTheme.textSecondary, height: 1.5),
+                 ),
                 const SizedBox(height: 40),
 
                 // OTP Digits Row

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
+import '../models/service_model.dart';
+import 'schedule_booking_screen.dart';
+import 'vendor_profile_screen.dart';
+import 'popular_services_screen.dart';
+import 'service_detail_screen.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 class CategoryDetailsScreen extends StatefulWidget {
@@ -74,6 +81,111 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
     }
   ];
 
+  Position? _userPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserPosition();
+  }
+
+  Future<void> _fetchUserPosition() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+      );
+      if (mounted) setState(() => _userPosition = pos);
+    } catch (_) {}
+  }
+
+  String _distanceLabel(Map<String, dynamic> v) {
+    if (_userPosition == null) return '1.5 km';
+    final lat = (v['lat'] ?? v['latitude'] ?? v['location']?['lat']) as num?;
+    final lng = (v['lng'] ?? v['longitude'] ?? v['location']?['lng']) as num?;
+    if (lat == null || lng == null) return '1.8 km';
+    final dist = Geolocator.distanceBetween(
+        _userPosition!.latitude, _userPosition!.longitude,
+        lat.toDouble(), lng.toDouble());
+    if (dist < 1000) return '${dist.toStringAsFixed(0)} m';
+    return '${(dist / 1000).toStringAsFixed(1)} km';
+  }
+
+  void _navigateToBooking(Map<String, dynamic> item) {
+    final double price = (item['price'] as num?)?.toDouble() ?? 199.0;
+    final String serviceTitle = item['title'] ?? 'Home Service';
+
+    final service = ServiceModel(
+      id: 'dynamic_${serviceTitle.hashCode}',
+      title: serviceTitle,
+      category: 'Home Services',
+      subCategory: 'Popular',
+      price: price,
+      discountPercent: 0,
+      rating: (item['rating'] as num?)?.toDouble() ?? 4.8,
+      totalReviews: 120,
+      vendorName: "NEXORA Certified Professional",
+      image: item['image'] ?? "",
+      images: [item['image'] ?? ""],
+      shortDescription: serviceTitle,
+      description: serviceTitle,
+      longDescription: serviceTitle,
+      duration: '45 mins',
+      isAvailable: true,
+      location: "Verified Expert",
+      tags: const [],
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScheduleBookingScreen(
+          service: service,
+          selectedItems: [
+            {
+              'name': service.title,
+              'price': price,
+              'quantity': 1,
+            }
+          ],
+          totalPrice: price,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetails(Map<String, dynamic> item) {
+    final double price = (item['price'] as num?)?.toDouble() ?? 199.0;
+    final String serviceTitle = item['title'] ?? 'Home Service';
+
+    final service = ServiceModel(
+      id: 'dynamic_${serviceTitle.hashCode}',
+      title: serviceTitle,
+      category: 'Home Services',
+      subCategory: 'Popular',
+      price: price,
+      discountPercent: 0,
+      rating: (item['rating'] as num?)?.toDouble() ?? 4.8,
+      totalReviews: 120,
+      vendorName: "NEXORA Certified Professional",
+      image: item['image'] ?? "",
+      images: [item['image'] ?? ""],
+      shortDescription: serviceTitle,
+      description: serviceTitle,
+      longDescription: serviceTitle,
+      duration: '45 mins',
+      isAvailable: true,
+      location: "Verified Expert",
+      tags: const [],
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServiceDetailScreen(service: service),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const brandBlue = Color(0xFF2563EB);
@@ -124,7 +236,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PopularServicesScreen(),
+                      ),
+                    ),
                     child: Text(
                       'See All',
                       style: GoogleFonts.inter(
@@ -241,18 +358,21 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                                       color: brandBlue,
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: lightBlue,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'Book Now',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: brandBlue,
+                                  GestureDetector(
+                                    onTap: () => _navigateToDetails(item),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: lightBlue,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Book Now',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: brandBlue,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -273,12 +393,15 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
             // Recently Viewed Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(
-                'Recently Viewed',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Recently Viewed',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
                 ),
               ),
             ),
@@ -320,26 +443,6 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                                 height: 110,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
-                              ),
-                            ),
-                            // Viewed Badge
-                            Positioned(
-                              top: 8,
-                              left: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: brandBlue.withValues(alpha: 0.85),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'Viewed ${item['daysAgo']} days ago',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                               ),
                             ),
                           ],
@@ -386,18 +489,21 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                                       color: brandBlue,
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: lightBlue,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'Book Now',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: brandBlue,
+                                  GestureDetector(
+                                    onTap: () => _navigateToDetails(item),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: lightBlue,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Book Now',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: brandBlue,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -418,50 +524,137 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
             // Popular Near You Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(
-                'Popular Near You',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Popular Near You',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
                 ),
               ),
             ),
 
             // Popular Near You List
             SizedBox(
-              height: 120,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _popularPros.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  final pro = _popularPros[index];
-                  return Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: NetworkImage(pro['image']!),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        pro['name']!,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
+              height: 195,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('vendors')
+                    .where('isApproved', isEqualTo: true)
+                    .where('isActive', isEqualTo: true)
+                    .snapshots(),
+                builder: (context, snap) {
+                  final docs = snap.data?.docs ?? [];
+                  final List<Map<String, dynamic>> vendors = docs.isEmpty
+                      ? _popularPros.map((p) => {
+                          'id': 'fallback_${p['name'].hashCode}',
+                          'fullName': p['name'],
+                          'profilePhoto': p['image'],
+                          'averageRating': p['rating'],
+                          'distance': p['distance'],
+                        }).toList()
+                      : docs.map((d) {
+                          return {'id': d.id, ...(d.data() as Map<String, dynamic>)};
+                        }).toList();
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: vendors.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                    itemBuilder: (context, index) {
+                      final pro = vendors[index];
+                      final name = pro['fullName'] ?? pro['name'] ?? 'Professional';
+                      final image = pro['profilePhoto'] ?? pro['photo'] ?? pro['image'] ?? 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?q=80&w=200&auto=format&fit=crop';
+                      final rating = ((pro['averageRating'] ?? 4.8) as num).toDouble();
+                      final dist = pro['distance'] ?? _distanceLabel(pro);
+
+                      return Container(
+                        width: 145,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: borderGray),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        '⭐ ${pro['rating']} • ${pro['distance']}',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          color: textSecondary,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundImage: NetworkImage(image),
+                              backgroundColor: lightBlue,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '★ $rating  •  $dist',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => VendorProfileScreen(
+                                      vendor: pro,
+                                      vendorId: pro['id'] ?? '',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: lightBlue,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'View',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: brandBlue,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   );
                 },
               ),

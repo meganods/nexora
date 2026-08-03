@@ -28,7 +28,6 @@ class VendorProfileScreen extends StatefulWidget {
 }
 
 class _VendorProfileScreenState extends State<VendorProfileScreen> {
-  bool _isLiked = false;
 
   final List<String> _portfolioImages = [
     'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop',
@@ -171,18 +170,6 @@ class _VendorProfileScreenState extends State<VendorProfileScreen> {
                       ),
                     ),
                     actions: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white.withValues(alpha: 0.9),
-                        child: IconButton(
-                          icon: Icon(
-                            _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            color: _isLiked ? Colors.red : _dark,
-                            size: 18,
-                          ),
-                          onPressed: () => setState(() => _isLiked = !_isLiked),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       CircleAvatar(
                         backgroundColor: Colors.white.withValues(alpha: 0.9),
                         child: IconButton(

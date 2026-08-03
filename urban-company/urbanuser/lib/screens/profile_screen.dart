@@ -14,7 +14,6 @@ import 'address_setup_screen.dart';
 import 'about_screen.dart';
 import 'login_screen.dart';
 import 'my_bookings_screen.dart';
-import 'wishlist_screen.dart';
 import 'notification_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'operations_desk_screen.dart';
@@ -263,36 +262,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       final completedCount = docs.where((d) => (d.data() as Map)['status'] == 'completed').length;
                       final upcomingCount = docs.where((d) => (d.data() as Map)['status'] != 'completed' && (d.data() as Map)['status'] != 'canceled').length;
 
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('favorites')
-                            .where('userId', isEqualTo: user?.uid ?? 'guest_user')
-                            .snapshots(),
-                        builder: (ctx2, fSnap) {
-                          final favCount = fSnap.data?.docs.length ?? 0;
-
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: _border),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _overviewItem('$completedCount', 'Completed', _green),
-                                _vDivider(),
-                                _overviewItem('$upcomingCount', 'Upcoming', _blue),
-                                _vDivider(),
-                                _overviewItem('1', 'Addresses', const Color(0xFFD97706)),
-                                _vDivider(),
-                                _overviewItem('$favCount', 'Favorites', Colors.pink),
-                              ],
-                            ),
-                          );
-                        },
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _border),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _overviewItem('$completedCount', 'Completed', _green),
+                            _vDivider(),
+                            _overviewItem('$upcomingCount', 'Upcoming', _blue),
+                            _vDivider(),
+                            _overviewItem('1', 'Addresses', const Color(0xFFD97706)),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -313,10 +300,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const Divider(color: _border),
                         _menuTile(Icons.calendar_month_rounded, "My Bookings", "Track active & view past bookings", () {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
-                        }),
-                        const Divider(color: _border),
-                        _menuTile(Icons.favorite_border_rounded, "Favorites (Wishlist)", "Saved preferred services", () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistScreen()));
                         }),
                         const Divider(color: _border),
                         _menuTile(Icons.notifications_outlined, "Notifications", "Real-time updates & offers", () {

@@ -205,15 +205,15 @@ class _NexoraAIAssistantScreenState extends State<NexoraAIAssistantScreen> {
               child: Row(
                 children: [
                   _headerTopPill('📍 Track My Booking', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
+                    _handleUserQuery('Track my bookings');
                   }),
                   const SizedBox(width: 8),
                   _headerTopPill('💳 Wallet Balance', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                    _handleUserQuery('Check my wallet balance');
                   }),
                   const SizedBox(width: 8),
                   _headerTopPill('🧾 Download Invoices', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
+                    _handleUserQuery('Show my invoice');
                   }),
                 ],
               ),
@@ -274,21 +274,6 @@ class _NexoraAIAssistantScreenState extends State<NexoraAIAssistantScreen> {
             child: SafeArea(
               child: Row(
                 children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.image_outlined, color: _blue, size: 20),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('📷 Image analysis connected to Gemini AI!')),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -398,22 +383,22 @@ class _NexoraAIAssistantScreenState extends State<NexoraAIAssistantScreen> {
             runSpacing: 8,
             children: [
               _welcomePillButton('🏠 Book Services', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+                _handleUserQuery('Book a service');
               }),
               _welcomePillButton('📦 Track Bookings', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
+                _handleUserQuery('Track my bookings');
               }),
               _welcomePillButton('💳 Wallet & Payments', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                _handleUserQuery('Check my wallet balance');
               }),
               _welcomePillButton('🎁 Offers & Coupons', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
+                _handleUserQuery('Show offers and coupons');
               }),
               _welcomePillButton('🧾 Download Invoices', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
+                _handleUserQuery('Show my invoice');
               }),
               _welcomePillButton('👨‍🔧 Find Professionals', () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AllProfessionalsScreen()));
+                _handleUserQuery('Find nearby professionals');
               }),
               _welcomePillButton('❓ Home Care Tips', () {
                 _handleUserQuery('Give me home care maintenance tips');
@@ -448,11 +433,11 @@ class _NexoraAIAssistantScreenState extends State<NexoraAIAssistantScreen> {
 
   Widget _buildICanHelpCategoryRow() {
     final categories = [
-      {'name': 'Home\nServices', 'icon': Icons.home_repair_service_rounded, 'color': const Color(0xFFF97316), 'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()))},
-      {'name': 'Payments', 'icon': Icons.credit_card_rounded, 'color': const Color(0xFFEAB308), 'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()))},
-      {'name': 'Invoices', 'icon': Icons.receipt_long_rounded, 'color': const Color(0xFF0EA5E9), 'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()))},
-      {'name': 'Tracking', 'icon': Icons.location_on_rounded, 'color': const Color(0xFFEF4444), 'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()))},
-      {'name': 'Coupons', 'icon': Icons.card_giftcard_rounded, 'color': const Color(0xFFEC4899), 'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()))},
+      {'name': 'Home\nServices', 'icon': Icons.home_repair_service_rounded, 'color': const Color(0xFFF97316), 'onTap': () => _handleUserQuery('Book a service')},
+      {'name': 'Payments', 'icon': Icons.credit_card_rounded, 'color': const Color(0xFFEAB308), 'onTap': () => _handleUserQuery('Check my wallet balance')},
+      {'name': 'Invoices', 'icon': Icons.receipt_long_rounded, 'color': const Color(0xFF0EA5E9), 'onTap': () => _handleUserQuery('Show my invoice')},
+      {'name': 'Tracking', 'icon': Icons.location_on_rounded, 'color': const Color(0xFFEF4444), 'onTap': () => _handleUserQuery('Track my bookings')},
+      {'name': 'Coupons', 'icon': Icons.card_giftcard_rounded, 'color': const Color(0xFFEC4899), 'onTap': () => _handleUserQuery('Show offers and coupons')},
     ];
 
     return SingleChildScrollView(
@@ -499,15 +484,15 @@ class _NexoraAIAssistantScreenState extends State<NexoraAIAssistantScreen> {
     return Column(
       children: [
         _quickActionCard('📅 17', 'My Bookings', 'Track current bookings', () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
+          _handleUserQuery('Track my bookings');
         }),
         const SizedBox(height: 10),
         _quickActionCard('💰', 'Wallet', 'View cashback & rewards', () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+          _handleUserQuery('Check my wallet balance');
         }),
         const SizedBox(height: 10),
         _quickActionCard('🎁', 'Offers', 'Today\'s best coupons', () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
+          _handleUserQuery('Show offers and coupons');
         }),
       ],
     );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,32 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      final user = userCredential.user;
-
-      if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        final prefs = await SharedPreferences.getInstance();
-
-        bool hasAddress = prefs.getString('userAddress') != null;
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          if ((data['userAddress'] ?? '').toString().isNotEmpty || data['hasCompletedAddressSetup'] == true) {
-            hasAddress = true;
-          }
-        }
-
-        if (mounted) {
-          if (hasAddress) {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          } else {
-            Navigator.pushReplacementNamed(context, '/address_setup');
-          }
-        }
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -88,46 +68,73 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => _isLoading = false);
+      // Flutter Web requires signInWithPopup — GoogleSignIn().signIn() is mobile-only
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      final User? user = userCredential.user;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Google Sign-In failed. No user returned.';
+        });
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final user = userCredential.user;
-
-      if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        final prefs = await SharedPreferences.getInstance();
-
-        bool hasAddress = prefs.getString('userAddress') != null;
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          if ((data['userAddress'] ?? '').toString().isNotEmpty || data['hasCompletedAddressSetup'] == true) {
-            hasAddress = true;
-          }
-        }
-
-        if (mounted) {
-          if (hasAddress) {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          } else {
-            await prefs.setString('temp_signup_name', user.displayName ?? '');
-            await prefs.setString('temp_signup_phone', user.phoneNumber ?? '');
-            Navigator.pushReplacementNamed(context, '/address_setup');
-          }
-        }
+      // Save user profile to Firestore (upsert so existing users aren't overwritten)
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.email ?? user.uid);
+      final docSnap = await userDoc.get();
+      if (!docSnap.exists) {
+        await userDoc.set({
+          'name': user.displayName ?? '',
+          'email': user.email ?? '',
+          'phone': user.phoneNumber ?? '',
+          'photoUrl': user.photoURL ?? '',
+          'uid': user.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'loginMethod': 'google',
+        });
+      } else {
+        // Update photo/name in case they changed in Google
+        await userDoc.update({
+          'name': user.displayName ?? docSnap['name'] ?? '',
+          'photoUrl': user.photoURL ?? docSnap['photoUrl'] ?? '',
+          'lastLogin': FieldValue.serverTimestamp(),
+        });
       }
+
+      // Persist to SharedPreferences for offline profile display
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', user.displayName ?? '');
+      await prefs.setString('userEmail', user.email ?? '');
+      await prefs.setString('userPhotoUrl', user.photoURL ?? '');
+      await prefs.setString('userMobile', user.phoneNumber ?? '');
+      await prefs.setBool('isLoggedIn', true);
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Google Sign-In failed. Please try again.';
+      if (e.code == 'popup-closed-by-user') {
+        message = 'Sign-In popup was closed. Please try again.';
+      } else if (e.code == 'popup-blocked') {
+        message = 'Popup was blocked by your browser. Please allow popups for this site.';
+      } else if (e.code == 'account-exists-with-different-credential') {
+        message = 'An account already exists with the same email. Please log in with email/password.';
+      } else if (e.message != null) {
+        message = e.message!;
+      }
+      setState(() {
+        _errorMessage = message;
+      });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Google Sign-in failed. Please try again.';
+        _errorMessage = 'An unexpected error occurred. Please try again.';
       });
     } finally {
       if (mounted) {
@@ -137,6 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

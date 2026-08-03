@@ -113,8 +113,9 @@ class NewServicesSection extends StatelessWidget {
               }).toList();
 
               final services = filteredDocs.isEmpty ? List.from(_fallback) : _mapDocs(filteredDocs);
+              final limitedServices = services.take(10).toList();
 
-              if (services.isEmpty) {
+              if (limitedServices.isEmpty) {
                 return Center(
                   child: Text('No new services available.',
                       style: GoogleFonts.inter(color: _gray, fontSize: 13)),
@@ -125,10 +126,10 @@ class NewServicesSection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: services.length,
+                itemCount: limitedServices.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 16),
                 itemBuilder: (ctx, idx) => _NewServiceCard(
-                  data: services[idx],
+                  data: limitedServices[idx],
                   animIndex: idx,
                 ),
               );

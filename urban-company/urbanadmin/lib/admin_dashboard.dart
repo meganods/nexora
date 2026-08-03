@@ -18,18 +18,25 @@ import 'screens/coupons_screen.dart';
 import 'screens/categories_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  final String? initialMenu;
+  const AdminDashboard({super.key, this.initialMenu});
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  String _selectedMenu = 'Dashboard';
+  late String _selectedMenu;
   bool _showingVendorDetails = false;
   Map<String, dynamic>? _selectedVendor;
   final TextEditingController _searchController = TextEditingController();
   String _selectedChartFilter = 'Last 6 Months';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMenu = widget.initialMenu ?? 'Dashboard';
+  }
 
   @override
   void dispose() {
@@ -41,7 +48,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 1100;
+        final isMobile = constraints.maxWidth < 850;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),

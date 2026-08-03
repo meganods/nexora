@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service_model.dart';
 import '../data/dummy_data.dart';
 import 'service_detail_screen.dart';
+import 'schedule_booking_screen.dart';
 import '../widgets/app_snackbar.dart';
 import '../widgets/custom_bottom_nav.dart';
 
@@ -42,8 +43,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
   String _selectedSubCat = "All";
   String _sortBy = "All";
-  bool _isWishlistOnly = false;
-  final Set<String> _wishlistedIds = {};
 
   final List<String> _filterChips = [
     "All",
@@ -183,6 +182,49 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     {"name": "Rohan D.", "rating": 4, "comment": "Satisfied with motor install. The controller operates smoothly.", "date": "1 week ago"},
   ];
 
+  void _navigateToBooking(Map<String, dynamic> s) {
+    final cleanPriceStr = s["startingPrice"].toString().replaceAll(RegExp(r'[^0-9]'), '');
+    final double price = double.tryParse(cleanPriceStr) ?? 199.0;
+
+    final service = ServiceModel(
+      id: s["id"] ?? "pl-1",
+      title: s["title"] ?? "",
+      category: widget.categoryName,
+      subCategory: s["tag"] ?? "Popular",
+      price: s["startingPrice"] ?? "₹199",
+      discountPercent: 0,
+      rating: double.tryParse(s["rating"] ?? "4.8") ?? 4.8,
+      totalReviews: 120,
+      vendorName: "NEXORA Certified Professional",
+      image: s["image"] ?? "",
+      images: [s["image"] ?? ""],
+      shortDescription: s["desc"] ?? "",
+      description: s["desc"] ?? "",
+      longDescription: s["desc"] ?? "",
+      duration: s["duration"] ?? "45 mins",
+      isAvailable: true,
+      location: "Verified Expert",
+      tags: const [],
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScheduleBookingScreen(
+          service: service,
+          selectedItems: [
+            {
+              'name': service.title,
+              'price': price,
+              'quantity': 1,
+            }
+          ],
+          totalPrice: price,
+        ),
+      ),
+    );
+  }
+
   void _navigateToDetails(Map<String, dynamic> s) {
     // Map to ServiceModel format
     final service = ServiceModel(
@@ -227,9 +269,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           s["tag"].toString().toLowerCase() == _selectedSubCat.toLowerCase() ||
           (_selectedSubCat == "Popular" && double.tryParse(s["rating"].toString())! >= 4.9);
 
-      final bool wishlistMatch = !_isWishlistOnly || _wishlistedIds.contains(s["id"]);
-
-      return (nameMatch || descMatch) && tagMatch && wishlistMatch;
+      return (nameMatch || descMatch) && tagMatch;
     }).toList();
 
     // Sort order
@@ -483,8 +523,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, idx) {
                     final s = finalServices[idx];
-                    final bool isWishlisted = _wishlistedIds.contains(s["id"]);
-                    return _buildServiceCard(s, isWishlisted);
+                    return _buildServiceCard(s);
                   },
                 );
               },
@@ -512,7 +551,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             _searchController.clear();
                             _searchQuery = "";
                             _selectedSubCat = "All";
-                            _isWishlistOnly = false;
                           });
                         },
                         child: Text("Browse Categories", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700)),
@@ -635,7 +673,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
 
-  Widget _buildServiceCard(Map<String, dynamic> s, bool isWishlisted) {
+  Widget _buildServiceCard(Map<String, dynamic> s) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -749,7 +787,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      onPressed: () => _navigateToDetails(s),
+                      onPressed: () => _navigateToBooking(s),
                       child: Text(
                         "Book Now",
                         style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),

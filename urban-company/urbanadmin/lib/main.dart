@@ -54,9 +54,9 @@ class NexoraAdminApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/dashboard': (context) => const AdminDashboard(),
-        '/users': (context) => const UsersScreen(),
-        '/coupons': (context) => const CouponsScreen(),
-        '/categories': (context) => const CategoriesScreen(),
+        '/users': (context) => const AdminDashboard(initialMenu: 'Users'),
+        '/coupons': (context) => const AdminDashboard(initialMenu: 'Coupons'),
+        '/categories': (context) => const AdminDashboard(initialMenu: 'Categories'),
       },
       onUnknownRoute: (settings) => MaterialPageRoute(builder: (_) => const NotFoundScreen()),
     );

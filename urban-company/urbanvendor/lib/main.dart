@@ -20,6 +20,7 @@ import 'screens/application_status_screen.dart';
 import 'screens/my_services_screen.dart';
 import 'screens/expert_portal_dashboard.dart';
 import 'screens/business_settings_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/wallet_management_screen.dart';
 import 'screens/business_growth_screen.dart';
 import 'screens/support_center_screen.dart';
@@ -153,7 +154,7 @@ class NexoraVendorApp extends StatelessWidget {
         '/application_status': (context) => const ApplicationStatusScreen(),
         '/my_services': (context) => const MyServicesScreen(),
         '/expert_dashboard': (context) => const ExpertPortalDashboard(),
-        '/partner_profile': (context) => const BusinessSettingsScreen(),
+        '/partner_profile': (context) => const VendorProfileScreen(),
         '/login': (context) => const LoginScreen(),
         '/store_setup': (context) => const StoreSetupScreen(),
         '/vendor_store': (context) => const VendorStorePage(),

@@ -53,7 +53,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
   final List<Map<String, dynamic>> _selectedSubServices = [];
   final List<Map<String, dynamic>> _selectedAddons = [];
-  bool _isFavorited = false;
   int _activeImageIndex = 0;
 
   final List<Map<String, String>> _mockFaqs = [
@@ -212,28 +211,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     Positioned(
                       top: 48,
                       right: 16,
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: IconButton(
-                              icon: Icon(
-                                _isFavorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                color: _isFavorited ? Colors.red : _dark,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() => _isFavorited = !_isFavorited),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: IconButton(
-                              icon: const Icon(Icons.share_rounded, color: _dark, size: 20),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: IconButton(
+                          icon: const Icon(Icons.share_rounded, color: _dark, size: 20),
+                          onPressed: () {},
+                        ),
                       ),
                     ),
                     // Indicators

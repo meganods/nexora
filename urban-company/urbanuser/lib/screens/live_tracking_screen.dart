@@ -1,3 +1,6 @@
+import 'nexora_ai_assistant_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -36,14 +39,98 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
   static const LatLng _vendorPos = LatLng(28.5420, 77.3820); // 2.4 km away
 
   void _shareTracking() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Sharing live tracking link for booking ${widget.bookingId}…',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
-        backgroundColor: _blue,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+    final String shareMessage = "Hey! Track my Nexora home service booking active now! Booking ID: ${widget.bookingId}. Status: On The Way. Track here: https://nexoraportal.web.app/track/${widget.bookingId}";
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.white,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Share Booking Status', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: _dark)),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                )
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Share live tracking link and updates with your family or friends.',
+              style: GoogleFonts.inter(fontSize: 12, color: _gray),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _shareOptionCard(Icons.copy_rounded, 'Copy Link', const Color(0xFF3B82F6), () async {
+                  await Clipboard.setData(ClipboardData(text: shareMessage));
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('📋 Link copied to clipboard!', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
+                        backgroundColor: _green,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        margin: const EdgeInsets.all(16),
+                      ),
+                    );
+                  }
+                }),
+                _shareOptionCard(Icons.message_rounded, 'WhatsApp', const Color(0xFF22C55E), () async {
+                  final url = Uri.parse("https://api.whatsapp.com/send?text=${Uri.encodeComponent(shareMessage)}");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                }),
+                _shareOptionCard(Icons.sms_rounded, 'SMS Message', const Color(0xFFF59E0B), () async {
+                  final url = Uri.parse("sms:?body=${Uri.encodeComponent(shareMessage)}");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                }),
+                _shareOptionCard(Icons.email_rounded, 'Email', const Color(0xFFEF4444), () async {
+                  final url = Uri.parse("mailto:?subject=Nexora%20Live%20Tracking&body=${Uri.encodeComponent(shareMessage)}");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                }),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shareOptionCard(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: _dark)),
+        ],
       ),
     );
   }
@@ -65,7 +152,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
               leading: const Icon(Icons.call_rounded, color: _blue),
               title: Text('Call Support Hotline', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold)),
               subtitle: Text('24x7 Nexora Support: 1800-102-9482', style: GoogleFonts.inter(fontSize: 11, color: _gray)),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                Navigator.pop(context);
+                final Uri telUrl = Uri.parse('tel:18001029482');
+                if (await canLaunchUrl(telUrl)) {
+                  await launchUrl(telUrl);
+                }
+              },
             ),
             ListTile(
               leading: const Icon(Icons.chat_bubble_outline_rounded, color: _green),
@@ -73,17 +166,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
               subtitle: Text('Average wait time: < 1 min', style: GoogleFonts.inter(fontSize: 11, color: _gray)),
               onTap: () {
                 Navigator.pop(context);
-                final myEmail = FirebaseAuth.instance.currentUser?.email ?? 'guest';
-                final chatId = 'chat_${myEmail.replaceAll('.', '_')}_support';
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ChatScreen(
-                      chatId: chatId,
-                      recipientId: 'support',
-                      recipientName: 'NEXORA Support',
-                      isVendorApp: false,
-                    ),
+                    builder: (_) => const NexoraAIAssistantScreen(),
                   ),
                 );
               },
@@ -423,7 +509,6 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
                       child: Column(
                         children: [
                           _timelineItem('Booking Confirmed', 'Payment & order verified', true, true),
-                          _timelineItem('Vendor Auto Assigned', 'Matched with $vendorName', isVendorAssigned, true),
                           _timelineItem('Vendor Accepted', isAccepted ? 'Confirmed by professional' : 'Pending acceptance', isAccepted, true),
                           _timelineItem('Professional On The Way', 'Live location active (2.4 km away)', isAccepted, true),
                           _timelineItem('Professional Arrived', 'Awaiting OTP verification at doorstep', false, true),

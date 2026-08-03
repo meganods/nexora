@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service_model.dart';
 import 'service_detail_screen.dart';
+import 'schedule_booking_screen.dart';
 
 class PopularServicesScreen extends StatefulWidget {
   const PopularServicesScreen({super.key});
@@ -279,11 +280,20 @@ class _PopularServicesScreenState extends State<PopularServicesScreen> {
                     ? fallbackServices
                     : docs.map((doc) {
                         final d = doc.data() as Map<String, dynamic>;
+                        double parseDouble(dynamic v) {
+                          if (v == null) return 0.0;
+                          if (v is num) return v.toDouble();
+                          if (v is String) {
+                            final cleaned = v.replaceAll(RegExp(r'[^\d.]'), '');
+                            return double.tryParse(cleaned) ?? 0.0;
+                          }
+                          return 0.0;
+                        }
                         return ServiceModel(
                           id: doc.id,
                           title: d['name'] ?? d['serviceName'] ?? 'Service Item',
-                          price: ((d['startingPrice'] ?? d['price'] ?? 0) as num).toDouble(),
-                          rating: ((d['rating'] ?? 5.0) as num).toDouble(),
+                          price: parseDouble(d['startingPrice'] ?? d['price']),
+                          rating: parseDouble(d['rating'] ?? 5.0),
                           totalReviews: d['reviewsCount'] ?? d['totalReviews'] ?? 0,
                           duration: d['duration'] ?? '1 Hour',
                           image: d['coverImage'] ?? d['image'] ?? '',
@@ -435,7 +445,17 @@ class _PopularServicesScreenState extends State<PopularServicesScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ServiceDetailScreen(service: s),
+                                          builder: (context) => ScheduleBookingScreen(
+                                            service: s,
+                                            selectedItems: [
+                                              {
+                                                'name': s.title,
+                                                'price': s.price,
+                                                'quantity': 1,
+                                              }
+                                            ],
+                                            totalPrice: s.price,
+                                          ),
                                         ),
                                       );
                                     },

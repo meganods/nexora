@@ -184,14 +184,6 @@ class _ReviewCard extends StatefulWidget {
 }
 
 class _ReviewCardState extends State<_ReviewCard> {
-  bool _isLiked = false;
-  late int _likeCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _likeCount = (widget.data['likes'] ?? 0) as int;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -310,35 +302,6 @@ class _ReviewCardState extends State<_ReviewCard> {
                     if (timeAgo.isNotEmpty)
                       Text(timeAgo, style: GoogleFonts.inter(fontSize: 9, color: _gray)),
                   ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isLiked = !_isLiked;
-                    _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _border)),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: _isLiked ? Colors.red : _gray,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text('$_likeCount',
-                          style: GoogleFonts.inter(
-                              fontSize: 10, fontWeight: FontWeight.bold, color: _gray)),
-                    ],
-                  ),
                 ),
               ),
             ],

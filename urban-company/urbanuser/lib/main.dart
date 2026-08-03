@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'screens/onboarding_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/my_bookings_screen.dart';
+import 'screens/nexora_ai_assistant_screen.dart';
 import 'screens/thank_you_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/categories_screen.dart';
@@ -29,7 +30,6 @@ import 'screens/checkout_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/order_details_screen.dart';
 import 'screens/notification_screen.dart';
-import 'screens/wishlist_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/help_support_screen.dart';
 import 'screens/search_screen.dart';
@@ -95,20 +95,20 @@ class NexoraApp extends StatelessWidget {
         '/otp_verification': (context) => const OtpVerificationScreen(),
         '/location_permission': (context) => const LocationPermissionScreen(),
         '/location_selection': (context) => const LocationSelectionScreen(),
-        '/register': (context) => const RegisterScreen(),
+        '/register': (context) => const SignupScreen(),
         '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile_setup': (context) => const ProfileSetupScreen(),
         '/address_setup': (context) => const AddressSetupScreen(),
         '/address_management': (context) => const AddressManagementScreen(),
+        '/nexora_ai_assistant': (context) => const NexoraAIAssistantScreen(),
         '/categories': (context) => const CategoriesScreen(),
         '/checkout': (context) => const CheckoutScreen(),
         '/orders': (context) => const OrdersScreen(),
         '/order_details': (context) => const OrderDetailsScreen(),
         '/notifications': (context) => const NotificationScreen(),
         '/my_bookings': (context) => const MyBookingsScreen(),
-        '/wishlist': (context) => const WishlistScreen(),
         '/rewards': (context) => const WalletScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/settings': (context) => const SettingsScreen(),

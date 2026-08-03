@@ -6,10 +6,10 @@ import 'package:urbanuser/services/app_infra_service.dart';
 void main() {
   testWidgets('Nexora user app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const NexoraApp());
-    await tester.pump();
-
-    // Verify that the provider and consumer are laid out
-    expect(find.byType(ChangeNotifierProvider<AppInfraService>), findsOneWidget);
+    await tester.runAsync(() async {
+      await tester.pumpWidget(const NexoraApp());
+      await tester.pump();
+      expect(find.byType(ChangeNotifierProvider<AppInfraService>), findsOneWidget);
+    });
   });
 }

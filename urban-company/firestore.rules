@@ -2,9 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ─── Helper Functions ─────────────────────────────────────────────────────
-
+    
     // Check if the current user is an Admin
     function isAdmin() {
       return request.auth != null && (
@@ -15,149 +13,174 @@ service cloud.firestore {
       );
     }
 
-    // Check if user is authenticated
-    function isAuth() {
-      return request.auth != null;
-    }
-
-    // ─── Real-Time Chat System ────────────────────────────────────────────────
-    match /chats/{chatId} {
-      allow read, write: if true;
-      match /messages/{messageId} {
-        allow read, write: if true;
-      }
-    }
-
-    // ─── User Accounts & Addresses ────────────────────────────────────────────
+    // Explicit rules for users (Handles user profile photo upload write syncs)
     match /users/{userId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    match /addresses/{addressId} {
       allow read, write: if true;
     }
+    
+    // Explicit rules for addresses
+    match /addresses/{addressId} {
+      allow read, write: if isAdmin() || request.auth != null;
+    }
 
-    // ─── Vendors & Services Catalog ───────────────────────────────────────────
+    // Explicit rules for vendors
     match /vendors/{vendorId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if request.auth != null;
     }
 
+    // Explicit rules for services
     match /services/{serviceId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if request.auth != null;
     }
 
+    // Explicit rules for categories
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
+    // Explicit rules for category requests
     match /category_requests/{requestId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
-    // ─── Bookings & Timeline ──────────────────────────────────────────────────
+    // Explicit rules for bookings
     match /bookings/{bookingId} {
-      allow read, create, update: if true;
-      allow delete: if false; // Never hard delete bookings — only update status to cancelled
+      // 1. READ RULES: Users, Vendors, and Admins can see bookings they are part of
+      allow read: if request.auth != null && (
+        ( 'userId' in resource.data && request.auth.uid == resource.data.userId ) ||
+        ( 'userEmail' in resource.data && request.auth.token.email == resource.data.userEmail ) ||
+        ( 'vendorId' in resource.data && request.auth.uid == resource.data.vendorId ) ||
+        isAdmin()
+      );
+      
+      // 2. CREATE RULES: Only a logged-in user can create a booking for themselves
+      allow create: if request.auth != null && (
+        ( 'userId' in request.resource.data && request.resource.data.userId == request.auth.uid ) ||
+        ( 'userEmail' in request.resource.data && request.resource.data.userEmail == request.auth.token.email )
+      ) && (
+        request.resource.data.status.upper() in ['PENDING', 'UPCOMING', 'PENDING_VENDOR_APPROVAL']
+      );
+      
+      // 3. UPDATE RULES: Strict checks based on actor roles
+      allow update: if request.auth != null && (
+        isAdmin()
+        ||
+        // Vendor operations (Reschedule, Accept, Complete, Cancel)
+        (
+          'vendorId' in resource.data && request.auth.uid == resource.data.vendorId &&
+          (request.resource.data.status.upper() in ['UPDATED_BY_VENDOR', 'CONFIRMED', 'COMPLETED', 'CANCELLED']) &&
+          (!('userId' in resource.data) || request.resource.data.userId == resource.data.userId) &&
+          (!('userEmail' in resource.data) || request.resource.data.userEmail == resource.data.userEmail)
+        ) 
+        || 
+        // User operations (Accept proposed time, Cancel)
+        (
+          (
+            ('userId' in resource.data && request.auth.uid == resource.data.userId) ||
+            ('userEmail' in resource.data && request.auth.token.email == resource.data.userEmail)
+          ) &&
+          (request.resource.data.status.upper() in ['CONFIRMED', 'CANCELLED']) &&
+          (!('vendorId' in resource.data) || request.resource.data.vendorId == resource.data.vendorId)
+        )
+      );
+      
+      // 4. DELETE RULES: Bookings should never be permanently deleted, only marked as 'cancelled'
+      allow delete: if false;
+    }
+
+    // Explicit rules for reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.userId);
+    }
+
+    // Admins collection rule
+    match /admins/{adminId} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow write: if false; // Must be added manually via Firebase Console
+    }
+
+    // Explicit rules for coupons
+    match /coupons/{couponId} {
+      allow read: if request.auth != null && (resource == null || resource.data.status == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Explicit rules for coupon usage logs
+    match /coupon_usage/{usageId} {
+      allow read, create: if request.auth != null && (
+        request.resource.data.userId == request.auth.uid || 
+        request.resource.data.userEmail == request.auth.token.email || 
+        isAdmin()
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // Explicit rules for campaigns (Promotional campaign management)
+    match /campaigns/{campaignId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Vendor campaign requests (submitted by vendors for admin approval)
+    match /vendor_campaigns/{campaignId} {
+      // Authenticated users can read (User App needs approved ones)
+      allow read: if request.auth != null;
+      // Vendors can create their own campaigns
+      allow create: if request.auth != null;
+      // Vendors can update only their own campaigns; admins can update any
+      allow update: if isAdmin() || (
+        request.auth != null &&
+        resource.data.vendorEmail == request.auth.token.email
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ─── Chat, Notifications, Wallet, History, and Timeline ───
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /recently_viewed/{viewId} {
+      allow read, write: if request.auth != null;
     }
 
     match /booking_timeline/{timelineId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
-    // ─── Real-Time Invoices ───────────────────────────────────────────────────
-    match /invoices/{invoiceId} {
-      allow read, write: if true;
-    }
-
-    // ─── Reviews & Ratings ────────────────────────────────────────────────────
-    match /reviews/{reviewId} {
-      allow read, write: if true;
-    }
-
-    // ─── Admin Management ─────────────────────────────────────────────────────
-    match /admins/{adminId} {
-      allow read, write: if true;
-    }
-
-    // ─── Offers, Coupons & Promotions ─────────────────────────────────────────
-    match /coupons/{couponId} {
-      allow read, write: if true;
-    }
-
-    match /flash_offers/{offerId} {
-      allow read, write: if true;
-    }
-
-    match /coupon_usage/{usageId} {
-      allow read, write: if true;
-    }
-
-    match /coupon_redemptions/{redemptionId} {
-      allow read, write: if true;
-    }
-
-    match /campaigns/{campaignId} {
-      allow read, write: if true;
-    }
-
-    match /vendor_campaigns/{campaignId} {
-      allow read, write: if true;
-    }
-
-    // ─── Real-Time Notifications ──────────────────────────────────────────────
-    match /notifications/{notificationId} {
-      allow read, write: if true;
-    }
-
-    // ─── User Activity & History ──────────────────────────────────────────────
-    match /recently_viewed/{viewId} {
-      allow read, write: if true;
-    }
-
-    match /search_history/{searchId} {
-      allow read, write: if true;
-    }
-
-    match /favorites/{favId} {
-      allow read, write: if true;
-    }
-
-    // ─── Wallet & Payments ────────────────────────────────────────────────────
     match /wallet/{walletId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
-
+    
     match /wallets/{walletId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
     match /transactions/{txId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
-    match /payment_receipts/{receiptId} {
-      allow read, write: if true;
+    match /search_history/{searchId} {
+      allow read, write: if request.auth != null;
     }
 
-    // ─── Platform & Earnings ──────────────────────────────────────────────────
-    match /app_config/{configId} {
-      allow read: if true;
-      allow write: if true;
+    match /favorites/{favId} {
+      allow read, write: if request.auth != null;
     }
 
-    match /vendor_earnings/{earnId} {
-      allow read, write: if true;
-    }
-
-    match /referrals/{refId} {
-      allow read, write: if true;
-    }
-
-    // ─── Catch-All Document Match ─────────────────────────────────────────────
+    // Default rule for all other documents (Relaxed for complete sandbox testing and validation)
     match /{document=**} {
       allow read, write: if true;
     }

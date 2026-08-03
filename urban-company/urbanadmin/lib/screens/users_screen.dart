@@ -232,7 +232,7 @@ class _UsersScreenState extends State<UsersScreen> {
           children: [
             // Title Header
             Text(
-              'Users Directory',
+              'Users',
               style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
             ),
             Text(
@@ -325,6 +325,7 @@ class _UsersScreenState extends State<UsersScreen> {
 
             // Users Table Container
             Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -343,111 +344,136 @@ class _UsersScreenState extends State<UsersScreen> {
                         ),
                       ),
                     )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columnSpacing: 32,
-                        columns: [
-                          DataColumn(label: Text('Client Profile', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Contact details', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Default Address', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Registration', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Status', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Actions', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                        ],
-                        rows: filteredUsers.map((u) {
-                          final data = u.data() as Map<String, dynamic>;
-                          final String docId = u.id;
-                          final String name = data['fullName'] ?? 'No Name';
-                          final String email = data['email'] ?? 'Not specified';
-                          final String phone = data['phone'] ?? 'Not specified';
-                          final String address = data['userAddress'] ?? data['location']?['address'] ?? 'No address registered';
-                          final bool isBlocked = data['blocked'] == true;
-                          
-                          String joined = '—';
-                          if (data['createdAt'] != null) {
-                            joined = DateFormat('dd MMM yyyy').format((data['createdAt'] as Timestamp).toDate());
-                          }
+                  : LayoutBuilder(
+                      builder: (context, boxConstraints) {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final isMobile = screenWidth < 850;
+                        final availableWidth = screenWidth - (isMobile ? 64 : 324);
+                        
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minWidth: availableWidth > 0 ? availableWidth : 0,
+                            ),
+                            child: DataTable(
+                              columnSpacing: 32,
+                              columns: [
+                                DataColumn(label: Text('Client Profile', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Contact details', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Default Address', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Registration', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Status', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                                DataColumn(label: Text('Actions', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                              ],
+                              rows: filteredUsers.map((u) {
+                                final data = u.data() as Map<String, dynamic>;
+                                final String docId = u.id;
+                                final String name = data['fullName'] ?? 'No Name';
+                                final String email = data['email'] ?? 'Not specified';
+                                final String phone = data['phone'] ?? 'Not specified';
+                                final String address = data['userAddress'] ?? data['location']?['address'] ?? 'No address registered';
+                                final bool isBlocked = data['blocked'] == true;
+                                
+                                String joined = '—';
+                                if (data['createdAt'] != null) {
+                                  joined = DateFormat('dd MMM yyyy').format((data['createdAt'] as Timestamp).toDate());
+                                }
 
-                          return DataRow(cells: [
-                            DataCell(
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: const Color(0xFFEEF2FF),
-                                    backgroundImage: data['photoUrl'] != null ? NetworkImage(data['photoUrl']) : null,
-                                    child: data['photoUrl'] == null
-                                        ? Text(name[0].toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)))
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                                ],
-                              ),
-                            ),
-                            DataCell(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(email, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600)),
-                                  Text(phone, style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B))),
-                                ],
-                              ),
-                            ),
-                            DataCell(
-                              SizedBox(
-                                width: 220,
-                                child: Text(
-                                  address,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF334155)),
-                                ),
-                              ),
-                            ),
-                            DataCell(Text(joined, style: GoogleFonts.inter(fontSize: 11))),
-                            DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isBlocked ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  isBlocked ? 'Blocked' : 'Active',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9, 
-                                    fontWeight: FontWeight.bold, 
-                                    color: isBlocked ? const Color(0xFFEF4444) : const Color(0xFF10B981)
-                                  ),
-                                ),
-                              ),
-                            ),
-                            DataCell(
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.info_outline_rounded, color: Color(0xFF6366F1), size: 18),
-                                    tooltip: 'Inspect account details',
-                                    onPressed: () => _showUserDetailsModal(data, docId),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      isBlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded, 
-                                      color: isBlocked ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                      size: 18
+                                return DataRow(cells: [
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: const Color(0xFFEEF2FF),
+                                          backgroundImage: data['photoUrl'] != null ? NetworkImage(data['photoUrl']) : null,
+                                          child: data['photoUrl'] == null
+                                              ? Text(
+                                                  name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF4F46E5)),
+                                                )
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          name,
+                                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                                        ),
+                                      ],
                                     ),
-                                    tooltip: isBlocked ? 'Unblock user' : 'Block user',
-                                    onPressed: () => _toggleUserStatus(docId, isBlocked),
                                   ),
-                                ],
-                              ),
+                                  DataCell(
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(email, style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13, color: const Color(0xFF1E293B))),
+                                        Text(phone, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
+                                      ],
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 220,
+                                      child: Text(
+                                        address,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF334155)),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      joined,
+                                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isBlocked ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        isBlocked ? 'Blocked' : 'Active',
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                          color: isBlocked ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.info_outline_rounded, color: Color(0xFF6366F1), size: 18),
+                                          tooltip: 'Inspect account details',
+                                          onPressed: () => _showUserDetailsModal(data, docId),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            isBlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded, 
+                                            color: isBlocked ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                            size: 18
+                                          ),
+                                          tooltip: isBlocked ? 'Unblock user' : 'Block user',
+                                          onPressed: () => _toggleUserStatus(docId, isBlocked),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ]);
+                              }).toList(),
                             ),
-                          ]);
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      },
                     ),
             ),
           ],

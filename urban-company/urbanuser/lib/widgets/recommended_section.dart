@@ -313,7 +313,6 @@ class _RecommendedCard extends StatefulWidget {
 }
 
 class _RecommendedCardState extends State<_RecommendedCard> {
-  bool _isLiked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -385,33 +384,7 @@ class _RecommendedCardState extends State<_RecommendedCard> {
                       ),
                     ),
                   ),
-                // Wishlist heart button top-right
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isLiked = !_isLiked;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
-                        ],
-                      ),
-                      child: Icon(
-                        _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: _isLiked ? Colors.red : _gray,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
+
               ],
             ),
 

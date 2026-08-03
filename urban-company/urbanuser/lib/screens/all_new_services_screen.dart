@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../models/service_model.dart';
 import 'service_detail_screen.dart';
+import 'schedule_booking_screen.dart';
 
 const _blue = Color(0xFF2563EB);
 const _dark = Color(0xFF0F172A);
@@ -450,12 +451,22 @@ String _timeAgo(dynamic createdAt) {
   return 'Added ${DateFormat('d MMM').format(dt)}';
 }
 
+double _parseDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is num) return v.toDouble();
+  if (v is String) {
+    final cleaned = v.replaceAll(RegExp(r'[^\d.]'), '');
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+  return 0.0;
+}
+
 ServiceModel _toModel(Map<String, dynamic> d) => ServiceModel(
       id: d['id'] ?? '',
       title: d['name'] ?? d['title'] ?? d['serviceName'] ?? 'Service',
-      price: ((d['startingPrice'] ?? d['price'] ?? 0) as num).toDouble(),
+      price: _parseDouble(d['startingPrice'] ?? d['price']),
       image: d['coverImage'] ?? d['image'] ?? '',
-      rating: ((d['rating'] ?? d['averageRating'] ?? 5.0) as num).toDouble(),
+      rating: _parseDouble(d['rating'] ?? d['averageRating'] ?? 5.0),
       category: d['category'] ?? '',
       totalReviews: (d['totalReviews'] ?? d['reviews'] ?? 0) as int,
       vendorName: d['vendorName'] ?? d['vendor'] ?? '',
@@ -603,12 +614,25 @@ class _NewServiceListCard extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: _dark)),
                       ElevatedButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ServiceDetailScreen(
-                                  service: _toModel(data))),
-                        ),
+                        onPressed: () {
+                          final service = _toModel(data);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ScheduleBookingScreen(
+                                service: service,
+                                selectedItems: [
+                                  {
+                                    'name': service.title,
+                                    'price': service.price,
+                                    'quantity': 1,
+                                  }
+                                ],
+                                totalPrice: service.price,
+                              ),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _blue,
                           foregroundColor: Colors.white,

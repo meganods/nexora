@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/vendor_theme.dart';
 import 'bookings/bookings_list_screen.dart';
 import 'business_settings_screen.dart';
+import 'profile_screen.dart';
 import 'my_services_screen.dart';
 import 'business_growth_screen.dart';
 import 'support_center_screen.dart';
@@ -118,7 +119,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
       );
     }
     if (_activeMenuIndex == 5) {
-      return BusinessSettingsScreen(
+      return VendorProfileScreen(
         isTab: true,
         onBack: () => setState(() => _activeMenuIndex = 0),
       );
@@ -995,7 +996,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
                                             onBack: () => setState(() => _activeMenuIndex = 0),
                                           )
                                         : _activeMenuIndex == 5
-                                            ? BusinessSettingsScreen(
+                                            ? VendorProfileScreen(
                                                 isTab: true,
                                                 onBack: () => setState(() => _activeMenuIndex = 0),
                                               )

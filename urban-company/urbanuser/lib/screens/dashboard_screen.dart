@@ -160,10 +160,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUserAddress() async {
-    final prefs = await SharedPreferences.getInstance();
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+      return;
+    }
 
-    if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (user.displayName != null && user.displayName!.isNotEmpty) {
       _userName = user.displayName!.split(' ').first;
     }
 

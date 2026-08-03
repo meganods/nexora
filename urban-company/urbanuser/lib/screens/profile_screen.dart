@@ -63,15 +63,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       mobile = user.phoneNumber!;
     }
 
-    if (email.isNotEmpty) {
+    if (user != null) {
       try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(email).get();
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
         if (doc.exists && doc.data() != null) {
           final data = doc.data()!;
-          if (name.isEmpty && data['name'] != null) name = data['name'].toString();
-          if (mobile.isEmpty && data['phone'] != null) mobile = data['phone'].toString();
-          if (photoUrl.isEmpty && data['photoUrl'] != null) photoUrl = data['photoUrl'].toString();
-          if (address.isEmpty && data['userAddress'] != null) address = data['userAddress'].toString();
+          if (data['fullName'] != null) name = data['fullName'].toString();
+          else if (data['name'] != null) name = data['name'].toString();
+          
+          if (data['phoneNumber'] != null) mobile = data['phoneNumber'].toString();
+          else if (data['phone'] != null) mobile = data['phone'].toString();
+          
+          if (data['photoUrl'] != null) photoUrl = data['photoUrl'].toString();
+          if (data['userAddress'] != null) address = data['userAddress'].toString();
         }
       } catch (e) {
         debugPrint("Profile fetch note: $e");

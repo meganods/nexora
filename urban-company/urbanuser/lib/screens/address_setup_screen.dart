@@ -192,6 +192,13 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   Future<void> _saveAddressAndProceed() async {
     setState(() => _validationError = null);
 
+    // Trigger inline field validators
+    final isFormValid = _formKey.currentState!.validate();
+    if (!isFormValid) {
+      _showError('Please fill in all required fields.');
+      return;
+    }
+
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
     final house = _houseController.text.trim();
@@ -201,35 +208,12 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     final state = _stateController.text.trim();
     final pincode = _pincodeController.text.trim();
 
-    if (name.isEmpty) {
-      _showError('Please enter your full name.');
-      return;
-    }
-    if (phone.isEmpty || phone.length < 10) {
+    // Extra safety checks (already covered by form validators)
+    if (phone.length < 10) {
       _showError('Please enter a valid 10-digit mobile number.');
       return;
     }
-    if (house.isEmpty) {
-      _showError('Please enter House / Flat Number.');
-      return;
-    }
-    if (building.isEmpty) {
-      _showError('Please enter Building / Society Name.');
-      return;
-    }
-    if (street.isEmpty) {
-      _showError('Please enter Street / Area.');
-      return;
-    }
-    if (city.isEmpty) {
-      _showError('Please enter City.');
-      return;
-    }
-    if (state.isEmpty) {
-      _showError('Please enter State.');
-      return;
-    }
-    if (pincode.isEmpty || pincode.length < 6) {
+    if (pincode.length < 6) {
       _showError('Please enter a valid 6-digit Pincode.');
       return;
     }
@@ -412,6 +396,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Form(
                 key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -446,9 +431,9 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    _fieldLabel('Full Name'),
+                    _fieldLabel('Full Name *'),
                     const SizedBox(height: 6),
-                    _textInput(_nameController, 'e.g. Vishal Ratan'),
+                    _textInput(_nameController, 'e.g. Vishal Ratan', requiredLabel: 'Full name'),
                     const SizedBox(height: 16),
 
                     _fieldLabel('Mobile Number'),
@@ -472,7 +457,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _textInput(_phoneController, '10-digit mobile number', isPhone: true, maxLength: 10),
+                          child: _textInput(_phoneController, '10-digit mobile number', isPhone: true, maxLength: 10, requiredLabel: 'Mobile number'),
                         ),
                       ],
                     ),
@@ -485,24 +470,24 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    _fieldLabel('House / Flat Number'),
+                    _fieldLabel('House / Flat Number *'),
                     const SizedBox(height: 6),
-                    _textInput(_houseController, 'e.g. K-1501'),
+                    _textInput(_houseController, 'e.g. K-1501', requiredLabel: 'House / flat number'),
                     const SizedBox(height: 14),
 
-                    _fieldLabel('Building / Society Name'),
+                    _fieldLabel('Building / Society Name *'),
                     const SizedBox(height: 6),
-                    _textInput(_buildingController, 'e.g. Ajnara Homes'),
+                    _textInput(_buildingController, 'e.g. Ajnara Homes', requiredLabel: 'Building / society name'),
                     const SizedBox(height: 14),
 
-                    _fieldLabel('Street / Area'),
+                    _fieldLabel('Street / Area *'),
                     const SizedBox(height: 6),
-                    _textInput(_streetController, 'e.g. Gaur City 2, Sector 16B'),
+                    _textInput(_streetController, 'e.g. Gaur City 2, Sector 16B', requiredLabel: 'Street / area'),
                     const SizedBox(height: 14),
 
                     _fieldLabel('Landmark (Optional)'),
                     const SizedBox(height: 6),
-                    _textInput(_landmarkController, 'e.g. Near Galaxy Plaza'),
+                    _textInput(_landmarkController, 'e.g. Near Galaxy Plaza', isOptional: true),
                     const SizedBox(height: 14),
 
                     Row(
@@ -513,7 +498,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                             children: [
                               _fieldLabel('City *'),
                               const SizedBox(height: 6),
-                              _textInput(_cityController, 'e.g. Greater Noida'),
+                              _textInput(_cityController, 'e.g. Greater Noida', requiredLabel: 'City'),
                             ],
                           ),
                         ),
@@ -524,7 +509,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                             children: [
                               _fieldLabel('State *'),
                               const SizedBox(height: 6),
-                              _textInput(_stateController, 'e.g. Uttar Pradesh'),
+                              _textInput(_stateController, 'e.g. Uttar Pradesh', requiredLabel: 'State'),
                             ],
                           ),
                         ),
@@ -534,7 +519,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
 
                     _fieldLabel('Pincode *'),
                     const SizedBox(height: 6),
-                    _textInput(_pincodeController, 'e.g. 201318', isPhone: true, maxLength: 6),
+                    _textInput(_pincodeController, 'e.g. 201318', isPhone: true, maxLength: 6, requiredLabel: 'Pincode'),
                     const SizedBox(height: 24),
 
                     // ── 3. Address Type Selection ──────────────────────────
@@ -607,13 +592,35 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
     );
   }
 
-  Widget _textInput(TextEditingController controller, String hint, {bool isPhone = false, int? maxLength}) {
-    return TextField(
+  Widget _textInput(
+    TextEditingController controller,
+    String hint, {
+    bool isPhone = false,
+    int? maxLength,
+    bool isOptional = false,
+    String? requiredLabel,
+  }) {
+    return TextFormField(
       controller: controller,
       keyboardType: isPhone ? TextInputType.number : TextInputType.text,
       maxLength: maxLength,
       inputFormatters: isPhone ? [FilteringTextInputFormatter.digitsOnly] : null,
       style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _dark),
+      validator: isOptional
+          ? null
+          : (value) {
+              final val = value?.trim() ?? '';
+              if (val.isEmpty) {
+                return '${requiredLabel ?? 'This field'} is required';
+              }
+              if (isPhone && val.length < 10) {
+                return 'Enter a valid 10-digit number';
+              }
+              if (maxLength == 6 && val.length < 6) {
+                return 'Enter a valid 6-digit pincode';
+              }
+              return null;
+            },
       decoration: InputDecoration(
         hintText: hint,
         counterText: '',
@@ -632,6 +639,19 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _blue, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        ),
+        errorStyle: GoogleFonts.inter(
+          fontSize: 11,
+          color: const Color(0xFFDC2626),
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

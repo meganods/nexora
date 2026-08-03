@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/vendor_theme.dart';
@@ -38,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       "businessName": _businessNameController.text.trim(),
       "ownerName": _ownerNameController.text.trim(),
       "email": _emailController.text.trim().toLowerCase(),
-      "phone": _phoneController.text.trim(),
+      "phone": "+91${_phoneController.text.trim()}",
       "password": _passwordController.text.trim(),
       "businessType": _selectedBusinessType,
     };
@@ -247,15 +248,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary, letterSpacing: 1.0),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) => (v == null || v.isEmpty) ? "Phone number is required" : null,
-            decoration: const InputDecoration(
-              hintText: "+91 98765 43210",
-              prefixIcon: Icon(Icons.phone_outlined, color: VendorTheme.textSecondary),
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                decoration: BoxDecoration(
+                  color: VendorTheme.surfaceColor,
+                  border: Border.all(color: VendorTheme.borderColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Text('🇮🇳', style: GoogleFonts.inter(fontSize: 16)),
+                    const SizedBox(width: 6),
+                    Text('+91', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: GoogleFonts.inter(color: VendorTheme.textPrimary),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return "Phone number is required";
+                    if (v.length < 10) return "Enter a valid 10-digit number";
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    hintText: "98765 43210",
+                    counterText: "",
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
 

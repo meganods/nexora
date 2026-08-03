@@ -84,11 +84,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         final prefs = await SharedPreferences.getInstance();
         String savedAddr = prefs.getString('userAddress') ?? '';
 
-        if (user != null && savedAddr.trim().isEmpty) {
+        if (user != null) {
           try {
             final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
             if (doc.exists && doc.data() != null) {
-              savedAddr = doc.data()?['userAddress'] ?? doc.data()?['address'] ?? '';
+              final data = doc.data()!;
+              savedAddr = (data['userAddress'] ?? data['address'] ?? '').toString();
+              final String name = (data['fullName'] ?? data['name'] ?? '').toString();
+              final String phone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+              final String type = (data['userAddressType'] ?? 'Home').toString();
+
+              if (savedAddr.isNotEmpty) {
+                await prefs.setString('userAddress', savedAddr);
+                await prefs.setString('userAddressType', type);
+              }
+              if (name.isNotEmpty) {
+                await prefs.setString('userName', name);
+              }
+              if (phone.isNotEmpty) {
+                await prefs.setString('userMobile', phone);
+              }
             }
           } catch (_) {}
         }

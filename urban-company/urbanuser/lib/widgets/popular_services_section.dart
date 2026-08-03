@@ -14,28 +14,7 @@ class PopularServicesSection extends StatelessWidget {
     const textGray = Color(0xFF64748B);
     const borderGray = Color(0xFFE2E8F0);
 
-    final List<ServiceModel> fallbackServices = [
-      ServiceModel(
-        id: 'p1',
-        title: 'Deep Home Cleaning',
-        price: 1899,
-        rating: 4.8,
-        totalReviews: 842,
-        duration: '2-3 Hours',
-        image: 'assets/hero section img/image.png',
-        category: 'Cleaning',
-      ),
-      ServiceModel(
-        id: 'p2',
-        title: 'Premium Appliance Repair',
-        price: 399,
-        rating: 4.9,
-        totalReviews: 531,
-        duration: '1-1.5 Hours',
-        image: 'assets/hero section img/image copy.png',
-        category: 'Appliance',
-      )
-    ];
+
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,33 +69,33 @@ class PopularServicesSection extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Horizontal list of services
-        SizedBox(
-          height: 290,
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('services')
-                .where('status', isEqualTo: 'Approved')
-                .where('featured', isEqualTo: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              final docs = snapshot.data?.docs ?? [];
-              final List<ServiceModel> services = docs.isEmpty
-                  ? fallbackServices
-                  : docs.map((doc) {
-                      final d = doc.data() as Map<String, dynamic>;
-                      return ServiceModel(
-                        id: doc.id,
-                        title: d['name'] ?? d['serviceName'] ?? 'Service Item',
-                        price: ((d['startingPrice'] ?? d['price'] ?? 0) as num).toDouble(),
-                        rating: ((d['rating'] ?? 5.0) as num).toDouble(),
-                        totalReviews: d['reviewsCount'] ?? d['totalReviews'] ?? 0,
-                        duration: d['duration'] ?? '1 Hour',
-                        image: d['coverImage'] ?? d['image'] ?? '',
-                        category: d['category'] ?? '',
-                      );
-                    }).toList();
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('services')
+              .snapshots(),
+          builder: (context, snapshot) {
+            final docs = snapshot.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
-              return ListView.separated(
+            final List<ServiceModel> services = docs.map((doc) {
+              final d = doc.data() as Map<String, dynamic>;
+              return ServiceModel(
+                id: doc.id,
+                title: d['categoryName'] ?? d['name'] ?? d['serviceName'] ?? 'Service Item',
+                price: ((d['startingPrice'] ?? d['price'] ?? 199) as num).toDouble(),
+                rating: ((d['rating'] ?? 5.0) as num).toDouble(),
+                totalReviews: d['reviewsCount'] ?? d['totalReviews'] ?? 0,
+                duration: d['duration'] ?? '1 Hour',
+                image: d['categoryImageUrl'] ?? d['coverImage'] ?? d['image'] ?? '',
+                category: d['categoryName'] ?? d['category'] ?? '',
+              );
+            }).toList();
+
+            return SizedBox(
+              height: 290,
+              child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -244,9 +223,9 @@ class PopularServicesSection extends StatelessWidget {
                     ),
                   );
                 },
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

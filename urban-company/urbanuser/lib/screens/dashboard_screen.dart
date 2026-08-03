@@ -46,7 +46,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _newServicesController = PageController(viewportFraction: 0.45, initialPage: 300);
-  String _userAddress = "4517 Washington Ave";
+  String _userAddress = "";
   String _userName = "User";
   Timer? _newServicesTimer;
   StreamSubscription<DocumentSnapshot>? _userDocSub;

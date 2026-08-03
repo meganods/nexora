@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/admin_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'admin_dashboard.dart';
 
 import 'screens/not_found_screen.dart';
@@ -53,6 +54,7 @@ class NexoraAdminApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/dashboard': (context) => const AdminDashboard(),
         '/users': (context) => const AdminDashboard(initialMenu: 'Users'),
         '/coupons': (context) => const AdminDashboard(initialMenu: 'Coupons'),
@@ -62,3 +64,4 @@ class NexoraAdminApp extends StatelessWidget {
     );
   }
 }
+

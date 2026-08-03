@@ -315,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                // Trigger forgot password
+                                Navigator.pushNamed(context, '/forgot_password');
                               },
                               child: Text(
                                 'Forgot?',

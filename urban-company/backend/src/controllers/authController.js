@@ -120,8 +120,118 @@ const refreshToken = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check if email exists in users collection
+    const userQuery = await db.collection('users')
+      .where('email', '==', email.trim().toLowerCase())
+      .limit(1)
+      .get();
+
+    if (userQuery.empty) {
+      return res.status(404).json({ success: false, message: 'Email address not registered' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+
+    // Save token record in Firestore
+    await db.collection('password_reset_tokens').doc(email.trim().toLowerCase()).set({
+      email: email.trim().toLowerCase(),
+      otp,
+      expiresAt,
+      verified: false,
+      createdAt: new Date()
+    });
+
+    // Send Verification OTP Email via emailService
+    const { sendTemplateMail } = require('../services/emailService');
+    await sendTemplateMail(
+      email.trim().toLowerCase(), 
+      'Reset Your Nexora Password', 
+      'otp', 
+      { OTP_CODE: otp }
+    );
+
+    return res.status(200).json({ success: true, message: 'Verification OTP sent to your email' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to process password reset request', error: error.message });
+  }
+};
+
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const tokenDoc = await db.collection('password_reset_tokens').doc(email.trim().toLowerCase()).get();
+    if (!tokenDoc.exists) {
+      return res.status(400).json({ success: false, message: 'Verification session expired or invalid' });
+    }
+
+    const data = tokenDoc.data();
+    if (data.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid verification OTP code' });
+    }
+
+    if (new Date() > data.expiresAt.toDate()) {
+      return res.status(400).json({ success: false, message: 'Verification OTP has expired' });
+    }
+
+    // Mark as verified
+    await tokenDoc.ref.update({ verified: true });
+
+    return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Verification failed', error: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, password } = req.body;
+
+    const tokenDoc = await db.collection('password_reset_tokens').doc(email.trim().toLowerCase()).get();
+    if (!tokenDoc.exists) {
+      return res.status(400).json({ success: false, message: 'Session invalid' });
+    }
+
+    const data = tokenDoc.data();
+    if (!data.verified || data.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'OTP verification required before reset' });
+    }
+
+    // Find the user's Firebase UID
+    const userQuery = await db.collection('users')
+      .where('email', '==', email.trim().toLowerCase())
+      .limit(1)
+      .get();
+
+    if (userQuery.empty) {
+      return res.status(404).json({ success: false, message: 'User profile not found' });
+    }
+
+    const uid = userQuery.docs[0].id;
+
+    // Update password in Firebase Auth
+    await firebaseAuth.updateUser(uid, { password });
+
+    // Invalidate/delete the used token
+    await tokenDoc.ref.delete();
+
+    return res.status(200).json({ success: true, message: 'Password reset successful' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to reset password', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
-  refreshToken
+  refreshToken,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword
 };

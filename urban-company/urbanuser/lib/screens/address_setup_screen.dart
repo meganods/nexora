@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/location_service.dart';
+import '../widgets/app_toast.dart';
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const _blue = Color(0xFF2563EB);
@@ -161,23 +162,13 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
       _mapController.move(LatLng(lat, lng), 16.0);
 
       if (isUserInitiated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Live location fetched! Address information updated.',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
-              ],
-            ),
-            backgroundColor: _green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.all(16),
-          ),
+        AppToast.show(
+          context,
+          title: 'Location Updated',
+          message: 'Live location fetched! Address information updated.',
+          icon: Icons.check_circle_rounded,
+          iconColor: _green,
+          iconBgColor: const Color(0xFFECFDF5),
         );
       }
     }
@@ -286,15 +277,13 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ Address saved! Please log in to continue.',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-            backgroundColor: _green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-          ),
+        AppToast.show(
+          context,
+          title: 'Address Saved',
+          message: 'Address saved! Please log in to continue.',
+          icon: Icons.check_circle_rounded,
+          iconColor: _green,
+          iconBgColor: const Color(0xFFECFDF5),
         );
 
         // Redirect to Dashboard page
@@ -310,22 +299,12 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
 
   void _showError(String message) {
     setState(() => _validationError = message);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(message, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12)),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFFEF4444),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
+    AppToast.show(
+      context,
+      title: 'Action Failed',
+      message: message,
+      icon: Icons.error_outline_rounded,
+      isError: true,
     );
   }
 

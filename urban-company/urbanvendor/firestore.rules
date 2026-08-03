@@ -5,9 +5,9 @@ service cloud.firestore {
 
     // ─── Helper Functions ─────────────────────────────────────────────────────
 
-    // Check if the current user is an Admin
     function isAdmin() {
       return request.auth != null && (
+        request.auth.token.email == 'admin.example@gmail.com' ||
         request.auth.token.email == 'urbanadmin01@gmail.com' ||
         request.auth.token.email == 'admin@gmail.com' ||
         request.auth.token.email == 'meganodscare@gmail.com' ||

@@ -41,6 +41,23 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final email = _emailController.text.trim().toLowerCase();
+
+      // Check if user exists in Firestore first
+      final userQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isEmpty) {
+        setState(() {
+          _errorMessage = 'Account does not exist. Please create an account.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -55,8 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _errorMessage = _humanizeFirebaseError(e.code) ?? 
-            e.message ?? 'An error occurred during log in.';
+        _errorMessage = e.code == 'user-not-found'
+            ? 'Account does not exist. Please create an account.'
+            : (_humanizeFirebaseError(e.code) ?? e.message ?? 'An error occurred during log in.');
       });
     } catch (e) {
       setState(() {
@@ -113,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // ── Map Firebase error codes to user-friendly messages ───────────────────
   String? _humanizeFirebaseError(String code) {
     const map = {
-      'user-not-found': 'No account found with this email address.',
+      'user-not-found': 'Account does not exist. Please create an account.',
       'wrong-password': 'Incorrect password. Please try again.',
       'invalid-credential': 'Invalid email or password.',
       'user-disabled': 'This account has been disabled. Please contact support.',

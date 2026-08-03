@@ -192,10 +192,10 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
   Future<void> _saveAddressAndProceed() async {
     setState(() => _validationError = null);
 
-    // Trigger inline field validators
+    // Trigger inline field validators and scroll to first error
     final isFormValid = _formKey.currentState!.validate();
     if (!isFormValid) {
-      _showError('Please fill in all required fields.');
+      setState(() => _validationError = 'Please fill in all required fields correctly.');
       return;
     }
 
@@ -396,7 +396,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Form(
                 key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+                autovalidateMode: AutovalidateMode.disabled,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -613,11 +613,13 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
               if (val.isEmpty) {
                 return '${requiredLabel ?? 'This field'} is required';
               }
-              if (isPhone && val.length < 10) {
-                return 'Enter a valid 10-digit number';
-              }
+              // Pincode: exactly 6 digits
               if (maxLength == 6 && val.length < 6) {
                 return 'Enter a valid 6-digit pincode';
+              }
+              // Phone: exactly 10 digits (only when maxLength is 10)
+              if (isPhone && maxLength == 10 && val.length < 10) {
+                return 'Enter a valid 10-digit number';
               }
               return null;
             },

@@ -317,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  _buildSavedAddresses(),
+
                   _wrapper(
                     title: 'Support & Settings',
                     child: Column(
@@ -462,39 +462,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSavedAddresses() {
-    return _wrapper(
-      title: 'Primary Service Address',
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: _blue.withValues(alpha: 0.08), shape: BoxShape.circle),
-            child: const Icon(Icons.home_rounded, color: _blue, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Home Address', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: _dark)),
-                Text(
-                  _userAddress.isNotEmpty ? _userAddress : '102, Green Meadows, Malad West, Mumbai',
-                  style: GoogleFonts.inter(fontSize: 12, color: _gray),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressSetupScreen())).then((_) => _loadUserProfile());
-            },
-            child: Text('Edit', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: _blue)),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLogoutButton() {
     return Container(

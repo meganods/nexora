@@ -3,6 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+/// Nexora backend base URL for auth endpoints.
+const _kBackendAuthUrl = 'http://localhost:5000/api/v1/auth';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,29 +41,86 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      // ─ Credentials valid: trigger backend to send OTP email ─
+      final otpSent = await _sendLoginOtpViaBackend(credential.user!);
+      if (!otpSent) return; // error already set in setState
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/otp_verification');
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _errorMessage = e.message ?? 'An error occurred during log in.';
+        _errorMessage = _humanizeFirebaseError(e.code) ?? 
+            e.message ?? 'An error occurred during log in.';
       });
     } catch (e) {
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
       });
     } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Call backend to generate, hash, store, and email the OTP ─────────────
+  Future<bool> _sendLoginOtpViaBackend(User user) async {
+    try {
+      final idToken = await user.getIdToken(true);
+      final response = await http
+          .post(
+            Uri.parse('$_kBackendAuthUrl/send-login-otp'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'idToken': idToken}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        // Store masked email so OTP screen can display it
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          '_otpMaskedEmail',
+          body['email']?.toString() ?? '',
+        );
+        return true;
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = body['message']?.toString() ??
+                'Could not send verification code. Please try again.';
+          });
+        }
+        return false;
+      }
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _errorMessage = 'Network error. Could not reach the server. Please check your connection.';
         });
       }
+      return false;
     }
+  }
+
+  // ── Map Firebase error codes to user-friendly messages ───────────────────
+  String? _humanizeFirebaseError(String code) {
+    const map = {
+      'user-not-found': 'No account found with this email address.',
+      'wrong-password': 'Incorrect password. Please try again.',
+      'invalid-credential': 'Invalid email or password.',
+      'user-disabled': 'This account has been disabled. Please contact support.',
+      'too-many-requests': 'Too many attempts. Please try again later.',
+      'network-request-failed': 'Network error. Please check your connection.',
+    };
+    return map[code];
   }
 
   Future<void> _loginWithGoogle() async {
@@ -131,6 +193,10 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('userAddress', existingAddress);
         await prefs.setString('userAddressType', existingAddressType);
       }
+
+      // ─ Credentials valid: trigger backend to send OTP email ─
+      final otpSent = await _sendLoginOtpViaBackend(user);
+      if (!otpSent) return;
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/otp_verification');

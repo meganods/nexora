@@ -16,6 +16,7 @@ import 'screens/system_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/coupons_screen.dart';
 import 'screens/categories_screen.dart';
+import 'screens/login_monitoring_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String? initialMenu;
@@ -149,6 +150,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return const CouponsScreen(initialIndex: 1);
       case 'Categories':
         return const CategoriesScreen();
+      case 'Monitoring':
+        return const LoginMonitoringScreen();
       default:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,6 +200,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildMenuItem('System', Icons.settings_rounded),
                   _buildMenuItem('Coupons', Icons.local_offer_rounded),
                   _buildMenuItem('Campaigns', Icons.campaign_rounded),
+                  _buildMenuItem('Monitoring', Icons.security_rounded),
                   const SizedBox(height: 24),
                   _buildMenuItem('Settings', Icons.settings_applications_rounded),
                 ],

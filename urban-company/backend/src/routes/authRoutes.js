@@ -1,9 +1,47 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, refreshToken, forgotPassword, verifyResetOtp, resetPassword } = require('../controllers/authController');
+const rateLimit = require('express-rate-limit');
+const {
+  register,
+  login,
+  refreshToken,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
+  sendLoginOtp,
+  verifyLoginOtp,
+} = require('../controllers/authController');
 const { validateFields } = require('../middleware/validation');
 
 const router = express.Router();
+
+// ─── Rate Limiters ────────────────────────────────────────────────────────────
+
+// Strict limiter for OTP send: max 5 requests per 15 minutes per IP
+const otpSendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: 'Too many OTP requests. Please wait 15 minutes before trying again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Strict limiter for OTP verify: max 10 requests per 15 minutes per IP
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: 'Too many verification attempts. Please wait 15 minutes before trying again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
 
 router.post(
   '/register',
@@ -62,6 +100,34 @@ router.post(
     validateFields
   ],
   resetPassword
+);
+
+// ─── Login MFA — Send OTP to email ───────────────────────────────────────────
+// Requires valid Firebase ID Token (credentials already verified by Firebase Auth on client)
+router.post(
+  '/send-login-otp',
+  otpSendLimiter,
+  [
+    body('idToken').notEmpty().withMessage('Firebase idToken is required'),
+    validateFields
+  ],
+  sendLoginOtp
+);
+
+// ─── Login MFA — Verify OTP entered by user ───────────────────────────────────
+router.post(
+  '/verify-login-otp',
+  otpVerifyLimiter,
+  [
+    body('idToken').notEmpty().withMessage('Firebase idToken is required'),
+    body('otp')
+      .isLength({ min: 6, max: 6 })
+      .withMessage('OTP must be exactly 6 digits')
+      .matches(/^\d{6}$/)
+      .withMessage('OTP must contain only digits'),
+    validateFields
+  ],
+  verifyLoginOtp
 );
 
 module.exports = router;

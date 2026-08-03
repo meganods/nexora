@@ -1,12 +1,16 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
+/// Base URL for the Nexora backend.
+const _kBackendAuthUrl = 'http://localhost:5000/api/v1/auth';
+
+/// Countdown before user may resend — matches backend's cooldown window.
+const _kResendCooldownSeconds = 30;
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -15,228 +19,234 @@ class OtpVerificationScreen extends StatefulWidget {
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+class _OtpVerificationScreenState extends State<OtpVerificationScreen>
+    with SingleTickerProviderStateMixin {
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
+      List.generate(6, (_) => TextEditingController());
 
-  int _secondsRemaining = 60;
+  // ── Timer state ─────────────────────────────────────────────────────────────
+  // _secondsRemaining counts down the resend cooldown (30 s by default).
+  // When it reaches 0 the Resend button is enabled.
+  int _secondsRemaining = _kResendCooldownSeconds;
   Timer? _timer;
+
+  // ── Screen state ─────────────────────────────────────────────────────────────
   bool _isLoading = false;
   bool _isSendingOtp = false;
   String? _errorMessage;
   bool _verificationSuccess = false;
-  String? _userEmail;
+  String _maskedEmail = '';
+
+  // ── Shake animation ──────────────────────────────────────────────────────────
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _sendOtpToEmail();
+
+    // Shake animation for error feedback
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.elasticOut),
+    );
+
+    _loadMaskedEmailAndStartCooldown();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var n in _focusNodes) {
-      n.dispose();
-    }
+    _shakeController.dispose();
+    for (final c in _controllers) c.dispose();
+    for (final n in _focusNodes) n.dispose();
     super.dispose();
   }
 
-  // ── Generate a random 6-digit OTP ─────────────────────────────────────────
-  String _generateOtp() {
-    final rng = Random.secure();
-    return List.generate(6, (_) => rng.nextInt(10)).join();
-  }
-
-  // ── Send OTP to the user's registered email ────────────────────────────────
-  Future<void> _sendOtpToEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-      return;
-    }
-
-    setState(() => _isSendingOtp = true);
-
-    _userEmail = user.email ?? '';
-    final otp = _generateOtp();
-
-    // Store OTP in Firestore with expiry (10 minutes)
-    final expiresAt =
-        DateTime.now().add(const Duration(minutes: 10)).millisecondsSinceEpoch;
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({'otp': otp, 'otpExpiresAt': expiresAt}, SetOptions(merge: true));
-    } catch (_) {}
-
-    // Send email via EmailJS (free tier — no backend needed)
-    await _sendEmailViaEmailJS(otp, _userEmail!);
-
-    _startTimer();
-    if (mounted) setState(() => _isSendingOtp = false);
-  }
-
-  // ── EmailJS integration ────────────────────────────────────────────────────
-  Future<void> _sendEmailViaEmailJS(String otp, String email) async {
-    try {
-      // Replace these with your EmailJS credentials:
-      // Sign up free at https://www.emailjs.com
-      const serviceId = 'service_nexora';
-      const templateId = 'template_nexora_otp';
-      const publicKey = 'YOUR_EMAILJS_PUBLIC_KEY';
-
-      final response = await http
-          .post(
-            Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'service_id': serviceId,
-              'template_id': templateId,
-              'user_id': publicKey,
-              'template_params': {
-                'to_email': email,
-                'otp_code': otp,
-                'user_email': email,
-              },
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      debugPrint('EmailJS response: ${response.statusCode}');
-    } catch (e) {
-      // Email delivery failed — OTP still stored in Firestore for verification
-      debugPrint('EmailJS error: $e');
+  // ── Read masked email stored by login_screen and start 30-second cooldown ───
+  Future<void> _loadMaskedEmailAndStartCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() => _maskedEmail = prefs.getString('_otpMaskedEmail') ?? '');
+      _startCooldown();
     }
   }
 
-  // ── Countdown Timer ────────────────────────────────────────────────────────
-  void _startTimer() {
-    setState(() => _secondsRemaining = 60);
+  // ── 30-second resend cooldown ────────────────────────────────────────────────
+  void _startCooldown() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    setState(() => _secondsRemaining = _kResendCooldownSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
       if (_secondsRemaining > 0) {
-        if (mounted) setState(() => _secondsRemaining--);
+        setState(() => _secondsRemaining--);
       } else {
-        _timer?.cancel();
+        t.cancel();
       }
     });
   }
 
-  // ── Get combined OTP string ────────────────────────────────────────────────
-  String _getOtpString() =>
-      _controllers.map((c) => c.text).join();
-
-  // ── Verify OTP against Firestore ──────────────────────────────────────────
-  Future<void> _verifyOtp() async {
-    final enteredOtp = _getOtpString();
-    if (enteredOtp.length < 6) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
+  // ── Get Firebase ID Token ────────────────────────────────────────────────────
+  Future<String?> _getIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        if (mounted) Navigator.pushReplacementNamed(context, '/login');
-        return;
-      }
-
-      // Fetch stored OTP from Firestore
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      if (!doc.exists || doc.data() == null) {
-        setState(() => _errorMessage = 'OTP not found. Please request a new one.');
-        return;
-      }
-
-      final data = doc.data()!;
-      final storedOtp = (data['otp'] ?? '').toString();
-      final otpExpiresAt = (data['otpExpiresAt'] ?? 0) as int;
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // Check expiry
-      if (now > otpExpiresAt) {
-        setState(() => _errorMessage = 'OTP has expired. Please request a new one.');
-        return;
-      }
-
-      // Check OTP match
-      if (enteredOtp != storedOtp) {
-        setState(() => _errorMessage = 'Incorrect OTP. Please try again.');
-        // Clear entered OTP boxes
-        for (var c in _controllers) {
-          c.clear();
-        }
-        _focusNodes[0].requestFocus();
-        return;
-      }
-
-      // ✅ OTP is correct — clear it from Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({'otp': FieldValue.delete(), 'otpExpiresAt': FieldValue.delete()});
-
-      // Cache user profile into SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final String name = (data['fullName'] ?? data['name'] ?? '').toString();
-      final String phone =
-          (data['phoneNumber'] ?? data['phone'] ?? '').toString();
-      final String savedAddr =
-          (data['userAddress'] ?? data['address'] ?? '').toString();
-      final String type = (data['userAddressType'] ?? 'Home').toString();
-
-      if (name.isNotEmpty) await prefs.setString('userName', name);
-      if (phone.isNotEmpty) await prefs.setString('userMobile', phone);
-      if (savedAddr.isNotEmpty) {
-        await prefs.setString('userAddress', savedAddr);
-        await prefs.setString('userAddressType', type);
-      }
-
-      if (mounted) {
-        setState(() => _verificationSuccess = true);
-        await Future.delayed(const Duration(milliseconds: 700));
-        if (mounted) {
-          // Always go to dashboard — never to address setup on login
-          Navigator.pushNamedAndRemoveUntil(
-              context, '/dashboard', (route) => false);
-        }
-      }
-    } catch (e) {
-      setState(() => _errorMessage = 'Verification failed. Please try again.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      return await user.getIdToken(true);
+    } catch (_) {
+      return null;
     }
   }
 
-  // ── Resend OTP ─────────────────────────────────────────────────────────────
+  // ── Trigger shake animation on error ────────────────────────────────────────
+  void _shake() {
+    _shakeController.reset();
+    _shakeController.forward();
+  }
+
+  // ── Resend OTP — calls backend, re-starts 30-second cooldown ────────────────
   Future<void> _resendOtp() async {
-    for (var c in _controllers) {
-      c.clear();
-    }
+    if (_secondsRemaining > 0 || _isSendingOtp) return;
+
+    for (final c in _controllers) c.clear();
     setState(() {
       _errorMessage = null;
       _verificationSuccess = false;
+      _isSendingOtp = true;
     });
-    await _sendOtpToEmail();
+
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_kBackendAuthUrl/send-login-otp'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'idToken': idToken}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        final maskedEmail = body['email']?.toString() ?? _maskedEmail;
+        await prefs.setString('_otpMaskedEmail', maskedEmail);
+
+        if (mounted) {
+          setState(() {
+            _maskedEmail = maskedEmail;
+            _isSendingOtp = false;
+          });
+          // Restart the resend cooldown after successful resend
+          _startCooldown();
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isSendingOtp = false;
+            _errorMessage = body['message']?.toString() ??
+                'Could not resend OTP. Please try again.';
+          });
+          _shake();
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSendingOtp = false;
+          _errorMessage = 'Network error. Please check your connection.';
+        });
+        _shake();
+      }
+    }
   }
 
-  // ── Handle digit input ─────────────────────────────────────────────────────
-  void _onOtpDigitChanged(int index, String value) {
+  // ── Verify OTP — calls backend /verify-login-otp ────────────────────────────
+  Future<void> _verifyOtp() async {
+    final enteredOtp = _controllers.map((c) => c.text).join();
+    if (enteredOtp.length < 6) return;
+
+    setState(() { _isLoading = true; _errorMessage = null; });
+
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_kBackendAuthUrl/verify-login-otp'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'idToken': idToken, 'otp': enteredOtp}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        // ✅ OTP verified — persist session data
+        final user = body['user'] as Map<String, dynamic>? ?? {};
+        final prefs = await SharedPreferences.getInstance();
+
+        final name    = user['name']?.toString()        ?? '';
+        final phone   = user['phone']?.toString()       ?? '';
+        final address = user['userAddress']?.toString() ?? '';
+        final addrType = user['userAddressType']?.toString() ?? 'Home';
+        final accessToken = body['accessToken']?.toString() ?? '';
+
+        if (name.isNotEmpty)    await prefs.setString('userName', name);
+        if (phone.isNotEmpty)   await prefs.setString('userMobile', phone);
+        if (address.isNotEmpty) {
+          await prefs.setString('userAddress', address);
+          await prefs.setString('userAddressType', addrType);
+        }
+        if (accessToken.isNotEmpty) await prefs.setString('nexoraAccessToken', accessToken);
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.remove('_otpMaskedEmail');
+
+        if (mounted) {
+          setState(() { _verificationSuccess = true; _isLoading = false; });
+          await Future.delayed(const Duration(milliseconds: 700));
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (r) => false);
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = body['message']?.toString() ?? 'Incorrect code. Please try again.';
+          });
+          for (final c in _controllers) c.clear();
+          _focusNodes[0].requestFocus();
+          _shake();
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Network error. Please check your connection.';
+        });
+        _shake();
+      }
+    }
+  }
+
+  // ── OTP digit navigation ─────────────────────────────────────────────────────
+  void _onDigitChanged(int index, String value) {
     if (value.isNotEmpty) {
+      if (_errorMessage != null) setState(() => _errorMessage = null);
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
       } else {
@@ -244,56 +254,41 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         _verifyOtp();
       }
     } else {
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
-      }
+      if (index > 0) _focusNodes[index - 1].requestFocus();
     }
   }
 
+  String _formatCountdown(int s) =>
+      '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF2563EB);
-    const backgroundSlant = Color(0xFFF8FAFC);
-    const textDark = Color(0xFF0F172A);
-    const textGray = Color(0xFF64748B);
-
-    final maskedEmail = _maskEmail(_userEmail ?? '');
+    const primaryBlue  = Color(0xFF2563EB);
+    const bgGray       = Color(0xFFF8FAFC);
+    const textDark     = Color(0xFF0F172A);
+    const textGray     = Color(0xFF64748B);
 
     return Scaffold(
-      backgroundColor: backgroundSlant,
+      backgroundColor: bgGray,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: textDark, size: 20),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: textDark, size: 20),
+          onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
         ),
       ),
       body: SafeArea(
         child: _isSendingOtp
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(color: primaryBlue),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Sending OTP to your email…',
-                      style: GoogleFonts.inter(
-                          fontSize: 14, color: textGray),
-                    ),
-                  ],
-                ),
-              )
+            ? _buildSendingIndicator(textGray)
             : SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
 
-                    // ── Logo ──────────────────────────────────────────────
+                    // ── Wordmark ──────────────────────────────────────────────
                     Text(
                       'NEXORA',
                       textAlign: TextAlign.center,
@@ -304,78 +299,105 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         letterSpacing: 2.0,
                       ),
                     ),
-                    const SizedBox(height: 32),
-
-                    // ── Email icon ────────────────────────────────────────
-                    Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: primaryBlue.withValues(alpha: 0.2),
-                              width: 2),
-                        ),
-                        child: const Icon(Icons.mark_email_unread_rounded,
-                            color: primaryBlue, size: 34),
-                      ),
-                    ),
                     const SizedBox(height: 24),
 
-                    // ── Title ─────────────────────────────────────────────
+                    // ── Icon badge ────────────────────────────────────────────
+                    Center(
+                      child: AnimatedBuilder(
+                        animation: _shakeAnimation,
+                        builder: (_, child) {
+                          final offset = (_shakeAnimation.value * 10 * (1 - _shakeAnimation.value) * 2) *
+                              (_shakeController.status == AnimationStatus.forward ? 1 : -1);
+                          return Transform.translate(offset: Offset(offset, 0), child: child);
+                        },
+                        child: Container(
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            color: _errorMessage != null
+                                ? const Color(0xFFFEF2F2)
+                                : const Color(0xFFEFF6FF),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _errorMessage != null
+                                  ? const Color(0xFFFCA5A5)
+                                  : primaryBlue.withValues(alpha: 0.25),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_errorMessage != null
+                                        ? Colors.red
+                                        : primaryBlue)
+                                    .withValues(alpha: 0.12),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _verificationSuccess
+                                ? Icons.check_circle_rounded
+                                : Icons.mark_email_unread_rounded,
+                            color: _verificationSuccess
+                                ? const Color(0xFF10B981)
+                                : _errorMessage != null
+                                    ? const Color(0xFFEF4444)
+                                    : primaryBlue,
+                            size: 36,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Title ─────────────────────────────────────────────────
                     Text(
-                      'Verify Your Email',
+                      _verificationSuccess ? 'Verification Successful!' : 'Verify Your Email',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: textDark,
+                        color: _verificationSuccess ? const Color(0xFF065F46) : textDark,
                         letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 10),
 
-                    // ── Subtitle ──────────────────────────────────────────
+                    // ── Subtitle ──────────────────────────────────────────────
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: GoogleFonts.inter(
-                            fontSize: 14, color: textGray, height: 1.5),
+                        style: GoogleFonts.inter(fontSize: 14, color: textGray, height: 1.6),
                         children: [
-                          const TextSpan(
-                              text: 'We sent a 6-digit OTP to\n'),
+                          const TextSpan(text: 'We sent a 6-digit code to\n'),
                           TextSpan(
-                            text: maskedEmail,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: textDark,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            text: _maskedEmail.isNotEmpty ? _maskedEmail : 'your registered email',
+                            style: GoogleFonts.inter(fontSize: 14, color: textDark, fontWeight: FontWeight.bold),
                           ),
-                          const TextSpan(
-                              text: '\nEnter the code below to continue.'),
+                          const TextSpan(text: '\nEnter the code below to continue.'),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
-                    // ── Error banner ──────────────────────────────────────
+                    // ── Error Banner ──────────────────────────────────────────
                     if (_errorMessage != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEE2E2),
                           borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: const Color(0xFFFCA5A5)),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
                         ),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.error_outline_rounded,
-                                color: Color(0xFF991B1B), size: 18),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 1),
+                              child: Icon(Icons.error_outline_rounded, color: Color(0xFF991B1B), size: 18),
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -384,6 +406,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   color: const Color(0xFF991B1B),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
+                                  height: 1.4,
                                 ),
                               ),
                             ),
@@ -393,133 +416,62 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       const SizedBox(height: 20),
                     ],
 
-                    // ── Success banner ────────────────────────────────────
-                    if (_verificationSuccess) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: const Color(0xFFA7F3D0)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: Color(0xFF10B981), size: 24),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Verification Successful!',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF065F46),
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-
-                    // ── 6 OTP Boxes ───────────────────────────────────────
+                    // ── 6 OTP Digit Boxes ─────────────────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: List.generate(
                         6,
-                        (index) => _OtpBox(
-                          controller: _controllers[index],
-                          focusNode: _focusNodes[index],
-                          isLoading: _isLoading || _verificationSuccess,
+                        (i) => _OtpBox(
+                          controller: _controllers[i],
+                          focusNode: _focusNodes[i],
+                          isDisabled: _isLoading || _verificationSuccess,
                           hasError: _errorMessage != null,
-                          onChanged: (val) =>
-                              _onOtpDigitChanged(index, val),
+                          onChanged: (v) => _onDigitChanged(i, v),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
-                    // ── Resend Timer ──────────────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_secondsRemaining > 0)
-                          Text(
-                            'Resend OTP in ${_secondsRemaining}s',
-                            style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: textGray,
-                                fontWeight: FontWeight.w500),
-                          )
-                        else ...[
-                          Text(
-                            "Didn't receive the code? ",
-                            style: GoogleFonts.inter(
-                                fontSize: 14, color: textGray),
-                          ),
-                          GestureDetector(
-                            onTap: _resendOtp,
-                            child: Text(
-                              'Resend OTP',
-                              style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: primaryBlue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 32),
+                    // ── Resend section ────────────────────────────────────────
+                    _buildResendSection(primaryBlue, textGray),
+                    const SizedBox(height: 28),
 
-                    // ── Verify Button ─────────────────────────────────────
+                    // ── Verify & Continue ─────────────────────────────────────
                     SizedBox(
                       height: 54,
                       child: ElevatedButton(
                         onPressed: (_isLoading ||
                                 _verificationSuccess ||
-                                _getOtpString().length < 6)
+                                _controllers.map((c) => c.text).join().length < 6)
                             ? null
                             : _verifyOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryBlue,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              primaryBlue.withValues(alpha: 0.4),
+                          disabledBackgroundColor: primaryBlue.withValues(alpha: 0.4),
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2.5),
+                                width: 22, height: 22,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                               )
                             : Text(
                                 'Verify & Continue',
-                                style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold),
+                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Change Email / Back to Login ───────────────────────
+                    // ── Switch Account ────────────────────────────────────────
                     Center(
                       child: TextButton(
-                        onPressed: () =>
-                            Navigator.pushReplacementNamed(context, '/login'),
+                        onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
                         child: Text(
                           'Use a different account',
-                          style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: textGray,
-                              fontWeight: FontWeight.w500),
+                          style: GoogleFonts.inter(fontSize: 13, color: textGray, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -531,30 +483,115 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // ── Mask email for display: v****@gmail.com ────────────────────────────────
-  String _maskEmail(String email) {
-    if (email.isEmpty) return '';
-    final parts = email.split('@');
-    if (parts.length != 2) return email;
-    final local = parts[0];
-    final domain = parts[1];
-    if (local.length <= 2) return '${local[0]}****@$domain';
-    return '${local[0]}${local[1]}****@$domain';
+  // ── Resend section: shows countdown or the Resend button ────────────────────
+  Widget _buildResendSection(Color primaryBlue, Color textGray) {
+    final canResend = _secondsRemaining == 0 && !_isSendingOtp;
+
+    if (_secondsRemaining > 0) {
+      return Column(
+        children: [
+          Text(
+            "Didn't receive the code?",
+            style: GoogleFonts.inter(fontSize: 13, color: textGray),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          // Circular countdown badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: primaryBlue.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF2563EB)),
+                const SizedBox(width: 6),
+                Text(
+                  'Resend in ${_formatCountdown(_secondsRemaining)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Text(
+          "Didn't receive the code?",
+          style: GoogleFonts.inter(fontSize: 13, color: textGray),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: canResend ? _resendOtp : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            decoration: BoxDecoration(
+              color: canResend ? primaryBlue : const Color(0xFFE2E8F0),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.refresh_rounded, size: 16, color: canResend ? Colors.white : textGray),
+                const SizedBox(width: 8),
+                Text(
+                  'Resend OTP',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: canResend ? Colors.white : textGray,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSendingIndicator(Color textGray) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: Color(0xFF2563EB)),
+          const SizedBox(height: 20),
+          Text(
+            'Sending verification code\nto your email…',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(fontSize: 14, color: textGray, height: 1.5),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-// ── Individual OTP Input Box ──────────────────────────────────────────────────
+// ─── Single OTP Digit Input Box ───────────────────────────────────────────────
 class _OtpBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
-  final bool isLoading;
+  final bool isDisabled;
   final bool hasError;
   final ValueChanged<String> onChanged;
 
   const _OtpBox({
     required this.controller,
     required this.focusNode,
-    required this.isLoading,
+    required this.isDisabled,
     required this.hasError,
     required this.onChanged,
   });
@@ -562,8 +599,8 @@ class _OtpBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const primaryBlue = Color(0xFF2563EB);
-    const borderGray = Color(0xFFE2E8F0);
-    const errorRed = Color(0xFFFCA5A5);
+    const borderGray  = Color(0xFFE2E8F0);
+    const errorRed    = Color(0xFFFCA5A5);
 
     return SizedBox(
       width: 48,
@@ -574,7 +611,7 @@ class _OtpBox extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        enabled: !isLoading,
+        enabled: !isDisabled,
         style: GoogleFonts.inter(
           fontSize: 22,
           fontWeight: FontWeight.w800,
@@ -595,8 +632,7 @@ class _OtpBox extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-                color: hasError ? errorRed : primaryBlue, width: 2.0),
+            borderSide: BorderSide(color: hasError ? errorRed : primaryBlue, width: 2.0),
           ),
         ),
         onChanged: onChanged,

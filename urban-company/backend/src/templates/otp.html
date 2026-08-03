@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px; color: #0f172a; }
+    .card { background-color: #ffffff; border-radius: 16px; padding: 32px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .header { text-align: center; margin-bottom: 24px; }
+    .title { color: #2563eb; font-size: 24px; font-weight: 800; }
+    .body { font-size: 15px; line-height: 1.6; color: #64748b; text-align: center; }
+    .otp-code { font-size: 32px; font-weight: 900; letter-spacing: 4px; color: #2563eb; margin: 24px 0; }
+    .footer { text-align: center; margin-top: 32px; font-size: 12px; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title">NEXORA</div>
+    </div>
+    <div class="body">
+      <h3>One-Time Verification Code</h3>
+      <p>Please use the following verification code to secure your session or login attempt. This code is valid for 10 minutes.</p>
+      <div class="otp-code">{{OTP_CODE}}</div>
+      <p>If you did not make this request, please contact our administrative security suite immediately.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 Nexora Marketplace. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

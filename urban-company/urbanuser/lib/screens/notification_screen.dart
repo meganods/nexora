@@ -130,7 +130,6 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
         stream: FirebaseFirestore.instance
             .collection('notifications')
             .where('userId', isEqualTo: user?.uid ?? 'guest_user')
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snap) {
           List<Map<String, dynamic>> items = [];
@@ -139,6 +138,19 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
               final data = d.data() as Map<String, dynamic>;
               return {'id': d.id, ...data};
             }).toList();
+
+            // Sort locally in memory descending
+            items.sort((a, b) {
+              final aTime = a['createdAt'] ?? a['timestamp'];
+              final bTime = b['createdAt'] ?? b['timestamp'];
+              if (aTime == null) return 1;
+              if (bTime == null) return -1;
+              
+              if (aTime is Timestamp && bTime is Timestamp) {
+                return bTime.compareTo(aTime);
+              }
+              return 0;
+            });
           }
 
           final bookingItems = items.where((i) => (i['type'] ?? '') == 'booking').toList();

@@ -129,24 +129,24 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
         // Always fill/update address fields with fetched location details
         if (result.houseNumber.isNotEmpty) {
           _houseController.text = result.houseNumber;
-        } else if (_houseController.text.isEmpty) {
-          _houseController.text = 'Flat / House No. ${(lat * 100).toInt() % 1000}';
+        } else {
+          _houseController.text = '';
         }
 
         if (result.buildingName.isNotEmpty) {
           _buildingController.text = result.buildingName;
         } else if (result.area.isNotEmpty) {
           _buildingController.text = result.area;
-        } else if (_buildingController.text.isEmpty) {
-          _buildingController.text = 'Primary Society / Complex';
+        } else {
+          _buildingController.text = '';
         }
 
         if (result.street.isNotEmpty) {
           _streetController.text = result.street;
         } else if (result.area.isNotEmpty) {
           _streetController.text = result.area;
-        } else if (_streetController.text.isEmpty) {
-          _streetController.text = 'Main Street Area';
+        } else {
+          _streetController.text = '';
         }
 
         if (result.city.isNotEmpty) {

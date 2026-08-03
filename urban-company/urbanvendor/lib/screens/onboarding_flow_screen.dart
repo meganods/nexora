@@ -572,7 +572,13 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Service Management", style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: VendorTheme.textPrimary)),
+            Expanded(
+              child: Text(
+                "Service Management",
+                style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: VendorTheme.textPrimary),
+              ),
+            ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: _showAddServiceDialog,
               icon: const Icon(Icons.add, size: 18),

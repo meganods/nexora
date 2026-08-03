@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -471,7 +472,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _textInput(_phoneController, '10-digit mobile number', isPhone: true),
+                          child: _textInput(_phoneController, '10-digit mobile number', isPhone: true, maxLength: 10),
                         ),
                       ],
                     ),
@@ -611,6 +612,7 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
       controller: controller,
       keyboardType: isPhone ? TextInputType.number : TextInputType.text,
       maxLength: maxLength,
+      inputFormatters: isPhone ? [FilteringTextInputFormatter.digitsOnly] : null,
       style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _dark),
       decoration: InputDecoration(
         hintText: hint,

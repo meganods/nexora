@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacementNamed(context, '/otp_verification');
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -133,11 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        if (hasAddress) {
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        } else {
-          Navigator.pushReplacementNamed(context, '/address_setup');
-        }
+        Navigator.pushReplacementNamed(context, '/otp_verification');
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Google Sign-In failed. Please try again.';

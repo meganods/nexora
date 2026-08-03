@@ -77,7 +77,7 @@ class _SignupScreenState extends State<SignupScreen> {
         });
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/address_setup');
+          Navigator.pushReplacementNamed(context, '/otp_verification');
         }
       }
     } on FirebaseAuthException catch (e) {
@@ -133,7 +133,7 @@ class _SignupScreenState extends State<SignupScreen> {
         }, SetOptions(merge: true));
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/address_setup');
+          Navigator.pushReplacementNamed(context, '/otp_verification');
         }
       }
     } catch (e) {

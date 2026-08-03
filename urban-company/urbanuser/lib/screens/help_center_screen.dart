@@ -61,7 +61,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     {
       'cat': 'Payments & Refunds',
       'q': 'How does digital payment escrow protection work?',
-      'a': 'Your payment is processed via 256-bit SSL encrypted gateways and held safely in escrow. Vendor payout is released only after you confirm service completion.'
+      'a': 'Your payment is processed via 256-bit SSL encrypted gateways and held safely in escrow. Partner payout is released only after you confirm service completion.'
     },
   ];
 

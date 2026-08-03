@@ -149,7 +149,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
               const SizedBox(height: 32),
 
               // Benefits Grid/List Cards
-              _buildBenefitRow(Icons.near_me_rounded, 'Find nearby vendors', 'Connect with professionals in your sector.'),
+              _buildBenefitRow(Icons.near_me_rounded, 'Find nearby partners', 'Connect with professionals in your sector.'),
               _buildBenefitRow(Icons.bolt_rounded, 'Faster booking', 'Skip manual address configurations.'),
               _buildBenefitRow(Icons.home_rounded, 'Accurate address', 'Real-time GPS pin matching.'),
               _buildBenefitRow(Icons.track_changes_rounded, 'Better service recommendations', 'Custom offers in your city.'),

@@ -252,7 +252,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               children: [
                                 const Icon(Icons.verified_user_rounded, color: _green, size: 13),
                                 const SizedBox(width: 4),
-                                Text('Vendor Reserved Automatically',
+                                Text('Service Partner Reserved Automatically',
                                     style: GoogleFonts.inter(fontSize: 11, color: _green, fontWeight: FontWeight.w600)),
                               ],
                             ),

@@ -44,7 +44,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Vendor Service Approvals',
+          'Partner Service Approvals',
           style: GoogleFonts.inter(
             fontSize: 32,
             fontWeight: FontWeight.w900,
@@ -53,7 +53,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Review, approve, or request changes for vendor-created services and pricing models.',
+          'Review, approve, or request changes for partner-created services and pricing models.',
           style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF64748B)),
         ),
       ],

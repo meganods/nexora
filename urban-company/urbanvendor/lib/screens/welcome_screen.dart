@@ -170,7 +170,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         Expanded(
           child: PageView.builder(
             controller: _pageController,
-            onPageChanged: (idx) => setState(() => _currentPage = idx),
+            onPageChanged: (idx) {
+              setState(() => _currentPage = idx);
+              _startAutoScroll(); // Reset timer on manual swipe
+            },
             itemCount: _slides.length,
             itemBuilder: (context, idx) {
               return Column(

@@ -116,7 +116,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Vendor Ecosystem',
+              'Partner Ecosystem',
               style: GoogleFonts.inter(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -230,7 +230,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
         spacing: 16,
         runSpacing: 16,
         children: [
-          _buildKpiCard('TOTAL VENDORS', '1,284', '▲ 4.2% vs last month', const Color(0xFF5B21B6), Icons.storefront_rounded, cardWidth, [4, 8, 5, 10, 7, 14, 11, 18]),
+          _buildKpiCard('TOTAL PARTNERS', '1,284', '▲ 4.2% vs last month', const Color(0xFF5B21B6), Icons.storefront_rounded, cardWidth, [4, 8, 5, 10, 7, 14, 11, 18]),
           _buildKpiCard('ACTIVE PARTNERS', '1,102', '▲ 12% vs last month', const Color(0xFF10B981), Icons.verified_user_rounded, cardWidth, [5, 10, 9, 14, 11, 18, 15, 22]),
           _buildKpiCard('PENDING REVIEW', '42', '▲ 8 vs last month', const Color(0xFFF59E0B), Icons.pending_actions_rounded, cardWidth, [2, 4, 3, 6, 5, 8, 6, 10]),
           _buildKpiCard('BLOCKED', '14', '▼ 2 vs last month', const Color(0xFFEF4444), Icons.block_rounded, cardWidth, [8, 7, 6, 5, 4, 3, 2, 1], isDown: true),
@@ -352,7 +352,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Search Vendor',
+                  'Search Partner',
                   style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 6),
@@ -372,7 +372,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                     },
                     style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF111827)),
                     decoration: InputDecoration(
-                      hintText: 'Search vendor name, ID, phone...',
+                      hintText: 'Search partner name, ID, phone...',
                       hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
                       prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF6B7280)),
                       border: InputBorder.none,
@@ -490,7 +490,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
             ),
             child: Row(
               children: [
-                Expanded(flex: 3, child: Text('VENDOR', style: _tableHeaderStyle())),
+                Expanded(flex: 3, child: Text('SERVICE PARTNER', style: _tableHeaderStyle())),
                 Expanded(flex: 2, child: Text('CATEGORY', style: _tableHeaderStyle())),
                 Expanded(flex: 2, child: Text('ONBOARDED DATE', style: _tableHeaderStyle())),
                 Expanded(flex: 2, child: Text('STATUS', style: _tableHeaderStyle())),
@@ -552,7 +552,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                   padding: const EdgeInsets.all(40.0),
                   child: Center(
                     child: Text(
-                      'No matching vendors found.',
+                      'No matching partners found.',
                       style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
                     ),
                   ),
@@ -755,7 +755,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                                     }),
                                     const SizedBox(width: 6),
                                     _buildActionIcon(LucideIcons.edit2, () {
-                                      _showTopRightToast('Edit Vendor $name');
+                                      _showTopRightToast('Edit Partner $name');
                                     }),
                                     const SizedBox(width: 6),
                                     _buildActionIcon(LucideIcons.moreHorizontal, () {
@@ -783,7 +783,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                     child: Row(
                       children: [
                         Text(
-                          'Showing ${startIndex + 1} to $endIndex of $totalItems vendors',
+                          'Showing ${startIndex + 1} to $endIndex of $totalItems partners',
                           style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
                         ),
                         const Spacer(),

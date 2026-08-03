@@ -4,6 +4,15 @@ const bcrypt = require('bcryptjs');
 const { auth: firebaseAuth, db } = require('../config/firebase');
 const { FieldValue } = require('firebase-admin/firestore');
 
+// Helper to safely parse both Firestore Timestamps and Javascript Date objects
+const parseDate = (val) => {
+  if (!val) return null;
+  if (typeof val.toDate === 'function') {
+    return val.toDate();
+  }
+  return new Date(val);
+};
+
 // ─── Token Generation ─────────────────────────────────────────────────────────
 const generateTokens = (user) => {
   const payload = { uid: user.uid, email: user.email, role: user.role || 'customer' };
@@ -180,7 +189,7 @@ const verifyResetOtp = async (req, res) => {
 
     const data = tokenDoc.data();
     if (data.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid verification OTP code' });
-    if (new Date() > data.expiresAt.toDate()) return res.status(400).json({ success: false, message: 'Verification OTP has expired' });
+    if (new Date() > (parseDate(data.expiresAt) || new Date(0))) return res.status(400).json({ success: false, message: 'Verification OTP has expired' });
 
     await tokenDoc.ref.update({ verified: true });
     return res.status(200).json({ success: true, message: 'OTP verified successfully' });
@@ -250,7 +259,7 @@ const sendLoginOtp = async (req, res) => {
     if (otpDoc.exists) {
       const existing = otpDoc.data();
       prevResendCount = existing.resendCount || 0;
-      sessionCreatedAt = existing.sessionCreatedAt ? existing.sessionCreatedAt.toDate() : new Date();
+      sessionCreatedAt = parseDate(existing.sessionCreatedAt) || new Date();
       const withinWindow = (Date.now() - sessionCreatedAt.getTime()) < WINDOW_MS;
 
       if (prevResendCount >= MAX_RESENDS && withinWindow) {
@@ -383,7 +392,7 @@ const verifyLoginOtp = async (req, res) => {
         }
 
         // ── Guard: expired ─────────────────────────────────────────────────────
-        const expiresAt = data.expiresAt ? data.expiresAt.toDate() : new Date(0);
+        const expiresAt = parseDate(data.expiresAt) || new Date(0);
         if (Date.now() > expiresAt.getTime()) {
           // Clear stale OTP inside the transaction
           transaction.update(otpRef, {

@@ -271,8 +271,8 @@ class _AddressSetupScreenState extends State<AddressSetupScreen> {
           iconBgColor: const Color(0xFFECFDF5),
         );
 
-        // Redirect to Dashboard page
-        Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+        // Redirect to Login page
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
     } catch (e) {
       if (mounted) {

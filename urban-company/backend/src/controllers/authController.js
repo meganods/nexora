@@ -159,8 +159,12 @@ const forgotPassword = async (req, res) => {
       email: email.trim().toLowerCase(), otp, expiresAt, verified: false, createdAt: new Date(),
     });
 
-    const { sendTemplateMail } = require('../services/emailService');
-    await sendTemplateMail(email.trim().toLowerCase(), 'Reset Your Nexora Password', 'otp', { OTP_CODE: otp });
+    try {
+      const { sendTemplateMail } = require('../services/emailService');
+      await sendTemplateMail(email.trim().toLowerCase(), 'Reset Your Nexora Password', 'otp', { OTP_CODE: otp });
+    } catch (mailError) {
+      console.warn('Mailer failed to send reset password OTP. Plaintext OTP:', otp);
+    }
     return res.status(200).json({ success: true, message: 'Verification OTP sent to your email' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to process password reset request', error: error.message });
@@ -296,11 +300,15 @@ const sendLoginOtp = async (req, res) => {
     });
 
     // 5. Send OTP via Nodemailer
-    const { sendTemplateMail } = require('../services/emailService');
-    await sendTemplateMail(email, 'Nexora Login Verification Code', 'login_otp', {
-      USER_NAME: name,
-      OTP_CODE: otp,
-    });
+    try {
+      const { sendTemplateMail } = require('../services/emailService');
+      await sendTemplateMail(email, 'Nexora Login Verification Code', 'login_otp', {
+        USER_NAME: name,
+        OTP_CODE: otp,
+      });
+    } catch (mailError) {
+      console.warn('Mailer failed to send login OTP. Plaintext OTP:', otp);
+    }
 
     // 6. Write audit log
     await writeAuditLog(uid, email, isResend ? 'OTP_RESENT' : 'OTP_SENT', {

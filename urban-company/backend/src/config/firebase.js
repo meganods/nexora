@@ -14,18 +14,30 @@ try {
 
   if (serviceAccountString) {
     let serviceAccount;
+    let useCert = false;
     try {
       serviceAccount = JSON.parse(serviceAccountString);
+      if (serviceAccount && serviceAccount.private_key) {
+        useCert = true;
+      }
     } catch (e) {
       serviceAccount = serviceAccountString; // treat as filePath
+      useCert = true;
     }
 
-    admin.initializeApp({
-      credential: typeof serviceAccount === 'string' 
-          ? admin.credential.cert(require(serviceAccount))
-          : admin.credential.cert(serviceAccount),
-      storageBucket: storageBucket,
-    });
+    if (useCert) {
+      admin.initializeApp({
+        credential: typeof serviceAccount === 'string' 
+            ? admin.credential.cert(require(serviceAccount))
+            : admin.credential.cert(serviceAccount),
+        storageBucket: storageBucket,
+      });
+    } else {
+      admin.initializeApp({
+        projectId: 'urbancompany-e7c79',
+        storageBucket: storageBucket,
+      });
+    }
   } else {
     // Graceful fallback to application default credentials or local testing emulation
     admin.initializeApp({

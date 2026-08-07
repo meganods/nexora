@@ -16,6 +16,7 @@ const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const payoutRoutes = require('./routes/payoutRoutes');
+const customerPayoutRoutes = require('./routes/customerPayoutRoutes');
 const walletRoutes = require('./routes/walletRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -81,9 +82,11 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/payouts', payoutRoutes);
+app.use('/api/v1/customer-payouts', customerPayoutRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/admin', adminRoutes);
+
 
 // Fallback Not Found Endpoint
 app.use((req, res, next) => {

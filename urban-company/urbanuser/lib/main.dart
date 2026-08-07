@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'services/app_infra_service.dart';
@@ -93,32 +94,33 @@ class NexoraApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/otp_verification': (context) => const OtpVerificationScreen(),
-        '/location_permission': (context) => const LocationPermissionScreen(),
-        '/location_selection': (context) => const LocationSelectionScreen(),
+        '/location_permission': (context) => const AuthGuard(child: LocationPermissionScreen()),
+        '/location_selection': (context) => const AuthGuard(child: LocationSelectionScreen()),
         '/register': (context) => const SignupScreen(),
         '/forgot_password': (context) => const ForgotPasswordScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/profile_setup': (context) => const ProfileSetupScreen(),
-        '/address_setup': (context) => const AddressSetupScreen(),
-        '/address_management': (context) => const AddressManagementScreen(),
-        '/nexora_ai_assistant': (context) => const NexoraAIAssistantScreen(),
-        '/categories': (context) => const CategoriesScreen(),
-        '/checkout': (context) => const CheckoutScreen(),
-        '/orders': (context) => const OrdersScreen(),
-        '/order_details': (context) => const OrderDetailsScreen(),
-        '/notifications': (context) => const NotificationScreen(),
-        '/my_bookings': (context) => const MyBookingsScreen(),
-        '/rewards': (context) => const WalletScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/help_support': (context) => const HelpSupportScreen(),
-        '/thank_you': (context) => const ThankYouScreen(),
-        '/search': (context) => const SearchScreen(),
-        '/offers': (context) => const OffersScreen(),
-        '/refer': (context) => const ReferScreen(),
-        '/popular_services': (context) => const PopularServicesScreen(),
+        '/dashboard': (context) => const AuthGuard(child: DashboardScreen()),
+        '/home': (context) => const AuthGuard(child: HomeScreen()),
+        '/profile_setup': (context) => const AuthGuard(child: ProfileSetupScreen()),
+        '/address_setup': (context) => const AuthGuard(child: AddressSetupScreen()),
+        '/address_management': (context) => const AuthGuard(child: AddressManagementScreen()),
+        '/nexora_ai_assistant': (context) => const AuthGuard(child: NexoraAIAssistantScreen()),
+        '/categories': (context) => const AuthGuard(child: CategoriesScreen()),
+        '/checkout': (context) => const AuthGuard(child: CheckoutScreen()),
+        '/orders': (context) => const AuthGuard(child: OrdersScreen()),
+        '/order_details': (context) => const AuthGuard(child: OrderDetailsScreen()),
+        '/notifications': (context) => const AuthGuard(child: NotificationScreen()),
+        '/my_bookings': (context) => const AuthGuard(child: MyBookingsScreen()),
+        '/rewards': (context) => const AuthGuard(child: WalletScreen()),
+        '/profile': (context) => const AuthGuard(child: ProfileScreen()),
+        '/settings': (context) => const AuthGuard(child: SettingsScreen()),
+        '/help_support': (context) => const AuthGuard(child: HelpSupportScreen()),
+        '/thank_you': (context) => const AuthGuard(child: ThankYouScreen()),
+        '/search': (context) => const AuthGuard(child: SearchScreen()),
+        '/offers': (context) => const AuthGuard(child: OffersScreen()),
+        '/refer': (context) => const AuthGuard(child: ReferScreen()),
+        '/popular_services': (context) => const AuthGuard(child: PopularServicesScreen()),
       },
+
       onGenerateRoute: (settings) {
         if (settings.name == '/category_details') {
           return MaterialPageRoute(
@@ -278,3 +280,41 @@ class NexoraApp extends StatelessWidget {
     );
   }
 }
+
+class AuthGuard extends StatelessWidget {
+  final Widget child;
+  const AuthGuard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFF8FAFC),
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            ),
+          );
+        }
+        
+        final user = snapshot.data;
+        if (user == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          });
+          return const Scaffold(
+            backgroundColor: Color(0xFFF8FAFC),
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            ),
+          );
+        }
+        
+        return child;
+      },
+    );
+  }
+}
+

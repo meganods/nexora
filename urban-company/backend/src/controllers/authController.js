@@ -308,18 +308,18 @@ const sendLoginOtp = async (req, res) => {
       loginTime: FieldValue.serverTimestamp(),
     });
 
-    // 5. Send OTP via Nodemailer
-    try {
-      const { sendTemplateMail } = require('../services/emailService');
-      await sendTemplateMail(email, 'Nexora Login Verification Code', 'login_otp', {
-        USER_NAME: name,
-        OTP_CODE: otp,
-      });
-    } catch (mailError) {
-      console.warn('Mailer failed to send login OTP. Plaintext OTP:', otp);
-    }
+    // 5. Send OTP via Nodemailer (done in background, no await)
+    const { sendTemplateMail } = require('../services/emailService');
+    sendTemplateMail(email, 'Nexora Login Verification Code', 'login_otp', {
+      USER_NAME: name,
+      OTP_CODE: otp,
+    }).catch(mailError => {
+      console.warn('Mailer failed to send login OTP in background. Plaintext OTP:', otp);
+    });
+
 
     // 6. Write audit log
+
     await writeAuditLog(uid, email, isResend ? 'OTP_RESENT' : 'OTP_SENT', {
       loginSessionId,
       expiresAt,

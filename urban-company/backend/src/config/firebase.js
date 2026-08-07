@@ -175,8 +175,12 @@ try {
         useCert = true;
       }
     } catch (e) {
-      serviceAccount = serviceAccountString; // treat as file path
-      useCert = true;
+      if (serviceAccountString.trim().startsWith('{')) {
+        console.error('FIREBASE_SERVICE_ACCOUNT looks like JSON but failed to parse:', e.message);
+      } else {
+        serviceAccount = serviceAccountString; // treat as file path
+        useCert = true;
+      }
     }
   }
 

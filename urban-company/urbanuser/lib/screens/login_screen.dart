@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'idToken': idToken}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 60));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 

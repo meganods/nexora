@@ -132,7 +132,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'idToken': idToken}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 60));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -190,7 +190,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'idToken': idToken, 'otp': enteredOtp}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 60));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 

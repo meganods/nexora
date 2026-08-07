@@ -475,10 +475,64 @@ const verifyCashfreePayment = async (req, res) => {
   }
 };
 
+const handleCashfreeCallback = async (req, res) => {
+  try {
+    const orderId = req.query.order_id || '';
+    if (!orderId) {
+      return res.redirect('https://meganods-nexora.vercel.app/#/wallet');
+    }
+
+    const paymentRef = db.collection('payments').doc(orderId);
+    const paymentDoc = await paymentRef.get();
+
+    if (!paymentDoc.exists) {
+      return res.redirect('https://meganods-nexora.vercel.app/#/wallet?error=not_found');
+    }
+
+    const paymentData = paymentDoc.data();
+    let isPaid = false;
+    let paymentDetails = null;
+
+    if (paymentData.status === 'SUCCESS') {
+      isPaid = true;
+    } else if (paymentData.isMock || !CASHFREE_API_ID || !CASHFREE_SECRET_KEY) {
+      isPaid = true;
+    } else {
+      const response = await fetch(`${CASHFREE_BASE_URL}/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'x-api-version': '2023-08-01',
+          'x-client-id': CASHFREE_API_ID,
+          'x-client-secret': CASHFREE_SECRET_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const responseData = await response.json();
+      if (response.ok) {
+        isPaid = responseData.order_status === 'PAID';
+        paymentDetails = responseData;
+      }
+    }
+
+    if (isPaid) {
+      await processPaymentSuccess(orderId, paymentDetails);
+      return res.redirect('https://meganods-nexora.vercel.app/#/wallet?status=success');
+    } else {
+      return res.redirect('https://meganods-nexora.vercel.app/#/wallet?status=pending');
+    }
+  } catch (error) {
+    console.error('Callback error:', error.message);
+    return res.redirect('https://meganods-nexora.vercel.app/#/wallet?error=verification_failed');
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPaymentSignature,
   handleWebhook,
   createCashfreeOrder,
-  verifyCashfreePayment
+  verifyCashfreePayment,
+  handleCashfreeCallback
 };
+

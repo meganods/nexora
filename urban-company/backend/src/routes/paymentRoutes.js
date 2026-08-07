@@ -61,5 +61,29 @@ router.post(
   verifyCashfreePayment
 );
 
+// Cashfree Browser Redirect Callback (GET)
+// Cashfree redirects the browser here after payment on web.
+// The Flutter SDK handles the result via its own callback.
+// This endpoint simply closes the browser tab / redirects cleanly.
+router.get('/cashfree/callback', (req, res) => {
+  const orderId = req.query.order_id || '';
+  // Send a self-closing HTML page so the in-app browser closes automatically
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>Payment Complete</title></head>
+      <body style="font-family:sans-serif;text-align:center;padding:40px;">
+        <h2>✅ Payment Complete</h2>
+        <p>Your payment was processed successfully.</p>
+        <p>Please return to the Nexora app.</p>
+        <script>
+          // Try to close the browser tab / webview automatically
+          setTimeout(function() { window.close(); }, 1500);
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 module.exports = router;
 

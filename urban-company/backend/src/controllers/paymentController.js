@@ -333,7 +333,6 @@ const createCashfreeOrder = async (req, res) => {
         order_id: orderId,
         order_amount: parseFloat(amount),
         payment_session_id: `mock_session_${orderId}`,
-        payment_link: `https://example.com/mock-pay?order_id=${orderId}`
       };
 
       await db.collection('payments').doc(orderId).set({
@@ -360,6 +359,11 @@ const createCashfreeOrder = async (req, res) => {
     }
 
     // Live Cashfree API call
+    // NOTE: return_url is only used for web/browser fallback.
+    // The Flutter SDK handles payment result via setCallback() on the app side.
+    // We point it to the backend verify endpoint so server-side verification
+    // also works if the user somehow ends up in a browser.
+    const BACKEND_URL = process.env.BACKEND_URL || 'https://nexora-94dt.onrender.com';
     const response = await fetch(`${CASHFREE_BASE_URL}/orders`, {
       method: 'POST',
       headers: {
@@ -378,7 +382,7 @@ const createCashfreeOrder = async (req, res) => {
           customer_email: customerEmail || 'customer@nexora.com'
         },
         order_meta: {
-          return_url: `https://example.com/checkout/cf-callback?order_id=${orderId}`
+          return_url: `${BACKEND_URL}/api/v1/payments/cashfree/callback?order_id={order_id}`
         }
       })
     });

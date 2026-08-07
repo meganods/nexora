@@ -284,8 +284,10 @@ const sendLoginOtp = async (req, res) => {
 
     // 3. Generate OTP, hash with bcrypt, create new loginSessionId
     const otp = generateSecureOtp();
+    console.log(`[AUTH] Generated Login OTP for ${email}: ${otp}`);
     const otpHash = await bcrypt.hash(otp, 10);
     const loginSessionId = generateSessionId();
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const newResendCount = isResend ? prevResendCount + 1 : 1;
 

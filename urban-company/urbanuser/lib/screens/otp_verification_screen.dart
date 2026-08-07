@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 /// Base URL for the Nexora backend.
-const _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
+final String _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
 
 /// Countdown before user may resend — matches backend's cooldown window.
 const _kResendCooldownSeconds = 30;

@@ -7,8 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Nexora backend base URL for auth endpoints.
-const _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
+final String _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

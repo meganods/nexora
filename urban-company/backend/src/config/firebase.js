@@ -168,7 +168,9 @@ try {
 
   if (serviceAccountString) {
     try {
-      serviceAccount = JSON.parse(serviceAccountString);
+      // Fix for Render environment variables where \n is sometimes escaped
+      const cleanedString = serviceAccountString.replace(/\\n/g, '\n');
+      serviceAccount = JSON.parse(cleanedString);
       if (serviceAccount && serviceAccount.private_key) {
         useCert = true;
       }

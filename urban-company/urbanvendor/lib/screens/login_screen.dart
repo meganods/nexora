@@ -46,11 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() => _isSubmitting = false);
           AppSnackbar.show(context, "Welcome back, ${data?['ownerName'] ?? 'Partner'}!");
           
-          if (status.toLowerCase() == 'approved') {
-            Navigator.pushNamedAndRemoveUntil(context, '/expert_dashboard', (route) => false);
-          } else {
-            Navigator.pushNamedAndRemoveUntil(context, '/pending_dashboard', (route) => false);
-          }
+          Navigator.pushNamedAndRemoveUntil(context, '/expert_dashboard', (route) => false);
         }
       } else {
         if (mounted) {

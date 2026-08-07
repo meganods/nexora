@@ -134,38 +134,38 @@ class _VendorsScreenState extends State<VendorsScreen> {
           ],
         ),
         const Spacer(),
-        // Notification Badge Icon
-        Container(
-          height: 52,
-          width: 52,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(LucideIcons.bell, color: Color(0xFF6B7280), size: 20),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEF4444),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    '12',
-                    style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
+        // // Notification Badge Icon
+        // Container(
+        //   height: 52,
+        //   width: 52,
+        //   decoration: BoxDecoration(
+        //     color: Colors.white,
+        //     borderRadius: BorderRadius.circular(10),
+        //     border: Border.all(color: const Color(0xFFE5E7EB)),
+        //   ),
+        //   child: Stack(
+        //     alignment: Alignment.center,
+        //     children: [
+        //       const Icon(LucideIcons.bell, color: Color(0xFF6B7280), size: 20),
+        //       Positioned(
+        //         top: 8,
+        //         right: 8,
+        //         child: Container(
+        //           padding: const EdgeInsets.all(4),
+        //           decoration: const BoxDecoration(
+        //             color: Color(0xFFEF4444),
+        //             shape: BoxShape.circle,
+        //           ),
+        //           child: const Text(
+        //             '15',
+        //             style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+        //           ),
+        //         ),
+        //       )
+        //     ],
+        //   ),
+        // ),
+        // const SizedBox(width: 12),
         // Date badge
         InkWell(
           onTap: () async {
@@ -514,13 +514,20 @@ class _VendorsScreenState extends State<VendorsScreen> {
 
               // Apply Filters in memory
               var docs = rawDocs;
-              if (_selectedStatus != 'All Statuses') {
+              if (_selectedStatus == 'All Statuses') {
                 docs = docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  final status = (data['status'] ?? '').toString().toLowerCase();
-                  if (_selectedStatus == 'Active') return status == 'approved' || status == 'active';
-                  if (_selectedStatus == 'Pending Review') return status == 'pending' || status == 'pending review';
-                  return status == _selectedStatus.toLowerCase();
+                  final status = (data['status'] ?? '').toString().toUpperCase();
+                  return status == 'APPROVED' || status == 'ACTIVE';
+                }).toList();
+              } else {
+                docs = docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final status = (data['status'] ?? '').toString().toUpperCase();
+                  if (_selectedStatus == 'Active') return status == 'APPROVED' || status == 'ACTIVE';
+                  if (_selectedStatus == 'Pending Review') return status == 'PENDING' || status == 'PENDING REVIEW';
+                  if (_selectedStatus == 'Blocked') return status == 'BLOCKED';
+                  return status == _selectedStatus.toUpperCase();
                 }).toList();
               }
               if (_selectedCategory != 'All Categories') {
@@ -751,15 +758,18 @@ class _VendorsScreenState extends State<VendorsScreen> {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     _buildActionIcon(LucideIcons.eye, () {
-                                      _showTopRightToast('View Details of $name');
+                                      data['id'] = vendorId;
+                                      widget.onVendorSelected?.call(data);
                                     }),
                                     const SizedBox(width: 6),
                                     _buildActionIcon(LucideIcons.edit2, () {
-                                      _showTopRightToast('Edit Partner $name');
+                                      data['id'] = vendorId;
+                                      _showEditVendorDialog(context, vendorId, data);
                                     }),
                                     const SizedBox(width: 6),
                                     _buildActionIcon(LucideIcons.moreHorizontal, () {
-                                      _showTopRightToast('More actions for $name');
+                                      data['id'] = vendorId;
+                                      _showMoreActionsMenu(context, vendorId, data);
                                     }),
                                   ],
                                 ),
@@ -938,6 +948,212 @@ class _VendorsScreenState extends State<VendorsScreen> {
         color: const Color(0xFF6B7280),
         letterSpacing: 0.5,
       );
+
+  // Edit Vendor Dialog
+  void _showEditVendorDialog(BuildContext context, String docId, Map<String, dynamic> initialData) {
+    final nameController = TextEditingController(text: (initialData['name'] ?? initialData['businessName'] ?? '').toString());
+    final phoneController = TextEditingController(text: (initialData['phone'] ?? initialData['phoneNumber'] ?? '').toString());
+    String selectedCategory = (initialData['mainCategory'] ?? initialData['category'] ?? 'AC Repair').toString();
+    String selectedCity = (initialData['city'] ?? 'Bangalore').toString();
+    String selectedStatus = (initialData['status'] ?? 'APPROVED').toString().toUpperCase();
+
+    // Standardize category/city to match dropdown lists
+    final categories = ['AC Repair', 'Cleaning', 'Plumbing', 'Electrical'];
+    if (!categories.contains(selectedCategory)) {
+      selectedCategory = categories.first;
+    }
+    final cities = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Chennai'];
+    if (!cities.contains(selectedCity)) {
+      selectedCity = cities.first;
+    }
+    final statuses = ['APPROVED', 'PENDING', 'REJECTED', 'BLOCKED'];
+    if (!statuses.contains(selectedStatus)) {
+      selectedStatus = 'APPROVED';
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Edit Partner Details', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Partner Name'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: phoneController,
+                      decoration: const InputDecoration(labelText: 'Phone Number'),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) => setDialogState(() => selectedCategory = val!),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedCity,
+                      decoration: const InputDecoration(labelText: 'City'),
+                      items: cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) => setDialogState(() => selectedCity = val!),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      decoration: const InputDecoration(labelText: 'Verification Status'),
+                      items: statuses.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                      onChanged: (val) => setDialogState(() => selectedStatus = val!),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await FirebaseFirestore.instance.collection('vendors').doc(docId).update({
+                        'name': nameController.text.trim(),
+                        'businessName': nameController.text.trim(),
+                        'phone': phoneController.text.trim(),
+                        'phoneNumber': phoneController.text.trim(),
+                        'mainCategory': selectedCategory,
+                        'city': selectedCity,
+                        'status': selectedStatus,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      });
+                      Navigator.pop(ctx);
+                      _showTopRightToast('Partner details updated successfully!');
+                    } catch (e) {
+                      _showTopRightToast('Error: ${e.toString()}');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5B21B6), foregroundColor: Colors.white),
+                  child: const Text('Save Changes'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // More Actions 3-dot Menu
+  void _showMoreActionsMenu(BuildContext context, String docId, Map<String, dynamic> data) {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx + size.width - 240,
+        position.dy + 80,
+        position.dx + size.width,
+        position.dy + size.height,
+      ),
+      items: [
+        const PopupMenuItem<String>(
+          value: 'APPROVE',
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
+              SizedBox(width: 8),
+              Text('Approve Partner'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'REJECT',
+          child: Row(
+            children: [
+              Icon(Icons.cancel_rounded, color: Colors.orange, size: 18),
+              SizedBox(width: 8),
+              Text('Reject Application'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'BLOCK',
+          child: Row(
+            children: [
+              Icon(Icons.block_rounded, color: Colors.red, size: 18),
+              SizedBox(width: 8),
+              Text('Block Partner'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'DELETE',
+          child: Row(
+            children: [
+              Icon(Icons.delete_forever_rounded, color: Colors.red, size: 18),
+              SizedBox(width: 8),
+              Text('Delete Profile', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    ).then((choice) async {
+      if (choice == null) return;
+      try {
+        if (choice == 'APPROVE') {
+          await FirebaseFirestore.instance.collection('vendors').doc(docId).update({
+            'status': 'APPROVED',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          _showTopRightToast('Partner approved!');
+        } else if (choice == 'REJECT') {
+          await FirebaseFirestore.instance.collection('vendors').doc(docId).update({
+            'status': 'REJECTED',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          _showTopRightToast('Partner rejected!');
+        } else if (choice == 'BLOCK') {
+          await FirebaseFirestore.instance.collection('vendors').doc(docId).update({
+            'status': 'BLOCKED',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          _showTopRightToast('Partner blocked!');
+        } else if (choice == 'DELETE') {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Delete Profile?'),
+              content: const Text('This action is permanent and cannot be undone.'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+          if (confirm == true) {
+            await FirebaseFirestore.instance.collection('vendors').doc(docId).delete();
+            _showTopRightToast('Profile deleted!');
+          }
+        }
+      } catch (e) {
+        _showTopRightToast('Error: ${e.toString()}');
+      }
+    });
+  }
 }
 
 // Custom Painter to render mini KPI sparklines

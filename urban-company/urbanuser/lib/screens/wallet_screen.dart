@@ -5,7 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../services/invoice_service.dart';
 import '../widgets/app_toast.dart';
-
+import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfwebcheckoutpayment.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
+import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
+import 'dart:io' show Platform;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const _blue = Color(0xFF2563EB);
 const _dark = Color(0xFF0F172A);
@@ -331,7 +339,24 @@ class _WalletScreenState extends State<WalletScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text('₹${_balance.toStringAsFixed(0)}', style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('₹${_balance.toStringAsFixed(0)}', style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.white)),
+                            ElevatedButton.icon(
+                              onPressed: _showAddMoneySheet,
+                              icon: const Icon(Icons.add_rounded, size: 16),
+                              label: Text('Add Money', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: _blue,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -475,5 +500,209 @@ class _WalletScreenState extends State<WalletScreen> {
         Text(label, style: GoogleFonts.inter(fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600)),
       ],
     );
+  }
+
+  void _showAddMoneySheet() {
+    final TextEditingController amountController = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 20, right: 20, top: 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Add Money to Wallet', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: _dark)),
+                    IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: _dark),
+                  decoration: InputDecoration(
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Text('₹', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: _dark)),
+                    ),
+                    hintText: '0',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _quickAmountBtn('500', amountController, setModalState),
+                    _quickAmountBtn('1000', amountController, setModalState),
+                    _quickAmountBtn('2000', amountController, setModalState),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final val = double.tryParse(amountController.text);
+                            if (val == null || val <= 0) {
+                              AppToast.show(context, title: 'Invalid Amount', message: 'Please enter a valid amount.', isError: true);
+                              return;
+                            }
+                            setModalState(() => isSubmitting = true);
+                            await _initiateWalletRecharge(val);
+                            if (mounted) Navigator.pop(context);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _blue,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text('Proceed to Add', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _quickAmountBtn(String amount, TextEditingController controller, StateSetter setModalState) {
+    return ActionChip(
+      label: Text('+ ₹$amount', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: _blue)),
+      backgroundColor: const Color(0xFFEFF6FF),
+      side: const BorderSide(color: _blue),
+      onPressed: () {
+        setModalState(() {
+          controller.text = amount;
+        });
+      },
+    );
+  }
+
+  Future<void> _initiateWalletRecharge(double amount) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    final token = await user.getIdToken();
+    String url = 'http://localhost:5000/api/v1/payments/cashfree/order';
+    if (!kIsWeb) {
+      if (Platform.isAndroid) {
+         url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/order';
+      }
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'amount': amount,
+          'customerEmail': user.email ?? 'customer@nexora.com',
+          'customerPhone': '9999999999',
+          'paymentType': 'wallet_recharge',
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true) {
+          final orderData = resData['order'];
+          final orderId = orderData['order_id'];
+          final paymentSessionId = orderData['payment_session_id'];
+          final environmentStr = resData['environment'] ?? 'sandbox';
+
+          final environment = environmentStr.toLowerCase() == 'production'
+              ? CFEnvironment.PRODUCTION
+              : CFEnvironment.SANDBOX;
+
+          final cfPaymentGatewayService = CFPaymentGatewayService();
+          cfPaymentGatewayService.setCallback(
+            (String orderId) {
+              _verifyRechargeOnServer(orderId);
+            },
+            (CFErrorResponse errorResponse, String orderId) {
+              AppToast.show(context, title: 'Payment Failed', message: errorResponse.getMessage() ?? 'Cancelled.', isError: true);
+            },
+          );
+
+          final session = CFSessionBuilder()
+              .setOrderId(orderId)
+              .setPaymentSessionId(paymentSessionId)
+              .setEnvironment(environment)
+              .build();
+
+          final webCheckoutPayment = CFWebCheckoutPaymentBuilder()
+              .setSession(session)
+              .build();
+
+          cfPaymentGatewayService.doPayment(webCheckoutPayment);
+        } else {
+          AppToast.show(context, title: 'Error', message: resData['message'] ?? 'Failed to start payment.', isError: true);
+        }
+      } else {
+        AppToast.show(context, title: 'Error', message: 'Server error.', isError: true);
+      }
+    } catch (e) {
+      AppToast.show(context, title: 'Error', message: 'Network error.', isError: true);
+    }
+  }
+
+  Future<void> _verifyRechargeOnServer(String orderId) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final token = await user?.getIdToken();
+      String url = 'http://localhost:5000/api/v1/payments/cashfree/verify';
+      if (!kIsWeb) {
+        if (Platform.isAndroid) {
+           url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/verify';
+        }
+      }
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'orderId': orderId}),
+      );
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true) {
+          AppToast.show(context, title: 'Success', message: 'Wallet recharged successfully!');
+          _loadWalletStats(); // Refresh balance
+        } else {
+          AppToast.show(context, title: 'Pending', message: 'Payment verification pending.');
+        }
+      } else {
+        AppToast.show(context, title: 'Error', message: 'Failed to verify payment.', isError: true);
+      }
+    } catch (e) {
+      AppToast.show(context, title: 'Error', message: 'Network error during verification.', isError: true);
+    }
   }
 }

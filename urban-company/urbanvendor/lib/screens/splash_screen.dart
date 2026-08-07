@@ -31,11 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
           final data = doc.data();
           final String status = data?['status'] ?? 'pending';
           if (!mounted) return;
-          if (status.toLowerCase() == 'approved') {
-            Navigator.pushReplacementNamed(context, '/expert_dashboard');
-          } else {
-            Navigator.pushReplacementNamed(context, '/pending_dashboard');
-          }
+          Navigator.pushReplacementNamed(context, '/expert_dashboard');
           return;
         }
       } catch (e) {

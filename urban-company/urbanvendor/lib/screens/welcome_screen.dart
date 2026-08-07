@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,54 +11,6 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  Timer? _autoScrollTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startAutoScroll();
-  }
-
-  void _startAutoScroll() {
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_pageController.hasClients) {
-        int nextPage = _currentPage + 1;
-        if (nextPage >= _slides.length) {
-          nextPage = 0;
-        }
-        _pageController.animateToPage(
-          nextPage,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _autoScrollTimer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  final List<Map<String, String>> _slides = [
-    {
-      "title": "Grow Your Business",
-      "desc": "Access thousands of home service booking requests in your neighborhood daily."
-    },
-    {
-      "title": "Flexible Hours",
-      "desc": "You are the boss. Work when you want, set your availability calendar and breaks."
-    },
-    {
-      "title": "Instant Withdrawals",
-      "desc": "Receive direct bank transfers of your earnings with transparent commission logs."
-    }
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -125,7 +76,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             child: SingleChildScrollView(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 440),
-                height: 540,
+                height: 580,
                 padding: const EdgeInsets.all(40),
                 child: _buildWelcomeCardContent(),
               ),
@@ -168,72 +119,70 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (idx) {
-              setState(() => _currentPage = idx);
-              _startAutoScroll(); // Reset timer on manual swipe
-            },
-            itemCount: _slides.length,
-            itemBuilder: (context, idx) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: VendorTheme.primaryColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      idx == 0
-                          ? Icons.trending_up_rounded
-                          : idx == 1
-                              ? Icons.alarm_on_rounded
-                              : Icons.payments_rounded,
-                      color: VendorTheme.primaryColor,
-                      size: 32,
-                    ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.transparent,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: VendorTheme.primaryColor,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: VendorTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      )
+                    ],
                   ),
-                  const SizedBox(height: 32),
-                  Text(
-                    _slides[idx]["title"]!,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: VendorTheme.textPrimary),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: Colors.white,
+                    size: 38,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _slides[idx]["desc"]!,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 14, color: VendorTheme.textSecondary, height: 1.5),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  "Nexora Partner Platform",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: VendorTheme.textPrimary,
+                    letterSpacing: -0.5,
                   ),
-                ],
-              );
-            },
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _slides.length,
-            (index) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: _currentPage == index ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _currentPage == index ? VendorTheme.primaryColor : VendorTheme.borderColor,
-                borderRadius: BorderRadius.circular(4),
-              ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Access daily home service bookings, control your hours, set custom pricing rates, and receive instant payouts directly to your account.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: VendorTheme.textSecondary,
+                    height: 1.6,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 40),
         SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
             onPressed: () => Navigator.pushNamed(context, '/register'),
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
             child: const Text("Become a Partner"),
           ),
         ),
@@ -243,6 +192,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           height: 56,
           child: OutlinedButton(
             onPressed: () => Navigator.pushNamed(context, '/login'),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
             child: const Text("Already Registered"),
           ),
         ),

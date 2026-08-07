@@ -61,12 +61,7 @@ class _ExpertPortalDashboardState extends State<ExpertPortalDashboard> {
         final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
         final String status = (data['status'] ?? 'pending').toString().toLowerCase();
 
-        // Redirect gate checks (Skip if testing bypass flag is set)
-        if (status == 'pending' && !isTestBypass) {
-          Future.microtask(() {
-            if (mounted) Navigator.pushReplacementNamed(context, '/pending_dashboard');
-          });
-        }
+        // Redirect gate checks removed
 
         final String ownerName = data['ownerName'] ?? 'Vishal';
         final String businessName = data['businessName'] ?? 'Nexora Partner';

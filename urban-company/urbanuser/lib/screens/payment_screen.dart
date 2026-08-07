@@ -6,7 +6,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/thank_you_screen.dart';
 import '../services/smart_assignment_service.dart';
 import 'address_setup_screen.dart';
-
+import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfwebcheckoutpayment.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
+import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const _blue = Color(0xFF2563EB);
 const _dark = Color(0xFF0F172A);
@@ -57,6 +65,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _appliedCouponCode;
   bool _isValidatingCoupon = false;
 
+  double _walletBalance = 0.0;
+
   final double _platformFee = 29.0;
   final double _gstTaxes = 52.0;
 
@@ -64,9 +74,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     _loadUserAddress();
+    _loadWalletBalance();
     if (widget.coupon != null) {
       _appliedCouponCode = widget.coupon!['code'];
       _couponDiscount = (widget.coupon!['discount'] ?? 0.0) as double;
+    }
+  }
+
+  Future<void> _loadWalletBalance() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('wallet').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          if (mounted) {
+            setState(() {
+              _walletBalance = ((doc.data()!['balance'] ?? 0.0) as num).toDouble();
+            });
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -109,6 +136,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     double total = _basePrice + _platformFee + _gstTaxes - _couponDiscount;
     return total < 0 ? 0 : total;
   }
+
+  double get _walletUsed {
+    if (_selectedPaymentMethod == 'NEXORA Wallet') {
+      return _finalGrandTotal > _walletBalance ? _walletBalance : _finalGrandTotal;
+    }
+    return 0.0;
+  }
+
+  double get _cashfreeAmount => _finalGrandTotal - _walletUsed;
 
   Future<void> _validateAndApplyCoupon(String code) async {
     final cleanCode = code.trim().toUpperCase();
@@ -463,6 +499,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const SizedBox(height: 8),
                         _priceRow('Coupon Discount', '- ₹${_couponDiscount.toStringAsFixed(0)}', isGreen: true),
                       ],
+                      if (_walletUsed > 0) ...[
+                        const SizedBox(height: 8),
+                        _priceRow('Wallet Amount Used', '- ₹${_walletUsed.toStringAsFixed(0)}', isGreen: true),
+                      ],
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(color: _border),
@@ -470,10 +510,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Grand Total Payable',
+                          Text(_walletUsed > 0 ? 'Net Cashfree Payable' : 'Grand Total Payable',
                               style: GoogleFonts.inter(
                                   fontSize: 15, fontWeight: FontWeight.bold, color: _dark)),
-                          Text('₹${_finalGrandTotal.toStringAsFixed(0)}',
+                          Text('₹${_cashfreeAmount.toStringAsFixed(0)}',
                               style: GoogleFonts.inter(
                                   fontSize: 22, fontWeight: FontWeight.w900, color: _blue)),
                         ],
@@ -491,7 +531,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       _paymentTile('UPI / Google Pay', 'Instant payment via GPay, PhonePe, Paytm', Icons.account_balance_wallet_rounded),
                       _paymentTile('Credit / Debit Card', 'Visa, Mastercard, RuPay', Icons.credit_card_rounded),
                       _paymentTile('Net Banking', 'All major Indian banks', Icons.account_balance_rounded),
-                      _paymentTile('NEXORA Wallet', 'Available balance ₹150', Icons.account_balance_wallet_outlined),
+                      _paymentTile('NEXORA Wallet', 'Available balance ₹${_walletBalance.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(10),
@@ -570,14 +610,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('FINAL PAYABLE',
+                      Text(_walletUsed > 0 ? 'CASHFREE PAYABLE' : 'FINAL PAYABLE',
                           style: GoogleFonts.inter(
                               fontSize: 8,
                               fontWeight: FontWeight.bold,
                               color: _gray,
                               letterSpacing: 0.5)),
                       const SizedBox(height: 2),
-                      Text('₹${_finalGrandTotal.toStringAsFixed(0)}',
+                      Text('₹${_cashfreeAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
                               fontSize: 22, fontWeight: FontWeight.w900, color: _blue)),
                     ],
@@ -635,75 +675,130 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } catch (_) {}
 
-    try {
-      // 1. Create Booking Doc
-      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
-        'id': bookingId,
-        'userId': user?.uid ?? 'guest_user',
-        'userEmail': user?.email ?? 'guest@nexora.com',
-        'userName': _userName,
-        'userPhone': _userPhone,
-        'userAddress': _userAddress,
-        'shopName': assignedShopName,
-        'price': '₹${_finalGrandTotal.toStringAsFixed(0)}',
-        'rawAmount': _finalGrandTotal,
-        'date': widget.date ?? 'Tomorrow',
-        'time': widget.time ?? '10:00 AM',
-        'paymentMethod': _selectedPaymentMethod,
-        'bookingStatus': 'Completed',
-        'status': 'assigned',
-        'notes': _notesController.text,
-        'couponCode': _appliedCouponCode,
-        'createdAt': FieldValue.serverTimestamp(),
-        'completedAt': FieldValue.serverTimestamp(),
-        'vendorId': assignedVendorId,
-        'coverImage': widget.imageUrl ?? '',
-      }).timeout(const Duration(seconds: 2));
-
-      // 2. Record Payment
-      final String paymentId = "PM-${100000 + DateTime.now().millisecond + DateTime.now().second * 1000}";
-      await FirebaseFirestore.instance.collection('payments').doc(paymentId).set({
-        'paymentId': paymentId,
-        'bookingId': bookingId,
-        'userId': user?.uid ?? 'guest_user',
-        'amount': _finalGrandTotal,
-        'paymentMethod': _selectedPaymentMethod,
-        'status': 'success',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // 3. Record Coupon Redemption (one-time use per user enforcement)
-      if (_appliedCouponCode != null && _appliedCouponCode!.isNotEmpty) {
-        final String couponCode = _appliedCouponCode!;
-        final String redemptionId = "CR-${user?.uid ?? 'guest'}-$couponCode-${DateTime.now().millisecondsSinceEpoch}";
-
-        // Write redemption record for this user
-        await FirebaseFirestore.instance.collection('coupon_redemptions').doc(redemptionId).set({
-          'redemptionId': redemptionId,
-          'couponCode': couponCode,
-          'userId': user?.uid ?? 'guest_user',
-          'userEmail': user?.email ?? 'guest@nexora.com',
-          'bookingId': bookingId,
-          'discountAmount': _couponDiscount,
-          'redeemedAt': FieldValue.serverTimestamp(),
-        });
-
-        // Increment totalUsed on the coupon doc (atomically)
-        try {
-          final couponSnap = await FirebaseFirestore.instance
-              .collection('coupons')
-              .where('code', isEqualTo: couponCode)
-              .limit(1)
-              .get();
-          if (couponSnap.docs.isNotEmpty) {
-            await couponSnap.docs.first.reference.update({
-              'totalUsed': FieldValue.increment(1),
-            });
-          }
-        } catch (_) {}
+    final token = await user?.getIdToken();
+    String url = 'http://localhost:5000/api/v1/payments/cashfree/order';
+    if (!kIsWeb) {
+      if (Platform.isAndroid) {
+         url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/order';
       }
-    } catch (_) {}
+    }
 
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'amount': _cashfreeAmount,
+          'bookingId': bookingId,
+          'customerEmail': user?.email ?? 'customer@nexora.com',
+          'customerPhone': _userPhone.replaceAll(RegExp(r'[^0-9]'), ''),
+          'paymentType': 'booking_payment',
+          'walletUsed': _walletUsed,
+          'couponCode': _appliedCouponCode ?? '',
+          'couponDiscount': _couponDiscount,
+          'bookingData': {
+            'userEmail': user?.email ?? 'customer@nexora.com',
+            'userName': _userName,
+            'userPhone': _userPhone,
+            'userAddress': _userAddress,
+            'shopName': assignedShopName,
+            'totalAmount': _finalGrandTotal,
+            'date': widget.date ?? 'Tomorrow',
+            'time': widget.time ?? '10:00 AM',
+            'notes': _notesController.text,
+            'vendorId': assignedVendorId,
+            'coverImage': widget.imageUrl ?? '',
+          }
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true) {
+          final orderData = resData['order'];
+          final orderId = orderData['order_id'];
+
+          if (resData['status'] == 'PAID') {
+            // Already paid (e.g. Wallet-only or mock auto-success)
+            _navigateToSuccessScreen(bookingId, assignedShopName);
+            return;
+          }
+
+          final String paymentSessionId = orderData['payment_session_id'];
+          final String environmentStr = resData['environment'] ?? 'sandbox';
+
+          final environment = environmentStr.toLowerCase() == 'production'
+              ? CFEnvironment.PRODUCTION
+              : CFEnvironment.SANDBOX;
+          final cfPaymentGatewayService = CFPaymentGatewayService();
+          cfPaymentGatewayService.setCallback(
+            (String orderId) {
+              _verifyOrderPaymentOnServer(orderId, bookingId, assignedVendorId, assignedShopName);
+            },
+            (CFErrorResponse errorResponse, String orderId) {
+              _handlePaymentFailed(errorResponse.getMessage() ?? "Payment failed or cancelled.");
+            },
+          );
+          final session = CFSessionBuilder()
+              .setOrderId(orderId)
+              .setPaymentSessionId(paymentSessionId)
+              .setEnvironment(environment)
+              .build();
+
+          final webCheckoutPayment = CFWebCheckoutPaymentBuilder()
+              .setSession(session)
+              .build();
+
+          cfPaymentGatewayService.doPayment(webCheckoutPayment);
+        } else {
+          _handlePaymentFailed("Order creation failed: ${resData['message']}");
+        }
+      } else {
+        _handlePaymentFailed("Server error code: ${response.statusCode}");
+      }
+    } catch (e) {
+      _handlePaymentFailed("Failed to connect to payment server: $e");
+    }
+  }
+
+  Future<void> _verifyOrderPaymentOnServer(
+      String orderId, String bookingId, String vendorId, String shopName) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final token = await user?.getIdToken();
+      String url = 'http://localhost:5000/api/v1/payments/cashfree/verify';
+      if (!kIsWeb) {
+        if (Platform.isAndroid) {
+           url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/verify';
+        }
+      }
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'orderId': orderId}),
+      );
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        if (resData['success'] == true) {
+          _navigateToSuccessScreen(bookingId, shopName);
+          return;
+        }
+      }
+      _handlePaymentFailed("Payment verification failed. Please check status.");
+    } catch (e) {
+      _handlePaymentFailed("Network error during verification: $e");
+    }
+  }
+
+  void _navigateToSuccessScreen(String bookingId, String shopName) {
     if (mounted) {
       setState(() => _isSubmitting = false);
       Navigator.push(
@@ -719,6 +814,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ),
         ),
       );
+    }
+  }
+
+  void _handlePaymentFailed(String errorMsg) {
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+      _showToast(errorMsg, isError: true);
     }
   }
 

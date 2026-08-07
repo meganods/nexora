@@ -466,7 +466,7 @@ class _AuditLogTab extends StatelessWidget {
                     SizedBox(
                       width: 140,
                       child: Text(sid.length > 16 ? '${sid.substring(0, 16)}…' : sid,
-                          style: GoogleFonts.inter(fontSize: 11, color: _gray, fontFamily: 'monospace')),
+                          style: GoogleFonts.inter(fontSize: 11, color: _gray).copyWith(fontFamily: 'monospace')),
                     ),
                   ),
                   DataCell(Text(timeStr, style: GoogleFonts.inter(fontSize: 12, color: _gray))),

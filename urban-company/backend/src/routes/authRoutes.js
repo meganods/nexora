@@ -10,6 +10,8 @@ const {
   resetPassword,
   sendLoginOtp,
   verifyLoginOtp,
+  sendRegisterOtp,
+  verifyRegisterOtp,
 } = require('../controllers/authController');
 const { validateFields } = require('../middleware/validation');
 
@@ -128,6 +130,34 @@ router.post(
     validateFields
   ],
   verifyLoginOtp
+);
+
+// ─── Vendor Registration OTP — Send code to email ───────────────────────────
+router.post(
+  '/send-register-otp',
+  otpSendLimiter,
+  [
+    body('email').isEmail().withMessage('Enter a valid email address'),
+    body('name').optional().isString(),
+    validateFields
+  ],
+  sendRegisterOtp
+);
+
+// ─── Vendor Registration OTP — Verify code entered by user ───────────────────
+router.post(
+  '/verify-register-otp',
+  otpVerifyLimiter,
+  [
+    body('email').isEmail().withMessage('Enter a valid email address'),
+    body('otp')
+      .isLength({ min: 6, max: 6 })
+      .withMessage('OTP must be exactly 6 digits')
+      .matches(/^\d{6}$/)
+      .withMessage('OTP must contain only digits'),
+    validateFields
+  ],
+  verifyRegisterOtp
 );
 
 module.exports = router;

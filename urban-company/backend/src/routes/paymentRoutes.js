@@ -1,6 +1,12 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { createOrder, verifyPaymentSignature, handleWebhook } = require('../controllers/paymentController');
+const { 
+  createOrder, 
+  verifyPaymentSignature, 
+  handleWebhook,
+  createCashfreeOrder,
+  verifyCashfreePayment
+} = require('../controllers/paymentController');
 const authMiddleware = require('../middleware/auth');
 const { validateFields } = require('../middleware/validation');
 
@@ -34,4 +40,26 @@ router.post(
   verifyPaymentSignature
 );
 
+// Cashfree Specific Endpoints
+router.post(
+  '/cashfree/order',
+  authMiddleware,
+  [
+    body('amount').isNumeric().withMessage('amount is required'),
+    validateFields
+  ],
+  createCashfreeOrder
+);
+
+router.post(
+  '/cashfree/verify',
+  authMiddleware,
+  [
+    body('orderId').notEmpty().withMessage('orderId is required'),
+    validateFields
+  ],
+  verifyCashfreePayment
+);
+
 module.exports = router;
+

@@ -667,23 +667,12 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> {
               }
               final rawDocs = snapshot.data?.docs ?? [];
 
-              // Apply Filters in memory
-              var docs = rawDocs;
-
-              // Filter based on selected Tab (All, Pending, Archived)
-              if (_selectedStatusTab == 'Pending') {
-                docs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final s = (data['status'] ?? '').toString().toUpperCase();
-                  return s == 'PENDING' || s == 'PENDING REVIEW' || s == '';
-                }).toList();
-              } else if (_selectedStatusTab == 'Archived') {
-                docs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final s = (data['status'] ?? '').toString().toUpperCase();
-                  return s == 'APPROVED' || s == 'REJECTED' || s == 'BLOCKED';
-                }).toList();
-              }
+              // Apply Filters in memory (Only show pending review applications)
+              var docs = rawDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final s = (data['status'] ?? '').toString().toUpperCase();
+                return s == 'PENDING' || s == 'PENDING REVIEW' || s == '';
+              }).toList();
 
               // Dropdown Status filter
               if (_selectedStatus != 'All Statuses') {

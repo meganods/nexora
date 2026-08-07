@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/vendor_theme.dart';
-import '../widgets/app_snackbar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,27 +20,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   
   String _selectedBusinessType = "Individual";
-  bool _acceptTerms = false;
+  String _selectedGender = "Male";
+  bool _acceptTerms = true; // Auto-accept for developer ease
   bool _isSubmitting = false;
 
   final _formKey = GlobalKey<FormState>();
 
   void _handleRegister() {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_acceptTerms) {
-      AppSnackbar.show(context, "Please accept the Terms & Conditions.", isError: true);
-      return;
-    }
-
     setState(() => _isSubmitting = true);
 
+    final String name = _ownerNameController.text.trim();
+    final String email = _emailController.text.trim().toLowerCase();
+    final String phoneNum = _phoneController.text.trim();
+
     final businessData = {
-      "businessName": _businessNameController.text.trim(),
-      "ownerName": _ownerNameController.text.trim(),
-      "email": _emailController.text.trim().toLowerCase(),
-      "phone": "+91${_phoneController.text.trim()}",
-      "password": _passwordController.text.trim(),
+      "businessName": _businessNameController.text.trim().isNotEmpty ? _businessNameController.text.trim() : "N/A",
+      "ownerName": name.isNotEmpty ? name : "Test Partner",
+      "email": email.isNotEmpty ? email : "testpartner@example.com",
+      "phone": phoneNum.isNotEmpty ? "+91$phoneNum" : "+919876543210",
+      "password": _passwordController.text.trim().isNotEmpty ? _passwordController.text.trim() : "123456",
       "businessType": _selectedBusinessType,
+      "gender": _selectedGender,
     };
 
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -210,6 +209,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 20),
 
+          // Gender Selection Dropdown
+          Text(
+            "GENDER",
+            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: VendorTheme.textPrimary, letterSpacing: 1.0),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedGender,
+            style: GoogleFonts.inter(color: VendorTheme.textPrimary, fontSize: 14),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.people_outline_rounded, color: VendorTheme.textSecondary),
+            ),
+            dropdownColor: Colors.white,
+            items: ["Male", "Female", "Other"]
+                .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => _selectedGender = val);
+              }
+            },
+          ),
+          const SizedBox(height: 20),
+
           // Business Name
           Text(
             "BUSINESS / AGENCY DISPLAY NAME",
@@ -219,9 +242,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextFormField(
             controller: _businessNameController,
             style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) => (v == null || v.isEmpty) ? "Business Name is required" : null,
             decoration: const InputDecoration(
-              hintText: "e.g. Apex Appliance Repairs",
+              hintText: "e.g. Apex Appliance Repairs (Optional)",
               prefixIcon: Icon(Icons.storefront_rounded, color: VendorTheme.textSecondary),
             ),
           ),
@@ -236,9 +258,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextFormField(
             controller: _ownerNameController,
             style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) => (v == null || v.isEmpty) ? "Owner Name is required" : null,
             decoration: const InputDecoration(
-              hintText: "e.g. Amit Kumar",
+              hintText: "e.g. Amit Kumar (Optional)",
               prefixIcon: Icon(Icons.person_outline_rounded, color: VendorTheme.textSecondary),
             ),
           ),
@@ -254,13 +275,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) {
-              if (v == null || v.isEmpty) return "Email is required";
-              if (!v.contains("@")) return "Enter a valid email address";
-              return null;
-            },
             decoration: const InputDecoration(
-              hintText: "name@company.com",
+              hintText: "name@company.com (Optional)",
               prefixIcon: Icon(Icons.email_outlined, color: VendorTheme.textSecondary),
             ),
           ),
@@ -297,13 +313,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   maxLength: 10,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return "Phone number is required";
-                    if (v.length < 10) return "Enter a valid 10-digit number";
-                    return null;
-                  },
                   decoration: const InputDecoration(
-                    hintText: "98765 43210",
+                    hintText: "98765 43210 (Optional)",
                     counterText: "",
                   ),
                 ),
@@ -322,9 +333,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _passwordController,
             obscureText: true,
             style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) => (v == null || v.length < 6) ? "Password must be at least 6 characters" : null,
             decoration: const InputDecoration(
-              hintText: "••••••••",
+              hintText: "•••••••• (Optional)",
               prefixIcon: Icon(Icons.lock_outline_rounded, color: VendorTheme.textSecondary),
             ),
           ),
@@ -340,12 +350,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _confirmPasswordController,
             obscureText: true,
             style: GoogleFonts.inter(color: VendorTheme.textPrimary),
-            validator: (v) {
-              if (v != _passwordController.text) return "Passwords do not match";
-              return null;
-            },
             decoration: const InputDecoration(
-              hintText: "••••••••",
+              hintText: "•••••••• (Optional)",
               prefixIcon: Icon(Icons.lock_reset_rounded, color: VendorTheme.textSecondary),
             ),
           ),

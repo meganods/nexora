@@ -511,6 +511,130 @@ const verifyLoginOtp = async (req, res) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/v1/auth/send-register-otp
+// Generates a 6-digit OTP, saves it hashed to Firestore (register_otps collection),
+// and emails it to the given address. No Firebase Auth user is created yet.
+// ═══════════════════════════════════════════════════════════════════════════════
+const sendRegisterOtp = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const displayName = (name || normalizedEmail.split('@')[0]).trim();
+
+    // Check if email is already registered in Firebase Auth
+    try {
+      await firebaseAuth.getUserByEmail(normalizedEmail);
+      return res.status(409).json({ success: false, message: 'This email address is already registered. Please log in.' });
+    } catch (authErr) {
+      // 'auth/user-not-found' is the expected case — we can proceed
+      if (authErr.code !== 'auth/user-not-found') {
+        throw authErr;
+      }
+    }
+
+    // Generate OTP and hash it
+    const otp = generateSecureOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    await db.collection('register_otps').doc(normalizedEmail).set({
+      email: normalizedEmail,
+      otpHash,
+      expiresAt,
+      attempts: 0,
+      verified: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    // Send registration OTP email
+    try {
+      const { sendTemplateMail } = require('../services/emailService');
+      await sendTemplateMail(normalizedEmail, 'Verify Your Nexora Partner Email', 'register_otp', {
+        USER_NAME: displayName,
+        OTP_CODE: otp,
+      });
+    } catch (mailError) {
+      console.warn('Registration mailer failed. OTP:', otp);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your email address.',
+      email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, '$1****$3'),
+    });
+  } catch (error) {
+    console.error('sendRegisterOtp error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to send verification code.', error: error.message });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/v1/auth/verify-register-otp
+// Verifies the OTP against the hashed value in Firestore.
+// Returns { success: true, verified: true } on correct OTP so the Flutter
+// client can proceed to create the Firebase Auth user.
+// ═══════════════════════════════════════════════════════════════════════════════
+const verifyRegisterOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const MAX_ATTEMPTS = 5;
+
+    const docRef = db.collection('register_otps').doc(normalizedEmail);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return res.status(400).json({ success: false, message: 'No active verification session. Please request a new code.' });
+    }
+
+    const data = docSnap.data();
+
+    if (data.verified === true) {
+      return res.status(400).json({ success: false, message: 'This code has already been used. Please request a new one.' });
+    }
+
+    if (data.attempts >= MAX_ATTEMPTS) {
+      return res.status(429).json({ success: false, message: 'Too many failed attempts. Please request a new verification code.' });
+    }
+
+    const expiresAt = parseDate(data.expiresAt) || new Date(0);
+    if (Date.now() > expiresAt.getTime()) {
+      await docRef.delete();
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new one.' });
+    }
+
+    const isMatch = await bcrypt.compare(otp, data.otpHash || '');
+    if (!isMatch) {
+      const newAttempts = data.attempts + 1;
+      await docRef.update({ attempts: newAttempts });
+      const remaining = MAX_ATTEMPTS - newAttempts;
+      return res.status(400).json({
+        success: false,
+        message: remaining > 0
+          ? `Incorrect code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+          : 'Too many failed attempts. Please request a new verification code.',
+      });
+    }
+
+    // Mark as verified so it can't be reused; the Flutter client creates the Firebase user next
+    await docRef.update({ verified: true, verifiedAt: FieldValue.serverTimestamp(), otpHash: null });
+
+    return res.status(200).json({ success: true, message: 'Email verified successfully.', verified: true });
+  } catch (error) {
+    console.error('verifyRegisterOtp error:', error.message);
+    return res.status(500).json({ success: false, message: 'Verification failed. Please try again.', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -520,4 +644,7 @@ module.exports = {
   resetPassword,
   sendLoginOtp,
   verifyLoginOtp,
+  sendRegisterOtp,
+  verifyRegisterOtp,
 };
+

@@ -17,6 +17,7 @@ import 'screens/settings_screen.dart';
 import 'screens/coupons_screen.dart';
 import 'screens/categories_screen.dart';
 import 'screens/login_monitoring_screen.dart';
+import 'screens/rejected_vendors_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String? initialMenu;
@@ -142,6 +143,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
             _showingVendorDetails = true;
           }),
         );
+      case 'Rejected Vendors':
+        return RejectedVendorsScreen(
+          onVendorSelected: (vendor) => setState(() {
+            _selectedVendor = vendor;
+            _showingVendorDetails = true;
+          }),
+        );
       case 'Settings':
         return const SettingsScreen();
       case 'Coupons':
@@ -192,6 +200,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildMenuItem('Dashboard', Icons.dashboard_rounded),
                   _buildMenuItem('Vendors', Icons.store_rounded),
                   _buildMenuItem('Applications', Icons.assignment_rounded),
+                  _buildMenuItem('Rejected Vendors', Icons.gavel_rounded),
                   _buildMenuItem('Services', Icons.handyman_rounded),
                   _buildMenuItem('Categories', Icons.category_rounded),
                   _buildMenuItem('Bookings', Icons.calendar_month_rounded),

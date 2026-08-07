@@ -52,7 +52,7 @@ class RootGatekeeper extends StatelessWidget {
                     );
                   }
                   if (!uidSnapshot.hasData || !uidSnapshot.data!.exists) {
-                    return const PendingDashboardScreen();
+                    return const ExpertPortalDashboard();
                   }
                   return _checkStatusAndNavigate(uidSnapshot.data!.data() as Map<String, dynamic>);
                 },
@@ -67,13 +67,6 @@ class RootGatekeeper extends StatelessWidget {
   }
 
   Widget _checkStatusAndNavigate(Map<String, dynamic> data) {
-    final verification = data['verification'] as Map<String, dynamic>? ?? {};
-    final status = (data['status'] ?? verification['status'] ?? 'NotStarted').toString().toLowerCase().trim();
-
-    if (status == 'approved') {
-      return const ExpertPortalDashboard();
-    } else {
-      return const PendingDashboardScreen();
-    }
+    return const ExpertPortalDashboard();
   }
 }

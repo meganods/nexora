@@ -82,35 +82,70 @@ class VendorDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildBreadcrumbs(Map<String, dynamic> data) {
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Row(
       children: [
-        GestureDetector(
+        InkWell(
           onTap: onBack,
-          child: Text(
-            'Vendors',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: const Color(0xFF64748B),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFF2563EB)),
+                const SizedBox(width: 6),
+                Text(
+                  'Back',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFFCBD5E1)),
-        const SizedBox(width: 8),
-        Text(
-          'Partner Onboarding',
-          style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+        const SizedBox(width: 16),
+        Container(
+          height: 16,
+          width: 1,
+          color: const Color(0xFFCBD5E1),
         ),
-        const SizedBox(width: 8),
-        const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFFCBD5E1)),
-        const SizedBox(width: 8),
-        Text(
-          'Application #${data['id'] ?? 'VP-8829'}',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF2563EB),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: onBack,
+                child: Text(
+                  'Vendors',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFFCBD5E1)),
+              const SizedBox(width: 8),
+              Text(
+                'Partner Onboarding',
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+              ),
+              const SizedBox(width: 8),
+              const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFFCBD5E1)),
+              const SizedBox(width: 8),
+              Text(
+                'Application #${data['id'] ?? 'VP-8829'}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF2563EB),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -212,11 +247,26 @@ class VendorDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildProfileInfo(bool isWide, Map<String, dynamic> data) {
-    final String statusStr = (data['status'] ?? (data['verification'] as Map<String, dynamic>?)?['status'] ?? 'PENDING').toString().toUpperCase().trim();
-    final String emailStr = data['email'] ?? 'N/A';
-    final String phoneStr = data['phoneNumber'] ?? data['phone'] ?? 'N/A';
+    final String statusStr = (data['status'] ?? (data['verification'] is Map ? (data['verification'] as Map)['status'] : null) ?? 'PENDING').toString().toUpperCase().trim();
+    final String emailStr = (data['email'] ?? 'N/A').toString();
+    final String phoneStr = (data['phoneNumber'] ?? data['phone'] ?? 'N/A').toString();
     final String experienceStr = data['experience'] != null ? '${data['experience']} Years' : 'N/A';
-    final String addressStr = data['address'] ?? 'N/A';
+    
+    String addressStr = 'N/A';
+    if (data['address'] != null) {
+      if (data['address'] is Map) {
+        final m = data['address'] as Map;
+        final parts = [
+          m['streetAddress'] ?? m['street'] ?? '',
+          m['city'] ?? '',
+          m['state'] ?? '',
+          m['zipCode'] ?? m['postalCode'] ?? ''
+        ].where((e) => e.toString().trim().isNotEmpty).toList();
+        addressStr = parts.isNotEmpty ? parts.join(', ') : 'N/A';
+      } else {
+        addressStr = data['address'].toString();
+      }
+    }
 
     String registrationDate = 'N/A';
     if (data['createdAt'] != null) {
@@ -584,8 +634,10 @@ class VendorDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildComplianceDocs(BuildContext context, Map<String, dynamic> data) {
-    final verification = data['verification'] as Map<String, dynamic>? ?? {};
-    final gst = verification['gst'] as Map<String, dynamic>? ?? data['gst'] as Map<String, dynamic>? ?? {};
+    final Map<String, dynamic> verification = data['verification'] is Map ? Map<String, dynamic>.from(data['verification'] as Map) : {};
+    final Map<String, dynamic> gst = verification['gst'] is Map 
+        ? Map<String, dynamic>.from(verification['gst'] as Map) 
+        : (data['gst'] is Map ? Map<String, dynamic>.from(data['gst'] as Map) : {});
 
     final String? aadhaarNumber = verification['aadhaarNumber'] ?? data['aadhaarNumber'];
     final String? aadhaarUrl = verification['aadhaarCardUrl'] ?? data['aadhaarCardUrl'] ?? data['aadhaarUrl'];

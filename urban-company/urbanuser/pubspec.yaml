@@ -38,6 +38,7 @@ dependencies:
   latlong2: ^0.9.1
   http: ^1.2.1
   flutter_map_cancellable_tile_provider: ^3.0.2
+  flutter_cashfree_pg_sdk: ^2.4.0+52
 
 dev_dependencies:
   flutter_test:

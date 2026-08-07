@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/api_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -676,12 +677,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     } catch (_) {}
 
     final token = await user?.getIdToken();
-    String url = 'http://localhost:5000/api/v1/payments/cashfree/order';
-    if (!kIsWeb) {
-      if (Platform.isAndroid) {
-         url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/order';
-      }
-    }
+    String url = ApiConfig.baseUrl + '/api/v1/payments/cashfree/order';
+    
 
     try {
       final response = await http.post(
@@ -769,12 +766,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final token = await user?.getIdToken();
-      String url = 'http://localhost:5000/api/v1/payments/cashfree/verify';
-      if (!kIsWeb) {
-        if (Platform.isAndroid) {
-           url = 'http://10.0.2.2:5000/api/v1/payments/cashfree/verify';
-        }
-      }
+      String url = ApiConfig.baseUrl + '/api/v1/payments/cashfree/verify';
+      
 
       final response = await http.post(
         Uri.parse(url),

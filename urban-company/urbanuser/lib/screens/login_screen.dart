@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/api_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +8,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// Nexora backend base URL for auth endpoints.
-const _kBackendAuthUrl = 'http://localhost:5000/api/v1/auth';
+const _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

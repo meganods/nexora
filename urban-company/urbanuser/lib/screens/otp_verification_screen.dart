@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../config/api_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 /// Base URL for the Nexora backend.
-const _kBackendAuthUrl = 'http://localhost:5000/api/v1/auth';
+const _kBackendAuthUrl = ApiConfig.baseUrl + '/api/v1/auth';
 
 /// Countdown before user may resend — matches backend's cooldown window.
 const _kResendCooldownSeconds = 30;

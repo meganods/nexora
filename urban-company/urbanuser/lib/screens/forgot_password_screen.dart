@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../config/api_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
@@ -50,7 +51,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  String get _backendUrl => 'http://localhost:5000/api/v1/auth';
+  String get _backendUrl => ApiConfig.baseUrl + '/api/v1/auth';
 
   @override
   void dispose() {

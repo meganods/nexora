@@ -87,46 +87,61 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Call backend to generate, hash, store, and email the OTP ─────────────
   Future<bool> _sendLoginOtpViaBackend(User user) async {
-    try {
-      final idToken = await user.getIdToken(true);
-      final response = await http
-          .post(
-            Uri.parse('$_kBackendAuthUrl/send-login-otp'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'idToken': idToken}),
-          )
-          .timeout(const Duration(seconds: 60));
+    // Try up to 2 times — Render free tier sleeps and first request may timeout
+    for (int attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt == 2 && mounted) {
+          setState(() {
+            _errorMessage = '⏳ Server is waking up, please wait...';
+          });
+        }
+        final idToken = await user.getIdToken(true);
+        final response = await http
+            .post(
+              Uri.parse('$_kBackendAuthUrl/send-login-otp'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'idToken': idToken}),
+            )
+            .timeout(const Duration(seconds: 90));
 
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 200 && body['success'] == true) {
-        // Store masked email so OTP screen can display it
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          '_otpMaskedEmail',
-          body['email']?.toString() ?? '',
-        );
-        return true;
-      } else {
+        if (response.statusCode == 200 && body['success'] == true) {
+          // Store masked email so OTP screen can display it
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            '_otpMaskedEmail',
+            body['email']?.toString() ?? '',
+          );
+          return true;
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage = body['message']?.toString() ??
+                  'Could not send verification code. Please try again.';
+            });
+          }
+          return false;
+        }
+      } catch (e) {
+        if (attempt < 2) {
+          // Wait a moment before retry
+          await Future.delayed(const Duration(seconds: 3));
+          continue;
+        }
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage = body['message']?.toString() ??
-                'Could not send verification code. Please try again.';
+            _errorMessage = 'Server is starting up. Please wait 30 seconds and try again.';
           });
         }
         return false;
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Network error. Could not reach the server. Please check your connection.';
-        });
-      }
-      return false;
     }
+    return false;
   }
+
 
   // ── Map Firebase error codes to user-friendly messages ───────────────────
   String? _humanizeFirebaseError(String code) {

@@ -34,14 +34,15 @@ class AddMoneyScreen extends StatefulWidget {
 }
 
 class _AddMoneyScreenState extends State<AddMoneyScreen> with SingleTickerProviderStateMixin {
-  final TextEditingController _amountController = TextEditingController();
-  double _enteredAmount = 0.0;
+  final TextEditingController _amountController = TextEditingController(text: '1000');
+  double _enteredAmount = 1000.0;
   String _selectedMethod = 'UPI';
   bool _isSubmitting = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
+
 
   @override
   void initState() {

@@ -36,6 +36,12 @@
 @import firebase_storage;
 #endif
 
+#if __has_include(<flutter_cashfree_pg_sdk/FlutterCashfreePgSdkPlugin.h>)
+#import <flutter_cashfree_pg_sdk/FlutterCashfreePgSdkPlugin.h>
+#else
+@import flutter_cashfree_pg_sdk;
+#endif
+
 #if __has_include(<geocoding_ios/GeocodingPlugin.h>)
 #import <geocoding_ios/GeocodingPlugin.h>
 #else
@@ -92,6 +98,7 @@
   [FLTFirebaseAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseAuthPlugin"]];
   [FLTFirebaseCorePlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseCorePlugin"]];
   [FLTFirebaseStoragePlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseStoragePlugin"]];
+  [FlutterCashfreePgSdkPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterCashfreePgSdkPlugin"]];
   [GeocodingPlugin registerWithRegistrar:[registry registrarForPlugin:@"GeocodingPlugin"]];
   [GeolocatorPlugin registerWithRegistrar:[registry registrarForPlugin:@"GeolocatorPlugin"]];
   [FGMGoogleMapsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FGMGoogleMapsPlugin"]];

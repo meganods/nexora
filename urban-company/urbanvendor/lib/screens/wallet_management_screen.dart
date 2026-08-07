@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/vendor_theme.dart';
 import '../widgets/app_snackbar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../config/api_config.dart';
 
 class WalletManagementScreen extends StatefulWidget {
   final bool isTab;
@@ -43,6 +46,7 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
   // Withdrawal form inputs
   final _withdrawController = TextEditingController(text: "5000");
   String _selectedWithdrawMethod = "Bank Account"; // Bank Account, UPI
+  bool _isWithdrawing = false;
 
   // Bank Accounts Management State
   List<Map<String, dynamic>> _bankAccounts = [
@@ -1047,7 +1051,7 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: _isWithdrawing ? null : () async {
                 final amt = double.tryParse(_withdrawController.text);
                 if (amt == null || amt < 500) {
                   AppSnackbar.show(context, "Minimum withdrawal limit is ₹500", isError: true);
@@ -1057,11 +1061,38 @@ class _WalletManagementScreenState extends State<WalletManagementScreen> {
                   AppSnackbar.show(context, "Insufficient withdrawable funds", isError: true);
                   return;
                 }
-                AppSnackbar.show(context, "Withdrawal Request Submitted Successfully!");
-                setState(() => _activeViewIndex = 4);
+                setState(() => _isWithdrawing = true);
+                try {
+                  final token = await user?.getIdToken();
+                  final response = await http.post(
+                    Uri.parse('${ApiConfig.baseUrl}/api/v1/payouts/request'),
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer $token',
+                    },
+                    body: jsonEncode({
+                      'amount': amt,
+                      'method': _selectedWithdrawMethod,
+                      'accountDetails': {}
+                    }),
+                  );
+                  final data = jsonDecode(response.body);
+                  if (response.statusCode == 201 && data['success']) {
+                    if (mounted) {
+                      AppSnackbar.show(context, "Withdrawal Request Submitted Successfully!");
+                      setState(() => _activeViewIndex = 4);
+                    }
+                  } else {
+                    if (mounted) AppSnackbar.show(context, data['message'] ?? "Failed to request withdrawal", isError: true);
+                  }
+                } catch (e) {
+                  if (mounted) AppSnackbar.show(context, "Network error", isError: true);
+                } finally {
+                  if (mounted) setState(() => _isWithdrawing = false);
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
-              child: const Text("Request Payout"),
+              child: _isWithdrawing ? const CircularProgressIndicator(color: Colors.white) : const Text("Request Payout"),
             ),
           ),
         ],

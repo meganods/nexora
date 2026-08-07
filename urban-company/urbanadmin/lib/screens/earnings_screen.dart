@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../config/api_config.dart';
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
 
@@ -11,6 +14,57 @@ class EarningsScreen extends StatefulWidget {
 
 class _EarningsScreenState extends State<EarningsScreen> {
   double _platformTakeRate = 15.0;
+  List<dynamic> _pendingPayouts = [];
+  bool _isLoadingPayouts = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPendingPayouts();
+  }
+
+  Future<void> _fetchPendingPayouts() async {
+    try {
+      final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+      final res = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/payouts/admin-pending'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success']) {
+          setState(() {
+            _pendingPayouts = data['withdrawals'];
+            _isLoadingPayouts = false;
+          });
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoadingPayouts = false);
+    }
+  }
+
+  Future<void> _approvePayout(String withdrawalId) async {
+    try {
+      final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/payouts/approve'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: jsonEncode({'withdrawalId': withdrawalId}),
+      );
+      if (res.statusCode == 200) {
+        _showTopRightToast('Payout approved successfully!');
+        _fetchPendingPayouts();
+      } else {
+        _showTopRightToast('Failed to approve payout.');
+      }
+    } catch (e) {
+      _showTopRightToast('Error approving payout.');
+    }
+  }
 
   // Custom Overlay toast notification on top-right side
   void _showTopRightToast(String message) {
@@ -92,6 +146,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 return Column(
                   children: [
                     _buildGlobalCommissionCard(),
+                    const SizedBox(height: 28),
+                    _buildPendingPayoutsCard(),
                     const SizedBox(height: 28),
                     _buildVendorPerformanceCard(),
                   ],
@@ -521,6 +577,56 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 ),
               ),
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingPayoutsCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Pending Cashfree Payouts', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+          const SizedBox(height: 24),
+          if (_isLoadingPayouts) const Center(child: CircularProgressIndicator())
+          else if (_pendingPayouts.isEmpty) Center(child: Text("No pending payout requests.", style: GoogleFonts.inter(color: Colors.grey)))
+          else ..._pendingPayouts.map((p) => _buildPayoutRow(p)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayoutRow(dynamic payout) {
+    final amt = payout['amount']?.toString() ?? '0';
+    final method = payout['method'] ?? 'Bank';
+    final vendor = payout['vendorId']?.substring(0, 8) ?? 'Vendor';
+    final wId = payout['id'] ?? '';
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Vendor: $vendor...', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text('Method: $method', style: GoogleFonts.inter(color: Colors.grey, fontSize: 11)),
+            ],
+          ),
+          Text('₹$amt', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF2563EB), fontSize: 16)),
+          ElevatedButton(
+            onPressed: () => _approvePayout(wId),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+            child: const Text('Approve', style: TextStyle(color: Colors.white, fontSize: 12)),
           )
         ],
       ),

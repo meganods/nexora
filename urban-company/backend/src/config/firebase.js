@@ -201,9 +201,22 @@ try {
 
     // ✅ Always normalize private_key to have real newlines (PEM requires them)
     if (useCert && serviceAccount && typeof serviceAccount === 'object' && serviceAccount.private_key) {
+      console.log('Firebase Init: Private key length before normalization:', serviceAccount.private_key.length);
+      console.log('Firebase Init: Does key contain literal \\n?', serviceAccount.private_key.includes('\\n'));
+      console.log('Firebase Init: Does key contain real newline?', serviceAccount.private_key.includes('\n'));
+      
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      
+      console.log('Firebase Init: Private key length after normalization:', serviceAccount.private_key.length);
+      console.log('Firebase Init: Does key contain real newline now?', serviceAccount.private_key.includes('\n'));
+      if (serviceAccount.private_key.startsWith('-----BEGIN PRIVATE KEY-----')) {
+        console.log('Firebase Init: Key header is correct.');
+      } else {
+        console.log('Firebase Init: Key header mismatch:', serviceAccount.private_key.substring(0, 30));
+      }
     }
   }
+
 
 
   if (useCert) {

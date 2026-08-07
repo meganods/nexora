@@ -198,6 +198,11 @@ try {
         }
       }
     }
+
+    // ✅ Always normalize private_key to have real newlines (PEM requires them)
+    if (useCert && serviceAccount && typeof serviceAccount === 'object' && serviceAccount.private_key) {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
   }
 
 

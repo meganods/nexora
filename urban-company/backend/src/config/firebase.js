@@ -167,22 +167,39 @@ try {
   let serviceAccount;
 
   if (serviceAccountString) {
+    // Strategy 1: Direct parse (JSON with \n as escape sequences - ideal)
     try {
-      // Fix for Render environment variables where \n is sometimes escaped
-      const cleanedString = serviceAccountString.replace(/\\n/g, '\n');
-      serviceAccount = JSON.parse(cleanedString);
-      if (serviceAccount && serviceAccount.private_key) {
-        useCert = true;
-      }
-    } catch (e) {
-      if (serviceAccountString.trim().startsWith('{')) {
-        console.error('FIREBASE_SERVICE_ACCOUNT looks like JSON but failed to parse:', e.message);
-      } else {
-        serviceAccount = serviceAccountString; // treat as file path
-        useCert = true;
+      serviceAccount = JSON.parse(serviceAccountString);
+      if (serviceAccount && serviceAccount.private_key) useCert = true;
+    } catch (_) {}
+
+    // Strategy 2: Render converts \n sequences to ACTUAL newlines in env vars.
+    // Fix by replacing actual newlines back to JSON \n escape sequences.
+    if (!useCert) {
+      try {
+        const fixed = serviceAccountString.replace(/\n/g, '\\n');
+        serviceAccount = JSON.parse(fixed);
+        if (serviceAccount && serviceAccount.private_key) useCert = true;
+      } catch (_) {}
+    }
+
+    // Strategy 3: Legacy approach - double-escaped \\n -> actual newline
+    if (!useCert) {
+      try {
+        const cleaned = serviceAccountString.replace(/\\n/g, '\n');
+        serviceAccount = JSON.parse(cleaned);
+        if (serviceAccount && serviceAccount.private_key) useCert = true;
+      } catch (e) {
+        if (serviceAccountString.trim().startsWith('{')) {
+          console.error('FIREBASE_SERVICE_ACCOUNT failed all parse strategies:', e.message);
+        } else {
+          serviceAccount = serviceAccountString; // treat as file path
+          useCert = true;
+        }
       }
     }
   }
+
 
   if (useCert) {
     admin.initializeApp({

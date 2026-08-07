@@ -32,44 +32,17 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   bool _isLoading = true;
   String _selectedFilter = 'All';
+  bool _isBalanceVisible = true;
 
   // Local state stats (synced from Firestore)
   double _balance = 0.0;
   double _pendingRefunds = 0.0;
   double _lifetimeRewards = 0.0;
+  double _totalAdded = 0.0;
+  double _totalSpent = 0.0;
+  int _rewardPoints = 0;
 
-  final List<Map<String, dynamic>> _fallbackTransactions = [
-    {
-      'id': 'tx_9829101',
-      'bookingId': 'bk_8910',
-      'type': 'Referral Reward',
-      'amount': 100.0,
-      'isCredit': true,
-      'paymentMethod': 'Wallet Credit',
-      'status': 'Completed',
-      'createdAt': '31 Jul 2026, 04:30 PM',
-    },
-    {
-      'id': 'tx_9829102',
-      'bookingId': 'bk_8712',
-      'type': 'Booking Payment',
-      'amount': 799.0,
-      'isCredit': false,
-      'paymentMethod': 'Razorpay (Card)',
-      'status': 'Completed',
-      'createdAt': '28 Jul 2026, 11:15 AM',
-    },
-    {
-      'id': 'tx_9829103',
-      'bookingId': 'bk_8501',
-      'type': 'Refund',
-      'amount': 599.0,
-      'isCredit': true,
-      'paymentMethod': 'Original UPI Source',
-      'status': 'Completed',
-      'createdAt': '25 Jul 2026, 02:45 PM',
-    },
-  ];
+  final List<Map<String, dynamic>> _fallbackTransactions = [];
 
   @override
   void initState() {
@@ -87,16 +60,25 @@ class _WalletScreenState extends State<WalletScreen> {
           if (d['balance'] != null) _balance = (d['balance'] as num).toDouble();
           if (d['pendingBalance'] != null) _pendingRefunds = (d['pendingBalance'] as num).toDouble();
           if (d['lifetimeRewards'] != null) _lifetimeRewards = (d['lifetimeRewards'] as num).toDouble();
+          if (d['totalAdded'] != null) _totalAdded = (d['totalAdded'] as num).toDouble();
+          if (d['totalSpent'] != null) _totalSpent = (d['totalSpent'] as num).toDouble();
+          if (d['rewardPoints'] != null) _rewardPoints = (d['rewardPoints'] as num).toInt();
         } else {
           // If no document exists in Firestore, set default state
-          _balance = 100.0;
+          _balance = 0.0;
           _pendingRefunds = 0.0;
-          _lifetimeRewards = 100.0;
+          _lifetimeRewards = 0.0;
+          _totalAdded = 0.0;
+          _totalSpent = 0.0;
+          _rewardPoints = 0;
         }
       } catch (_) {
-        _balance = 100.0;
+        _balance = 0.0;
         _pendingRefunds = 0.0;
-        _lifetimeRewards = 100.0;
+        _lifetimeRewards = 0.0;
+        _totalAdded = 0.0;
+        _totalSpent = 0.0;
+        _rewardPoints = 0;
       }
     }
     if (mounted) {
@@ -281,214 +263,559 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _dark, size: 18),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            }
-          },
-        ),
-        title: Text('Wallet & Transactions', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: _dark)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download_rounded, color: _dark),
-            onPressed: _showStatementDialog,
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(color: _border, height: 1)),
-      ),
+      appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _blue))
-          : SingleChildScrollView(
+          : CustomScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Wallet Balance Premium Card ────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: const LinearGradient(
-                        colors: [_blue, Color(0xFF1D4ED8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(color: _blue.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
-                      ],
-                    ),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Available Balance', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold)),
-                            const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 20),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('₹${_balance.toStringAsFixed(0)}', style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.white)),
-                            ElevatedButton.icon(
-                              onPressed: _showAddMoneySheet,
-                              icon: const Icon(Icons.add_rounded, size: 16),
-                              label: Text('Add Money', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: _blue,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(child: _walletMiniStat('Pending Refunds', '₹${_pendingRefunds.toStringAsFixed(0)}')),
-                            Container(width: 1, height: 30, color: Colors.white24),
-                            Expanded(child: _walletMiniStat('Lifetime Rewards', '₹${_lifetimeRewards.toStringAsFixed(0)}')),
-                          ],
-                        ),
+                        const SizedBox(height: 16),
+                        _buildHeroCard(),
+                        const SizedBox(height: 24),
+                        _buildQuickActions(),
+                        const SizedBox(height: 24),
+                        _buildWalletAnalytics(),
+                        const SizedBox(height: 24),
+                        _buildPromoBanner(),
+                        const SizedBox(height: 24),
+                        _buildTransactionsSection(user),
+                        const SizedBox(height: 24),
+                        _buildRewardsCard(),
+                        const SizedBox(height: 16),
+                        _buildPaymentMethodsCard(),
+                        const SizedBox(height: 16),
+                        _buildSecurityCard(),
+                        const SizedBox(height: 24),
+                        _buildHelpSupport(),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
+                ),
+              ],
+            ),
+      floatingActionButton: _buildFloatingAI(),
+      bottomNavigationBar: const CustomBottomNav(selectedIndex: 3),
+    );
+  }
 
-                  const SizedBox(height: 24),
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFFF8FAFC),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _dark, size: 18),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          }
+        },
+      ),
+      title: Text('My Wallet', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: _dark)),
+      actions: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: _dark),
+              onPressed: () {},
+            ),
+            Positioned(
+              right: 12,
+              top: 12,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(color: _red, shape: BoxShape.circle),
+                child: Text('3', style: GoogleFonts.inter(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            )
+          ],
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
 
-                  // ── Transaction Filters ────────────────────────────────────
-                  Text('Transaction History', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: _dark)),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 38,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      children: ['All', 'Payments', 'Refunds', 'Rewards'].map((filter) {
-                        final isSel = _selectedFilter == filter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(filter),
-                            selected: isSel,
-                            selectedColor: const Color(0xFFEFF6FF),
-                            labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: isSel ? _blue : _gray),
-                            onSelected: (val) {
-                              if (val) setState(() => _selectedFilter = filter);
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Transactions Feed Stream ────────────────────────────────
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('transactions')
-                        .where('userId', isEqualTo: user?.uid ?? 'guest_user')
-                        .orderBy('createdAt', descending: true)
-                        .snapshots(),
-                    builder: (ctx, snap) {
-                      List<Map<String, dynamic>> txList = _fallbackTransactions;
-
-                      if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                        txList = snap.data!.docs.map((d) {
-                          final data = d.data() as Map<String, dynamic>;
-                          return {'id': d.id, ...data};
-                        }).toList();
-                      }
-
-                      // Apply filter matching
-                      final filtered = txList.where((tx) {
-                        if (_selectedFilter == 'All') return true;
-                        final String type = (tx['type'] ?? '').toString().toLowerCase();
-                        if (_selectedFilter == 'Payments') return type.contains('payment');
-                        if (_selectedFilter == 'Refunds') return type.contains('refund');
-                        if (_selectedFilter == 'Rewards') return type.contains('reward') || type.contains('cashback');
-                        return true;
-                      }).toList();
-
-                      if (filtered.isEmpty) {
-                        return Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: _border),
-                          ),
-                          child: Center(
-                            child: Text('No transactions found under this category.',
-                                textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 12, color: _gray)),
-                          ),
-                        );
-                      }
-
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (ctx, i) {
-                          final tx = filtered[i];
-                          final isCredit = tx['isCredit'] ?? (tx['type'] == 'Refund' || tx['type'] == 'Referral Reward');
-                          final amt = ((tx['amount'] ?? 0.0) as num).toDouble();
-                          final type = tx['type'] ?? 'Transaction';
-                          final date = tx['createdAt'] ?? 'Just now';
-
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: _border),
-                              boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 3)),
-                              ],
-                            ),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isCredit ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                                child: Icon(
-                                  isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                  color: isCredit ? _green : _red,
-                                  size: 18,
-                                ),
-                              ),
-                              title: Text(type, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: _dark)),
-                              subtitle: Text(date, style: GoogleFonts.inter(fontSize: 11, color: _gray)),
-                              trailing: Text(
-                                '${isCredit ? "+" : "-"}₹${amt.toStringAsFixed(0)}',
-                                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: isCredit ? _green : _dark),
-                              ),
-                              onTap: () => _showTransactionDetails(tx),
-                            ),
-                          );
-                        },
-                      );
-                    },
+  Widget _buildHeroCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF2563EB).withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 12)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text('Current Balance', style: GoogleFonts.inter(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => setState(() => _isBalanceVisible = !_isBalanceVisible),
+                    child: Icon(_isBalanceVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: Colors.white70, size: 16),
                   ),
                 ],
               ),
+              const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 22),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isBalanceVisible ? '₹${_balance.toStringAsFixed(2)}' : '₹ ••••••',
+            style: GoogleFonts.outfit(fontSize: 42, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-      bottomNavigationBar: const CustomBottomNav(selectedIndex: 3),
+            child: Text('+ ₹${_pendingRefunds.toStringAsFixed(2)} this month', style: GoogleFonts.inter(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(height: 28),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _heroMiniStat(Icons.card_giftcard_rounded, 'Cashback Balance', '₹${_lifetimeRewards.toStringAsFixed(2)}'),
+              _heroMiniStat(Icons.stars_rounded, 'Reward Points', _rewardPoints.toString()),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showAddMoneySheet,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text('Add Money', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF2563EB),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    AppToast.show(context, title: 'Withdraw', message: 'Withdraw functionality coming soon!');
+                  },
+                  icon: const Icon(Icons.upload_rounded, size: 18),
+                  label: Text('Withdraw', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white38, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroMiniStat(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.inter(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 2),
+            Text(value, style: GoogleFonts.inter(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Quick Actions', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: _dark)),
+            Text('View All', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: _blue)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: _border, width: 0.5),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _actionBtn(Icons.add_circle_rounded, 'Add Money', const Color(0xFF3B82F6), _showAddMoneySheet),
+              _actionBtn(Icons.send_rounded, 'Withdraw', const Color(0xFF10B981), () {}),
+              _actionBtn(Icons.receipt_long_rounded, 'Transactions', const Color(0xFF8B5CF6), () {}),
+              _actionBtn(Icons.card_giftcard_rounded, 'Rewards', const Color(0xFFF59E0B), () {}),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _actionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _dark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletAnalytics() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Wallet Overview', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: _dark)),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _analyticCard(Icons.account_balance_wallet, 'Current Balance', '₹${_balance.toStringAsFixed(2)}', const Color(0xFF3B82F6))),
+            const SizedBox(width: 12),
+            Expanded(child: _analyticCard(Icons.arrow_downward_rounded, 'Total Added', '₹${_totalAdded.toStringAsFixed(2)}', const Color(0xFF10B981))),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _analyticCard(Icons.arrow_upward_rounded, 'Total Spent', '₹${_totalSpent.toStringAsFixed(2)}', const Color(0xFFEF4444))),
+            const SizedBox(width: 12),
+            Expanded(child: _analyticCard(Icons.workspace_premium_rounded, 'Cashback Earned', '₹${_lifetimeRewards.toStringAsFixed(2)}', const Color(0xFFF59E0B))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _analyticCard(IconData icon, String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(height: 12),
+          Text(label, style: GoogleFonts.inter(fontSize: 11, color: _gray, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Text(value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: _dark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.redeem_rounded, color: Colors.white, size: 40),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add Money & Get Cashback', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 4),
+                Text('Earn up to ₹200 on next recharge', style: GoogleFonts.inter(fontSize: 11, color: Colors.white70)),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _showAddMoneySheet,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF6366F1),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text('Add Money'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionsSection(User? user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Recent Transactions', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: _dark)),
+            Text('View All', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: _blue)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: _border, width: 0.5),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('transactions')
+                .where('userId', isEqualTo: user?.uid ?? 'guest_user')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (ctx, snap) {
+              List<Map<String, dynamic>> txList = _fallbackTransactions;
+              if (snap.hasData && snap.data!.docs.isNotEmpty) {
+                txList = snap.data!.docs.map((d) {
+                  final data = d.data() as Map<String, dynamic>;
+                  return {'id': d.id, ...data};
+                }).toList();
+              }
+              if (txList.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(child: Text('No transactions found.', style: GoogleFonts.inter(fontSize: 12, color: _gray))),
+                );
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(8),
+                itemCount: txList.length > 4 ? 4 : txList.length,
+                separatorBuilder: (_, __) => const Divider(color: _border, height: 1),
+                itemBuilder: (ctx, i) {
+                  final tx = txList[i];
+                  final isCredit = tx['isCredit'] ?? (tx['type'] == 'Refund' || tx['type'] == 'Referral Reward');
+                  final amt = ((tx['amount'] ?? 0.0) as num).toDouble();
+                  final type = tx['type'] ?? 'Transaction';
+                  final date = tx['createdAt'] ?? 'Just now';
+                  
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isCredit ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                        color: isCredit ? _green : _red,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(type, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: _dark)),
+                    subtitle: Text(date, style: GoogleFonts.inter(fontSize: 11, color: _gray)),
+                    trailing: Text(
+                      '${isCredit ? "+" : "-"}₹${amt.toStringAsFixed(2)}',
+                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: isCredit ? _green : _dark),
+                    ),
+                    onTap: () => _showTransactionDetails(tx),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRewardsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: const Color(0xFFFFF7ED), borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.card_giftcard_rounded, color: Color(0xFFF97316), size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Rewards & Cashback', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: _dark)),
+                const SizedBox(height: 2),
+                Text('You have earned ₹${_lifetimeRewards.toStringAsFixed(2)}', style: GoogleFonts.inter(fontSize: 12, color: _gray)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: _gray),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.credit_card_rounded, color: _blue, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Payment Methods', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: _dark)),
+                const SizedBox(height: 2),
+                Text('Manage your linked cards', style: GoogleFonts.inter(fontSize: 12, color: _gray)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: _gray),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.gpp_good_rounded, color: _green, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text('100% Secure Payments backed by Cashfree', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF166534))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSupport() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Help & Support', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: _dark)),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _supportItem(Icons.help_outline_rounded, 'Wallet FAQ', const Color(0xFF3B82F6))),
+            const SizedBox(width: 12),
+            Expanded(child: _supportItem(Icons.chat_rounded, 'Chat Support', const Color(0xFF8B5CF6))),
+            const SizedBox(width: 12),
+            Expanded(child: _supportItem(Icons.report_problem_rounded, 'Report Issue', const Color(0xFFEF4444))),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _supportItem(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(label, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _dark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingAI() {
+    return FloatingActionButton(
+      onPressed: () {},
+      backgroundColor: const Color(0xFF6366F1),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
     );
   }
 
